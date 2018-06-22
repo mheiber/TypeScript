@@ -4470,5 +4470,9 @@
     "Add all missing enum members": {
         "category": "Message",
         "code": 95064
+    },
+    "Private names are not allowed outside of class bodies": {
+        "category": "Error",
+        "code": 95065
     }
 }

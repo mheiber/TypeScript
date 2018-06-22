@@ -1736,7 +1736,7 @@ namespace ts {
                             return token = SyntaxKind.Identifier;
                         }
                         error(Diagnostics.Invalid_character);
-                        pos++;
+                        // no `pos++` because already advanced at beginning of this `case` statement
                         return token = SyntaxKind.Unknown;
                     default:
                         if (isIdentifierStart(ch, languageVersion)) {

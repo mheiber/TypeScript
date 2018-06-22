@@ -1320,16 +1320,22 @@ namespace ts {
         // An identifier that starts with two underscores has an extra underscore character prepended to it to avoid issues
         // with magic property names like '__proto__'. The 'identifiers' object is used to share a single string instance for
         // each identifier in order to reduce memory consumption.
-        function createIdentifier(isIdentifier: boolean, diagnosticMessage?: DiagnosticMessage): Identifier {
+        function createIdentifier(isIdentifier: boolean, suggestedDiagnosticMessage?: DiagnosticMessage): Identifier {
             identifierCount++;
-            if (isIdentifier) {
+            let diagnosticMessage = suggestedDiagnosticMessage;
+            const isPrivateName = !!(scanner.getTokenFlags() & TokenFlags.PrivateName);
+            const privateNameIsAllowed = !!(parsingContext & (1 << ParsingContext.ClassMembers));
+            if (isPrivateName && !privateNameIsAllowed) {
+                diagnosticMessage = Diagnostics.Private_names_are_not_allowed_outside_of_class_bodies;
+            }
+            else if (isIdentifier && (!isPrivateName || privateNameIsAllowed)) {
                 const node = <Identifier>createNode(SyntaxKind.Identifier);
 
                 // Store original token kind if it is not just an Identifier so we can report appropriate error later in type checker
                 if (token() !== SyntaxKind.Identifier) {
                     node.originalKeywordKind = token();
                 }
-                node.isPrivateName = !!(scanner.getTokenFlags() & TokenFlags.PrivateName);
+                node.isPrivateName = isPrivateName;
                 node.escapedText = escapeLeadingUnderscores(internIdentifier(scanner.getTokenValue()));
                 nextToken();
                 return finishNode(node);
