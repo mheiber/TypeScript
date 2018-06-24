@@ -1725,7 +1725,10 @@ namespace ts {
                         return token = SyntaxKind.Unknown;
                     case CharacterCodes.hash:
                         pos++;
-                        if (isIdentifierStart(ch = text.charCodeAt(pos), languageVersion)) {
+                        if (
+                            languageVersion === ScriptTarget.ESNext
+                            && isIdentifierStart(ch = text.charCodeAt(pos), languageVersion)
+                        ) {
                             tokenFlags |= TokenFlags.PrivateName;
                             pos++;
                             while (pos < end && isIdentifierPart(ch = text.charCodeAt(pos), languageVersion)) pos++;
@@ -1736,11 +1739,7 @@ namespace ts {
                             return token = SyntaxKind.Identifier;
                         }
                         error(Diagnostics.Invalid_character);
-<<<<<<< HEAD
                         // no `pos++` because already advanced at beginning of this `case` statement
-=======
-                        pos++;
->>>>>>> can parse private names (#1)
                         return token = SyntaxKind.Unknown;
                     default:
                         if (isIdentifierStart(ch, languageVersion)) {
