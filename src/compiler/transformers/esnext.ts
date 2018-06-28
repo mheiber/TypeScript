@@ -943,7 +943,7 @@ namespace ts {
 
     export function createClassPrivateFieldHelper(context: TransformationContext, privateField: Identifier) {
         context.requestEmitHelper({
-            name: 'typescript:classPrivateField',
+            name: "typescript:classPrivateField",
             scoped: true,
             text: helperString`var ${"_" + privateField.escapedText} = new WeakMap();`
         });
@@ -953,7 +953,7 @@ namespace ts {
         name: "typescript:classPrivateFieldGet",
         scoped: false,
         text: `var _classPrivateFieldGet = function (receiver, privateMap) { if (!privateMap.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return privateMap.get(receiver); };`
-    }
+    };
 
     export function createClassPrivateFieldGetHelper(context: TransformationContext, receiver: Expression, privateField: Identifier) {
         context.requestEmitHelper(classPrivateFieldGetHelper);
@@ -964,7 +964,7 @@ namespace ts {
         name: "typescript:classPrivateFieldSet",
         scoped: false,
         text: `var _classPrivateFieldSet = function (receiver, privateMap, value) { if (!privateMap.has(receiver)) { throw new TypeError("attempted to set private field on non-instance"); } privateMap.set(receiver, value); return value; };`
-    }
+    };
 
     export function createClassPrivateFieldSetHelper(context: TransformationContext, expression: Expression) {
         context.requestEmitHelper(classPrivateFieldSetHelper);
