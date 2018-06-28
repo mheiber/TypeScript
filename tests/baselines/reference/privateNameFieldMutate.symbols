@@ -1,0 +1,14 @@
+=== tests/cases/conformance/classes/members/privateNames/privateNameFieldMutate.ts ===
+class Test {
+>Test : Symbol(Test, Decl(privateNameFieldMutate.ts, 0, 0))
+
+    #field: number;
+>#field : Symbol(Test[#field], Decl(privateNameFieldMutate.ts, 0, 12))
+
+    constructor() {
+        this.#field = 100;
+>this.#field : Symbol(Test[#field], Decl(privateNameFieldMutate.ts, 0, 12))
+>this : Symbol(Test, Decl(privateNameFieldMutate.ts, 0, 0))
+    }
+}
+

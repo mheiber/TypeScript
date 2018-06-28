@@ -2237,7 +2237,19 @@ namespace ts {
             return !nodeIsMissing(node.body);
         }
 
-        function visitPropertyDeclaration(node: PropertyDeclaration): undefined {
+        function visitPropertyDeclaration(node: PropertyDeclaration): PropertyDeclaration | undefined {
+            if (isPrivateName(node.name)) {
+                // Keep the private name declaration (without the initializer - which will be moved to the constructor).
+                return updateProperty(
+                    node,
+                    node.decorators,
+                    node.modifiers,
+                    node.name,
+                    node.questionToken,
+                    node.type,
+                    /*initializer*/ undefined
+                );
+            }
             const expr = getPropertyNameExpressionIfNeeded(node.name, some(node.decorators) || !!node.initializer, /*omitSimple*/ true);
             if (expr && !isSimpleInlineableExpression(expr)) {
                 (pendingExpressions || (pendingExpressions = [])).push(expr);

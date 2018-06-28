@@ -1,0 +1,20 @@
+=== tests/cases/conformance/classes/members/privateNames/privateNameFieldAccess.ts ===
+class Test {
+>Test : Test
+
+    #field: number;
+>#field : number
+
+    method() {
+>method : () => void
+
+        console.log(this.#field);
+>console.log(this.#field) : void
+>console.log : (message?: any, ...optionalParams: any[]) => void
+>console : Console
+>log : (message?: any, ...optionalParams: any[]) => void
+>this.#field : number
+>this : this
+    }
+}
+

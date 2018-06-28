@@ -619,6 +619,9 @@ declare namespace ts {
         type?: TypeNode;
         initializer?: Expression;
     }
+    interface PrivateNamedPropertyDeclaration extends PropertyDeclaration {
+        name: PrivateName;
+    }
     interface ObjectLiteralElement extends NamedDeclaration {
         _objectLiteralBrandBrand: any;
         name?: PropertyName;
@@ -3458,6 +3461,7 @@ declare namespace ts {
     function isClassElement(node: Node): node is ClassElement;
     function isClassLike(node: Node): node is ClassLikeDeclaration;
     function isAccessor(node: Node): node is AccessorDeclaration;
+    function isPrivateNamedPropertyDeclaration(node: Node): node is PrivateNamedPropertyDeclaration;
     function isTypeElement(node: Node): node is TypeElement;
     function isClassOrTypeElement(node: Node): node is ClassElement | TypeElement;
     function isObjectLiteralElementLike(node: Node): node is ObjectLiteralElementLike;

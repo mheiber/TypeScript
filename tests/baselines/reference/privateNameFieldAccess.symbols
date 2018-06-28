@@ -1,0 +1,19 @@
+=== tests/cases/conformance/classes/members/privateNames/privateNameFieldAccess.ts ===
+class Test {
+>Test : Symbol(Test, Decl(privateNameFieldAccess.ts, 0, 0))
+
+    #field: number;
+>#field : Symbol(Test[#field], Decl(privateNameFieldAccess.ts, 0, 12))
+
+    method() {
+>method : Symbol(Test.method, Decl(privateNameFieldAccess.ts, 1, 19))
+
+        console.log(this.#field);
+>console.log : Symbol(Console.log, Decl(lib.dom.d.ts, --, --))
+>console : Symbol(console, Decl(lib.dom.d.ts, --, --))
+>log : Symbol(Console.log, Decl(lib.dom.d.ts, --, --))
+>this.#field : Symbol(Test[#field], Decl(privateNameFieldAccess.ts, 0, 12))
+>this : Symbol(Test, Decl(privateNameFieldAccess.ts, 0, 0))
+    }
+}
+

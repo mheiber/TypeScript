@@ -864,6 +864,10 @@ namespace ts {
         initializer?: Expression;           // Optional initializer
     }
 
+    export interface PrivateNamedPropertyDeclaration extends PropertyDeclaration {
+        name: PrivateName;
+    }
+
     export interface ObjectLiteralElement extends NamedDeclaration {
         _objectLiteralBrandBrand: any;
         name?: PropertyName;

@@ -1,0 +1,9 @@
+=== tests/cases/conformance/classes/members/privateNames/privateNameFieldInitializer.ts ===
+class Test {
+>Test : Test
+
+    #property: number = 100;
+>#property : number
+>100 : 100
+}
+

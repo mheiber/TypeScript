@@ -1,0 +1,66 @@
+=== tests/cases/conformance/classes/members/privateNames/privateNameFieldMutateNontrivialReceiver.ts ===
+class Test {
+>Test : Symbol(Test, Decl(privateNameFieldMutateNontrivialReceiver.ts, 0, 0))
+
+    #field: number;
+>#field : Symbol(Test[#field], Decl(privateNameFieldMutateNontrivialReceiver.ts, 0, 12))
+
+    static mutate(getReceiver: () => Test) {
+>mutate : Symbol(Test.mutate, Decl(privateNameFieldMutateNontrivialReceiver.ts, 1, 19))
+>getReceiver : Symbol(getReceiver, Decl(privateNameFieldMutateNontrivialReceiver.ts, 2, 18))
+>Test : Symbol(Test, Decl(privateNameFieldMutateNontrivialReceiver.ts, 0, 0))
+
+        getReceiver().#field = 100;
+>getReceiver().#field : Symbol(Test[#field], Decl(privateNameFieldMutateNontrivialReceiver.ts, 0, 12))
+>getReceiver : Symbol(getReceiver, Decl(privateNameFieldMutateNontrivialReceiver.ts, 2, 18))
+
+        getReceiver().#field += 1;
+>getReceiver().#field : Symbol(Test[#field], Decl(privateNameFieldMutateNontrivialReceiver.ts, 0, 12))
+>getReceiver : Symbol(getReceiver, Decl(privateNameFieldMutateNontrivialReceiver.ts, 2, 18))
+
+        getReceiver().#field -= 2;
+>getReceiver().#field : Symbol(Test[#field], Decl(privateNameFieldMutateNontrivialReceiver.ts, 0, 12))
+>getReceiver : Symbol(getReceiver, Decl(privateNameFieldMutateNontrivialReceiver.ts, 2, 18))
+
+        getReceiver().#field /= 3;
+>getReceiver().#field : Symbol(Test[#field], Decl(privateNameFieldMutateNontrivialReceiver.ts, 0, 12))
+>getReceiver : Symbol(getReceiver, Decl(privateNameFieldMutateNontrivialReceiver.ts, 2, 18))
+
+        getReceiver().#field *= 4;
+>getReceiver().#field : Symbol(Test[#field], Decl(privateNameFieldMutateNontrivialReceiver.ts, 0, 12))
+>getReceiver : Symbol(getReceiver, Decl(privateNameFieldMutateNontrivialReceiver.ts, 2, 18))
+
+        getReceiver().#field |= 5;
+>getReceiver().#field : Symbol(Test[#field], Decl(privateNameFieldMutateNontrivialReceiver.ts, 0, 12))
+>getReceiver : Symbol(getReceiver, Decl(privateNameFieldMutateNontrivialReceiver.ts, 2, 18))
+
+        getReceiver().#field **= 6;
+>getReceiver().#field : Symbol(Test[#field], Decl(privateNameFieldMutateNontrivialReceiver.ts, 0, 12))
+>getReceiver : Symbol(getReceiver, Decl(privateNameFieldMutateNontrivialReceiver.ts, 2, 18))
+
+        getReceiver().#field %= 7;
+>getReceiver().#field : Symbol(Test[#field], Decl(privateNameFieldMutateNontrivialReceiver.ts, 0, 12))
+>getReceiver : Symbol(getReceiver, Decl(privateNameFieldMutateNontrivialReceiver.ts, 2, 18))
+
+        getReceiver().#field <<= 8;
+>getReceiver().#field : Symbol(Test[#field], Decl(privateNameFieldMutateNontrivialReceiver.ts, 0, 12))
+>getReceiver : Symbol(getReceiver, Decl(privateNameFieldMutateNontrivialReceiver.ts, 2, 18))
+
+        getReceiver().#field >>= 9;
+>getReceiver().#field : Symbol(Test[#field], Decl(privateNameFieldMutateNontrivialReceiver.ts, 0, 12))
+>getReceiver : Symbol(getReceiver, Decl(privateNameFieldMutateNontrivialReceiver.ts, 2, 18))
+
+        getReceiver().#field >>>= 10;
+>getReceiver().#field : Symbol(Test[#field], Decl(privateNameFieldMutateNontrivialReceiver.ts, 0, 12))
+>getReceiver : Symbol(getReceiver, Decl(privateNameFieldMutateNontrivialReceiver.ts, 2, 18))
+
+        getReceiver().#field &= 11;
+>getReceiver().#field : Symbol(Test[#field], Decl(privateNameFieldMutateNontrivialReceiver.ts, 0, 12))
+>getReceiver : Symbol(getReceiver, Decl(privateNameFieldMutateNontrivialReceiver.ts, 2, 18))
+
+        getReceiver().#field ^= 12;
+>getReceiver().#field : Symbol(Test[#field], Decl(privateNameFieldMutateNontrivialReceiver.ts, 0, 12))
+>getReceiver : Symbol(getReceiver, Decl(privateNameFieldMutateNontrivialReceiver.ts, 2, 18))
+    }
+}
+
