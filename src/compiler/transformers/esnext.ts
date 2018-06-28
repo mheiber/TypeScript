@@ -101,9 +101,33 @@ namespace ts {
                     return visitParenthesizedExpression(node as ParenthesizedExpression, noDestructuringValue);
                 case SyntaxKind.CatchClause:
                     return visitCatchClause(node as CatchClause);
+                case SyntaxKind.PropertyDeclaration:
+                    return visitPropertyDeclaration(node as PropertyDeclaration);
+                case SyntaxKind.PropertyAccessExpression:
+                    return visitPropertyAccessExpression(node as PropertyAccessExpression);
                 default:
                     return visitEachChild(node, visitor, context);
             }
+        }
+
+        function visitPropertyAccessExpression(node: PropertyAccessExpression): Expression {
+            if (node.name.isPrivateName) {
+                return setOriginalNode(
+                    setTextRange(
+                        createClassPrivateFieldGetHelper(context, node.expression, node.name),
+                        /* location */ node
+                    ),
+                    node
+                );
+            }
+            return visitEachChild(node, visitor, context);
+        }
+
+        function visitPropertyDeclaration(node: PropertyDeclaration): VisitResult<PropertyDeclaration> {
+            if (isIdentifier(node.name) && node.name.isPrivateName) {
+                createClassPrivateFieldHelper(context, node.name);
+            }
+            return visitEachChild(node, visitor, context);
         }
 
         function visitAwaitExpression(node: AwaitExpression): Expression {
@@ -915,6 +939,36 @@ namespace ts {
             /*typeArguments*/ undefined,
             attributesSegments
         );
+    }
+
+    export function createClassPrivateFieldHelper(context: TransformationContext, privateField: Identifier) {
+        context.requestEmitHelper({
+            name: 'typescript:classPrivateField',
+            scoped: true,
+            text: helperString`var ${"_" + privateField.escapedText} = new WeakMap();`
+        });
+    }
+
+    const classPrivateFieldGetHelper: EmitHelper = {
+        name: "typescript:classPrivateFieldGet",
+        scoped: false,
+        text: `var _classPrivateFieldGet = function (receiver, privateMap) { if (!privateMap.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return privateMap.get(receiver); };`
+    }
+
+    export function createClassPrivateFieldGetHelper(context: TransformationContext, receiver: Expression, privateField: Identifier) {
+        context.requestEmitHelper(classPrivateFieldGetHelper);
+        return createCall(getHelperName("_classPrivateFieldGet"), /* typeArguments */ undefined, [ receiver, privateField ]);
+    }
+
+    const classPrivateFieldSetHelper: EmitHelper = {
+        name: "typescript:classPrivateFieldSet",
+        scoped: false,
+        text: `var _classPrivateFieldSet = function (receiver, privateMap, value) { if (!privateMap.has(receiver)) { throw new TypeError("attempted to set private field on non-instance"); } privateMap.set(receiver, value); return value; };`
+    }
+
+    export function createClassPrivateFieldSetHelper(context: TransformationContext, expression: Expression) {
+        context.requestEmitHelper(classPrivateFieldSetHelper);
+        return createCall(getHelperName("_classPrivateFieldSet"), /* typeArguments */ undefined, [ expression ]);
     }
 
     const awaitHelper: EmitHelper = {
