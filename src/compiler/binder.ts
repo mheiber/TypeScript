@@ -3311,6 +3311,11 @@ namespace ts {
             transformFlags |= TransformFlags.ContainsPropertyInitializer;
         }
 
+        // Private names are an ESNext feature.
+        if (isIdentifier(node.name) && node.name.isPrivateName) {
+            transformFlags |= TransformFlags.AssertESNext;
+        }
+
         node.transformFlags = transformFlags | TransformFlags.HasComputedFlags;
         return transformFlags & ~TransformFlags.NodeExcludes;
     }
@@ -3446,6 +3451,11 @@ namespace ts {
         if (transformFlags & TransformFlags.Super) {
             transformFlags ^= TransformFlags.Super;
             transformFlags |= TransformFlags.ContainsSuper;
+        }
+
+        // Private names are an ESNext feature.
+        if (isIdentifier(node.name) && node.name.isPrivateName) {
+            transformFlags |= TransformFlags.AssertESNext;
         }
 
         node.transformFlags = transformFlags | TransformFlags.HasComputedFlags;

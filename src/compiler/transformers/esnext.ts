@@ -26,6 +26,16 @@ namespace ts {
         let enclosingFunctionFlags: FunctionFlags;
         let enclosingSuperContainerFlags: NodeCheckFlags = 0;
 
+
+        /**
+         * Maps private names to the generated name of the WeakMap.
+         */
+        interface PrivateNameEnvironment {
+            [name: string]: { weakMapName: Identifier, initializer: Expression | undefined }
+        }
+        let privateNameEnvironmentStack: PrivateNameEnvironment[] = [];
+        let privateNameEnvironmentIndex = -1;
+
         return chainBundle(transformSourceFile);
 
         function transformSourceFile(node: SourceFile) {
@@ -105,16 +115,41 @@ namespace ts {
                     return visitPropertyDeclaration(node as PropertyDeclaration);
                 case SyntaxKind.PropertyAccessExpression:
                     return visitPropertyAccessExpression(node as PropertyAccessExpression);
+                case SyntaxKind.ClassDeclaration:
+                case SyntaxKind.ClassExpression:
+                    return visitClassLikeDeclaration(node as ClassLikeDeclaration);
                 default:
                     return visitEachChild(node, visitor, context);
             }
         }
 
+        function currentPrivateNameEnvironment() {
+            return privateNameEnvironmentStack[privateNameEnvironmentIndex];
+        }
+
+        function addPrivateNameToEnvironment(name: Identifier,
+                                             initializer?: Expression,
+                                             environment: PrivateNameEnvironment = currentPrivateNameEnvironment()) {
+            const nameString = getTextOfIdentifierOrLiteral(name);
+            if (nameString in environment) {
+                if (initializer) {
+                    environment[nameString].initializer = initializer;
+                }
+                return environment[nameString].weakMapName;
+            }
+            const weakMapName = createFileLevelUniqueName('_' + nameString.substring(1));
+            environment[nameString] = {
+                weakMapName, initializer
+            };
+            return weakMapName;
+        }
+
         function visitPropertyAccessExpression(node: PropertyAccessExpression): Expression {
             if (node.name.isPrivateName) {
+                const weakMapName = addPrivateNameToEnvironment(node.name);
                 return setOriginalNode(
                     setTextRange(
-                        createClassPrivateFieldGetHelper(context, node.expression, node.name),
+                        createClassPrivateFieldGetHelper(context, node.expression, weakMapName),
                         /* location */ node
                     ),
                     node
@@ -125,9 +160,97 @@ namespace ts {
 
         function visitPropertyDeclaration(node: PropertyDeclaration): VisitResult<PropertyDeclaration> {
             if (isIdentifier(node.name) && node.name.isPrivateName) {
-                createClassPrivateFieldHelper(context, node.name);
+                addPrivateNameToEnvironment(node.name);
             }
             return visitEachChild(node, visitor, context);
+        }
+
+        function visitClassLikeDeclaration(node: ClassLikeDeclaration): VisitResult<ClassLikeDeclaration> {
+            // Create private name environment.
+            privateNameEnvironmentStack[++privateNameEnvironmentIndex] = {};
+            // Visit children.
+            node = visitEachChild(node, visitor, context);
+            // Create WeakMaps for private properties.
+            // TODO: insert these WeakMap statements somewhere in the code...
+            const privateNameEnvironment = currentPrivateNameEnvironment();
+            for (let propertyName in privateNameEnvironment) {
+                const { weakMapName } = privateNameEnvironment[propertyName];
+                /*const weakMapStatement = */createVariableStatement(
+                    /* modifiers */ undefined,
+                    [
+                        createVariableDeclaration(weakMapName,
+                                                  /* typeNode */ undefined,
+                                                  createNew(
+                                                      createIdentifier('WeakMap'),
+                                                      /* typeArguments */ undefined,
+                                                      /* argumentsArray */ undefined
+                                                  ))
+                    ]
+                );
+            }
+            const initializerStatements = Object.keys(privateNameEnvironment).map(name => {
+                return createStatement(
+                    createCall(
+                        createPropertyAccess(privateNameEnvironment[name].weakMapName, 'set'),
+                        /* typeArguments */ undefined,
+                        [privateNameEnvironment[name].initializer || createVoidZero()]
+                    )
+                );
+            });
+            let members = [...node.members];
+            let ctor = find(members, (member) => isConstructorDeclaration(member));
+            if (!ctor) {
+                // Create constructor with private field initializers.
+                ctor = createConstructor(
+                    /* decorators */ undefined,
+                    /* modifiers */ undefined,
+                    /* parameters */ [],
+                    createBlock(initializerStatements)
+                );
+                members.unshift(ctor);
+            } else {
+                // Update existing constructor to add private field initializers.
+                members = members.map(member => {
+                    if (isConstructorDeclaration(member)) {
+                        let statements = member.body ?
+                            [...initializerStatements, ...member.body.statements] :
+                            initializerStatements;
+                        return updateConstructor(
+                            member,
+                            member.decorators,
+                            member.modifiers,
+                            member.parameters,
+                            createBlock(statements, member.body ? member.body.multiLine : undefined)
+                        );
+                    }
+                    return member;
+                })
+            }
+
+            // Update class members.
+            if (isClassDeclaration(node)) {
+                node = updateClassDeclaration(
+                    node,
+                    node.decorators,
+                    node.modifiers,
+                    node.name,
+                    node.typeParameters,
+                    node.heritageClauses,
+                    members
+                );
+            } else if (isClassExpression(node)) {
+                node = updateClassExpression(
+                    node,
+                    node.modifiers,
+                    node.name,
+                    node.typeParameters,
+                    node.heritageClauses,
+                    members
+                );
+            }
+            // Destroy private name environment.
+            delete privateNameEnvironmentStack[privateNameEnvironmentIndex--];
+            return node;
         }
 
         function visitAwaitExpression(node: AwaitExpression): Expression {
@@ -288,6 +411,18 @@ namespace ts {
                     node,
                     visitNode(node.left, visitorNoDestructuringValue, isExpression),
                     visitNode(node.right, noDestructuringValue ? visitorNoDestructuringValue : visitor, isExpression)
+                );
+            }
+            else if (isAssignmentOperator(node.operatorToken.kind) &&
+                     isPropertyAccessExpression(node.left) &&
+                     isIdentifier(node.left.name) &&
+                     node.left.name.isPrivateName)
+            {
+                // If assigning to a private property, rewrite it as a call to the helper function.
+                const weakMapName = addPrivateNameToEnvironment(node.left.name);
+                return setOriginalNode(
+                    createClassPrivateFieldSetHelper(context, node.left.expression, weakMapName, node.right),
+                    node
                 );
             }
             return visitEachChild(node, visitor, context);
@@ -942,11 +1077,20 @@ namespace ts {
     }
 
     export function createClassPrivateFieldHelper(context: TransformationContext, privateField: Identifier) {
+        let mapName = null;
+        const text = (uniqueName: EmitHelperUniqueNameCallback) => {
+            const str = helperString`var ${"_" + privateField.escapedText} = new WeakMap();`;
+            return str(name => {
+                mapName = name;
+                return uniqueName(name);
+            });
+        };
         context.requestEmitHelper({
             name: "typescript:classPrivateField",
             scoped: true,
-            text: helperString`var ${"_" + privateField.escapedText} = new WeakMap();`
+            text
         });
+        return mapName;
     }
 
     const classPrivateFieldGetHelper: EmitHelper = {
@@ -966,9 +1110,9 @@ namespace ts {
         text: `var _classPrivateFieldSet = function (receiver, privateMap, value) { if (!privateMap.has(receiver)) { throw new TypeError("attempted to set private field on non-instance"); } privateMap.set(receiver, value); return value; };`
     };
 
-    export function createClassPrivateFieldSetHelper(context: TransformationContext, expression: Expression) {
+    export function createClassPrivateFieldSetHelper(context: TransformationContext, receiver: Expression, privateField: Identifier, value: Expression) {
         context.requestEmitHelper(classPrivateFieldSetHelper);
-        return createCall(getHelperName("_classPrivateFieldSet"), /* typeArguments */ undefined, [ expression ]);
+        return createCall(getHelperName("_classPrivateFieldSet"), /* typeArguments */ undefined, [ receiver, privateField, value ]);
     }
 
     const awaitHelper: EmitHelper = {
