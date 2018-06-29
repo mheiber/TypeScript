@@ -1073,23 +1073,6 @@ namespace ts {
         );
     }
 
-    export function createClassPrivateFieldHelper(context: TransformationContext, privateField: Identifier) {
-        let mapName = null;
-        const text = (uniqueName: EmitHelperUniqueNameCallback) => {
-            const str = helperString`var ${"_" + privateField.escapedText} = new WeakMap();`;
-            return str(name => {
-                mapName = name;
-                return uniqueName(name);
-            });
-        };
-        context.requestEmitHelper({
-            name: "typescript:classPrivateField",
-            scoped: true,
-            text
-        });
-        return mapName;
-    }
-
     const classPrivateFieldGetHelper: EmitHelper = {
         name: "typescript:classPrivateFieldGet",
         scoped: false,
