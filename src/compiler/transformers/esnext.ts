@@ -165,35 +165,32 @@ namespace ts {
             return visitEachChild(node, visitor, context);
         }
 
-        function visitClassLikeDeclaration(node: ClassLikeDeclaration): VisitResult<ClassLikeDeclaration> {
+        function visitClassLikeDeclaration(node: ClassLikeDeclaration): Node[] {
             // Create private name environment.
             privateNameEnvironmentStack[++privateNameEnvironmentIndex] = {};
             // Visit children.
             node = visitEachChild(node, visitor, context);
             // Create WeakMaps for private properties.
-            // TODO: insert these WeakMap statements somewhere in the code...
             const privateNameEnvironment = currentPrivateNameEnvironment();
-            for (let propertyName in privateNameEnvironment) {
-                const { weakMapName } = privateNameEnvironment[propertyName];
-                /*const weakMapStatement = */createVariableStatement(
+            const weakMapDeclarations = Object.keys(privateNameEnvironment).map(name => {
+                const { weakMapName } = privateNameEnvironment[name];
+                return createVariableStatement(
                     /* modifiers */ undefined,
-                    [
-                        createVariableDeclaration(weakMapName,
-                                                  /* typeNode */ undefined,
-                                                  createNew(
-                                                      createIdentifier('WeakMap'),
-                                                      /* typeArguments */ undefined,
-                                                      /* argumentsArray */ undefined
-                                                  ))
-                    ]
+                    [createVariableDeclaration(weakMapName,
+                                               /* typeNode */ undefined,
+                                               createNew(
+                                                   createIdentifier('WeakMap'),
+                                                   /* typeArguments */ undefined,
+                                                   /* argumentsArray */ undefined
+                                               ))]
                 );
-            }
+            });
             const initializerStatements = Object.keys(privateNameEnvironment).map(name => {
                 return createStatement(
                     createCall(
                         createPropertyAccess(privateNameEnvironment[name].weakMapName, 'set'),
                         /* typeArguments */ undefined,
-                        [privateNameEnvironment[name].initializer || createVoidZero()]
+                        [createThis(), privateNameEnvironment[name].initializer || createVoidZero()]
                     )
                 );
             });
@@ -250,7 +247,7 @@ namespace ts {
             }
             // Destroy private name environment.
             delete privateNameEnvironmentStack[privateNameEnvironmentIndex--];
-            return node;
+            return [ ...weakMapDeclarations, node ];
         }
 
         function visitAwaitExpression(node: AwaitExpression): Expression {
