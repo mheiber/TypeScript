@@ -1725,10 +1725,7 @@ namespace ts {
                         return token = SyntaxKind.Unknown;
                     case CharacterCodes.hash:
                         pos++;
-                        if (
-                            languageVersion === ScriptTarget.ESNext
-                            && isIdentifierStart(ch = text.charCodeAt(pos), languageVersion)
-                        ) {
+                        if (isIdentifierStart(ch = text.charCodeAt(pos), languageVersion)) {
                             tokenFlags |= TokenFlags.PrivateName;
                             pos++;
                             while (pos < end && isIdentifierPart(ch = text.charCodeAt(pos), languageVersion)) pos++;
