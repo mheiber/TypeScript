@@ -31,7 +31,7 @@ namespace ts {
          * Maps private names to the generated name of the WeakMap.
          */
         interface PrivateNameEnvironment {
-            [name: string]: { weakMapName: Identifier, initializer: Expression | undefined }
+            [name: string]: Identifier
         }
         let privateNameEnvironmentStack: PrivateNameEnvironment[] = [];
         let privateNameEnvironmentIndex = -1;
@@ -128,19 +128,13 @@ namespace ts {
         }
 
         function addPrivateNameToEnvironment(name: Identifier,
-                                             initializer?: Expression,
                                              environment: PrivateNameEnvironment = currentPrivateNameEnvironment()) {
             const nameString = getTextOfIdentifierOrLiteral(name);
             if (nameString in environment) {
-                if (initializer) {
-                    environment[nameString].initializer = initializer;
-                }
-                return environment[nameString].weakMapName;
+                return environment[nameString];
             }
             const weakMapName = createFileLevelUniqueName('_' + nameString.substring(1));
-            environment[nameString] = {
-                weakMapName, initializer
-            };
+            environment[nameString] = weakMapName;
             return weakMapName;
         }
 
@@ -173,7 +167,7 @@ namespace ts {
             // Create WeakMaps for private properties.
             const privateNameEnvironment = currentPrivateNameEnvironment();
             const weakMapDeclarations = Object.keys(privateNameEnvironment).map(name => {
-                const { weakMapName } = privateNameEnvironment[name];
+                const weakMapName = privateNameEnvironment[name];
                 return createVariableStatement(
                     /* modifiers */ undefined,
                     [createVariableDeclaration(weakMapName,
@@ -188,9 +182,9 @@ namespace ts {
             const initializerStatements = Object.keys(privateNameEnvironment).map(name => {
                 return createStatement(
                     createCall(
-                        createPropertyAccess(privateNameEnvironment[name].weakMapName, 'set'),
+                        createPropertyAccess(privateNameEnvironment[name], 'set'),
                         /* typeArguments */ undefined,
-                        [createThis(), privateNameEnvironment[name].initializer || createVoidZero()]
+                        [createThis(), createVoidZero()]
                     )
                 );
             });
