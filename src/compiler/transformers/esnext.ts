@@ -228,13 +228,14 @@ namespace ts {
                     )
                 );
             });
-            const ctor = find(members, (member) => isConstructorDeclaration(member)) as ConstructorDeclaration | undefined;
+            const ctor = find(
+                members,
+                (member) => isConstructorDeclaration(member) && !!member.body
+            ) as ConstructorDeclaration | undefined;
             if (ctor) {
-                const body = ctor.body ?
-                    updateBlock(ctor.body, [...initializerStatements, ...ctor.body.statements]) :
-                    createBlock(initializerStatements, /* multiLine */ undefined);
+                const body = updateBlock(ctor.body!, [...initializerStatements, ...ctor.body!.statements]);
                 return members.map(member => {
-                    if (isConstructorDeclaration(member)) {
+                    if (member === ctor) {
                         return updateConstructor(
                             ctor,
                             ctor.decorators,
