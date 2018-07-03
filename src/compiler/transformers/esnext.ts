@@ -116,8 +116,9 @@ namespace ts {
                 case SyntaxKind.PropertyAccessExpression:
                     return visitPropertyAccessExpression(node as PropertyAccessExpression);
                 case SyntaxKind.ClassDeclaration:
+                    return visitClassDeclaration(node as ClassDeclaration);
                 case SyntaxKind.ClassExpression:
-                    return visitClassLikeDeclaration(node as ClassLikeDeclaration);
+                    return visitClassExpression(node as ClassExpression);
                 default:
                     return visitEachChild(node, visitor, context);
             }
@@ -159,12 +160,42 @@ namespace ts {
             return visitEachChild(node, visitor, context);
         }
 
-        function visitClassLikeDeclaration(node: ClassLikeDeclaration): Node[] {
+        function visitClassDeclaration(node: ClassDeclaration) {
+            startPrivateNameEnvironment();
+            node = visitEachChild(node, visitor, context);
+            node = updateClassDeclaration(
+                node,
+                node.decorators,
+                node.modifiers,
+                node.name,
+                node.typeParameters,
+                node.heritageClauses,
+                transformClassMembers(node.members)
+            );
+            return [...endPrivateNameEnvironment(), node];
+        }
+
+        function visitClassExpression(node: ClassExpression) {
+            startPrivateNameEnvironment();
+            node = visitEachChild(node, visitor, context);
+            node = updateClassExpression(
+                node,
+                node.modifiers,
+                node.name,
+                node.typeParameters,
+                node.heritageClauses,
+                transformClassMembers(node.members)
+            );
+            return [...endPrivateNameEnvironment(), node];
+        }
+
+        function startPrivateNameEnvironment() {
             // Create private name environment.
             privateNameEnvironmentStack[++privateNameEnvironmentIndex] = {};
-            // Visit children.
-            node = visitEachChild(node, visitor, context);
-            // Create WeakMaps for private properties.
+            return currentPrivateNameEnvironment();
+        }
+
+        function endPrivateNameEnvironment(): Statement[] {
             const privateNameEnvironment = currentPrivateNameEnvironment();
             const weakMapDeclarations = Object.keys(privateNameEnvironment).map(name => {
                 const weakMapName = privateNameEnvironment[name];
@@ -179,6 +210,15 @@ namespace ts {
                                                ))]
                 );
             });
+            // Destroy private name environment.
+            delete privateNameEnvironmentStack[privateNameEnvironmentIndex--];
+            return weakMapDeclarations;
+        }
+
+        function transformClassMembers(members: ReadonlyArray<ClassElement>): ClassElement[] {
+            // Rewrite constructor with private name initializers.
+            const privateNameEnvironment = currentPrivateNameEnvironment();
+            // Initialize private properties.
             const initializerStatements = Object.keys(privateNameEnvironment).map(name => {
                 return createStatement(
                     createCall(
@@ -188,60 +228,33 @@ namespace ts {
                     )
                 );
             });
-            let members = [...node.members];
-            let ctor = find(members, (member) => isConstructorDeclaration(member));
-            if (!ctor) {
-                // Create constructor with private field initializers.
-                ctor = createConstructor(
+            const ctor = find(members, (member) => isConstructorDeclaration(member)) as ConstructorDeclaration | undefined;
+            if (ctor) {
+                const body = ctor.body ?
+                    updateBlock(ctor.body, [...initializerStatements, ...ctor.body.statements]) :
+                    createBlock(initializerStatements, /* multiLine */ undefined);
+                return members.map(member => {
+                    if (isConstructorDeclaration(member)) {
+                        return updateConstructor(
+                            ctor,
+                            ctor.decorators,
+                            ctor.modifiers,
+                            ctor.parameters,
+                            body
+                        );
+                    }
+                    return member;
+                });
+            }
+            return [
+                createConstructor(
                     /* decorators */ undefined,
                     /* modifiers */ undefined,
                     /* parameters */ [],
                     createBlock(initializerStatements)
-                );
-                members.unshift(ctor);
-            } else {
-                // Update existing constructor to add private field initializers.
-                members = members.map(member => {
-                    if (isConstructorDeclaration(member)) {
-                        let statements = member.body ?
-                            [...initializerStatements, ...member.body.statements] :
-                            initializerStatements;
-                        return updateConstructor(
-                            member,
-                            member.decorators,
-                            member.modifiers,
-                            member.parameters,
-                            createBlock(statements, member.body ? member.body.multiLine : undefined)
-                        );
-                    }
-                    return member;
-                })
-            }
-
-            // Update class members.
-            if (isClassDeclaration(node)) {
-                node = updateClassDeclaration(
-                    node,
-                    node.decorators,
-                    node.modifiers,
-                    node.name,
-                    node.typeParameters,
-                    node.heritageClauses,
-                    members
-                );
-            } else if (isClassExpression(node)) {
-                node = updateClassExpression(
-                    node,
-                    node.modifiers,
-                    node.name,
-                    node.typeParameters,
-                    node.heritageClauses,
-                    members
-                );
-            }
-            // Destroy private name environment.
-            delete privateNameEnvironmentStack[privateNameEnvironmentIndex--];
-            return [ ...weakMapDeclarations, node ];
+                ),
+                ...members
+            ];
         }
 
         function visitAwaitExpression(node: AwaitExpression): Expression {
