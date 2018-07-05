@@ -1087,7 +1087,7 @@ namespace ts {
         text: `var _classPrivateFieldGet = function (receiver, privateMap) { if (!privateMap.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return privateMap.get(receiver); };`
     };
 
-    export function createClassPrivateFieldGetHelper(context: TransformationContext, receiver: Expression, privateField: Identifier) {
+    function createClassPrivateFieldGetHelper(context: TransformationContext, receiver: Expression, privateField: Identifier) {
         context.requestEmitHelper(classPrivateFieldGetHelper);
         return createCall(getHelperName("_classPrivateFieldGet"), /* typeArguments */ undefined, [ receiver, privateField ]);
     }
@@ -1098,7 +1098,7 @@ namespace ts {
         text: `var _classPrivateFieldSet = function (receiver, privateMap, value) { if (!privateMap.has(receiver)) { throw new TypeError("attempted to set private field on non-instance"); } privateMap.set(receiver, value); return value; };`
     };
 
-    export function createClassPrivateFieldSetHelper(context: TransformationContext, receiver: Expression, privateField: Identifier, value: Expression) {
+    function createClassPrivateFieldSetHelper(context: TransformationContext, receiver: Expression, privateField: Identifier, value: Expression) {
         context.requestEmitHelper(classPrivateFieldSetHelper);
         return createCall(getHelperName("_classPrivateFieldSet"), /* typeArguments */ undefined, [ receiver, privateField, value ]);
     }
