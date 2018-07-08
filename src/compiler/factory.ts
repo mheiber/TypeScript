@@ -65,13 +65,13 @@ namespace ts {
 
     // Literals
 
-    /* @internal */ export function createLiteral(value: string | StringLiteral | NoSubstitutionTemplateLiteral | NumericLiteral | Identifier, isSingleQuote: boolean): StringLiteral; // tslint:disable-line unified-signatures
+    /* @internal */ export function createLiteral(value: string | StringLiteral | NoSubstitutionTemplateLiteral | NumericLiteral | Identifier | PrivateName, isSingleQuote: boolean): StringLiteral; // tslint:disable-line unified-signatures
     /** If a node is passed, creates a string literal whose source text is read from a source node during emit. */
-    export function createLiteral(value: string | StringLiteral | NoSubstitutionTemplateLiteral | NumericLiteral | Identifier): StringLiteral;
+    export function createLiteral(value: string | StringLiteral | NoSubstitutionTemplateLiteral | NumericLiteral | Identifier | PrivateName): StringLiteral;
     export function createLiteral(value: number): NumericLiteral;
     export function createLiteral(value: boolean): BooleanLiteral;
     export function createLiteral(value: string | number | boolean): PrimaryExpression;
-    export function createLiteral(value: string | number | boolean | StringLiteral | NoSubstitutionTemplateLiteral | NumericLiteral | Identifier, isSingleQuote?: boolean): PrimaryExpression {
+    export function createLiteral(value: string | number | boolean | StringLiteral | NoSubstitutionTemplateLiteral | NumericLiteral | Identifier | PrivateName, isSingleQuote?: boolean): PrimaryExpression {
         if (typeof value === "number") {
             return createNumericLiteral(value + "");
         }
@@ -136,6 +136,10 @@ namespace ts {
         return node.typeArguments !== typeArguments
         ? updateNode(createIdentifier(idText(node), typeArguments), node)
         : node;
+    }
+
+    export function updatePrivateName(node: PrivateName): PrivateName {
+        return node;
     }
 
     let nextAutoGenerateId = 0;
@@ -995,7 +999,7 @@ namespace ts {
             : node;
     }
 
-    export function createPropertyAccess(expression: Expression, name: string | Identifier | undefined) {
+    export function createPropertyAccess(expression: Expression, name: string | Identifier | PrivateName | undefined) {
         const node = <PropertyAccessExpression>createSynthesizedNode(SyntaxKind.PropertyAccessExpression);
         node.expression = parenthesizeForAccess(expression);
         node.name = asName(name)!; // TODO: GH#18217
@@ -1003,7 +1007,7 @@ namespace ts {
         return node;
     }
 
-    export function updatePropertyAccess(node: PropertyAccessExpression, expression: Expression, name: Identifier) {
+    export function updatePropertyAccess(node: PropertyAccessExpression, expression: Expression, name: Identifier | PrivateName) {
         // Because we are updating existed propertyAccess we want to inherit its emitFlags
         // instead of using the default from createPropertyAccess
         return node.expression !== expression
@@ -2754,7 +2758,7 @@ namespace ts {
 
     // Utilities
 
-    function asName<T extends Identifier | BindingName | PropertyName | EntityName | ThisTypeNode | undefined>(name: string | T): T | Identifier {
+    function asName<T extends Identifier | PrivateName | BindingName | PropertyName | EntityName | ThisTypeNode | undefined>(name: string | T): T | Identifier {
         return isString(name) ? createIdentifier(name) : name;
     }
 
@@ -3139,7 +3143,7 @@ namespace ts {
         }
         else {
             const expression = setTextRange(
-                isIdentifier(memberName)
+                (isIdentifier(memberName) || isPrivateName(memberName))
                     ? createPropertyAccess(target, memberName)
                     : createElementAccess(target, memberName),
                 memberName
@@ -3570,7 +3574,7 @@ namespace ts {
     }
 
     export function createExpressionForPropertyName(memberName: PropertyName): Expression {
-        if (isIdentifier(memberName)) {
+        if (isIdentifier(memberName) || isPrivateName(memberName)) {
             return createLiteral(memberName);
         }
         else if (isComputedPropertyName(memberName)) {

@@ -221,6 +221,8 @@ namespace ts {
 
             case SyntaxKind.Identifier:
                 return updateIdentifier(<Identifier>node, nodesVisitor((<Identifier>node).typeArguments, visitor, isTypeNodeOrTypeParameterDeclaration));
+            case SyntaxKind.PrivateName:
+                return updatePrivateName(node as PrivateName);
 
             case SyntaxKind.QualifiedName:
                 return updateQualifiedName(<QualifiedName>node,
@@ -464,7 +466,7 @@ namespace ts {
             case SyntaxKind.PropertyAccessExpression:
                 return updatePropertyAccess(<PropertyAccessExpression>node,
                     visitNode((<PropertyAccessExpression>node).expression, visitor, isExpression),
-                    visitNode((<PropertyAccessExpression>node).name, visitor, isIdentifier));
+                    visitNode((<PropertyAccessExpression>node).name, visitor, isIdentifierOrPrivateName));
 
             case SyntaxKind.ElementAccessExpression:
                 return updateElementAccess(<ElementAccessExpression>node,

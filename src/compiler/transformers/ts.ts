@@ -2130,7 +2130,7 @@ namespace ts {
                     ? getGeneratedNameForNode(name)
                     : name.expression;
             }
-            else if (isIdentifier(name)) {
+            else if (isIdentifier(name) || isPrivateName(name)) {
                 return createLiteral(idText(name));
             }
             else {
