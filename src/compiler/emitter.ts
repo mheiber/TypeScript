@@ -609,6 +609,10 @@ namespace ts {
                     case SyntaxKind.Identifier:
                         return emitIdentifier(<Identifier>node);
 
+                    // PrivateNames
+                    case SyntaxKind.PrivateName:
+                        return emitPrivateName(node as PrivateName);
+
                     // Parse tree nodes
 
                     // Names
@@ -878,6 +882,10 @@ namespace ts {
                     case SyntaxKind.Identifier:
                         return emitIdentifier(<Identifier>node);
 
+                    // Private Names
+                    case SyntaxKind.PrivateName:
+                        return emitPrivateName(node as PrivateName);
+
                     // Reserved words
                     case SyntaxKind.FalseKeyword:
                     case SyntaxKind.NullKeyword:
@@ -1065,6 +1073,12 @@ namespace ts {
             const writeText = node.symbol ? writeSymbol : write;
             writeText(getTextOfNode(node, /*includeTrivia*/ false), node.symbol);
             emitList(node, node.typeArguments, ListFormat.TypeParameters); // Call emitList directly since it could be an array of TypeParameterDeclarations _or_ type arguments
+        }
+
+        function emitPrivateName(node: PrivateName) {
+            const writeText = node.symbol ? writeSymbol : write;
+            writeText(getTextOfNode(node, /*includeTrivia*/ false), node.symbol);
+            emitList(node, /*typeArguments*/ undefined, ListFormat.TypeParameters); // Call emitList directly since it could be an array of TypeParameterDeclarations _or_ type arguments
         }
 
         //
@@ -3306,7 +3320,7 @@ namespace ts {
         function getLiteralTextOfNode(node: LiteralLikeNode): string {
             if (node.kind === SyntaxKind.StringLiteral && (<StringLiteral>node).textSourceNode) {
                 const textSourceNode = (<StringLiteral>node).textSourceNode!;
-                if (isIdentifier(textSourceNode)) {
+                if (isIdentifierOrPrivateName(textSourceNode)) {
                     return getEmitFlags(node) & EmitFlags.NoAsciiEscaping ?
                         `"${escapeString(getTextOfNode(textSourceNode))}"` :
                         `"${escapeNonAsciiString(getTextOfNode(textSourceNode))}"`;
