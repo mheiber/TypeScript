@@ -161,7 +161,7 @@ namespace ts {
             ];
 
             // Write any pending expressions from elided or moved computed property names
-            if (some(pendingExpressions)) {
+            if (pendingExpressions !== undefined && some(pendingExpressions)) {
                 statements.push(createExpressionStatement(inlineExpressions(pendingExpressions)));
             }
 
