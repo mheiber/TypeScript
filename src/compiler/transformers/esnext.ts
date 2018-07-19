@@ -423,12 +423,37 @@ namespace ts {
                      isIdentifier(node.left.name) &&
                      node.left.name.isPrivateName)
             {
-                // If assigning to a private property, rewrite it as a call to the helper function.
                 const weakMapName = addPrivateNameToEnvironment(node.left.name);
-                return setOriginalNode(
-                    createClassPrivateFieldSetHelper(context, node.left.expression, weakMapName, node.right),
-                    node
-                );
+                if (isCompoundAssignment(node.operatorToken.kind)) {
+                    let setReceiver: Expression;
+                    let getReceiver: Identifier;
+                    if (!isIdentifier(node.left.expression) && !isKeyword(node.left.expression.kind)) {
+                        getReceiver = createTempVariable(/* recordTempVariable */ undefined);
+                        hoistVariableDeclaration(getReceiver);
+                        setReceiver = createBinary(getReceiver, SyntaxKind.EqualsToken, node.left.expression);
+                    } else {
+                        getReceiver = node.left.expression as Identifier;
+                        setReceiver = node.left.expression as Identifier;
+                    }
+                    return setOriginalNode(
+                        createClassPrivateFieldSetHelper(
+                            context,
+                            setReceiver,
+                            weakMapName,
+                            createBinary(
+                                createClassPrivateFieldGetHelper(context, getReceiver, weakMapName),
+                                getOperatorForCompoundAssignment(node.operatorToken.kind),
+                                node.right
+                            )
+                        ),
+                        node
+                    );
+                } else {
+                    return setOriginalNode(
+                        createClassPrivateFieldSetHelper(context, node.left.expression, weakMapName, node.right),
+                        node
+                    );
+                }
             }
             return visitEachChild(node, visitor, context);
         }
