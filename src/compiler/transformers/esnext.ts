@@ -31,9 +31,9 @@ namespace ts {
          * Maps private names to the generated name of the WeakMap.
          */
         interface PrivateNameEnvironment {
-            [name: string]: Identifier
+            [name: string]: Identifier;
         }
-        let privateNameEnvironmentStack: PrivateNameEnvironment[] = [];
+        const privateNameEnvironmentStack: PrivateNameEnvironment[] = [];
         let privateNameEnvironmentIndex = -1;
 
         return chainBundle(transformSourceFile);
@@ -134,7 +134,7 @@ namespace ts {
             if (nameString in environment) {
                 return environment[nameString];
             }
-            const weakMapName = createFileLevelUniqueName('_' + nameString.substring(1));
+            const weakMapName = createFileLevelUniqueName("_" + nameString.substring(1));
             environment[nameString] = weakMapName;
             return weakMapName;
         }
@@ -204,7 +204,7 @@ namespace ts {
                     [createVariableDeclaration(weakMapName,
                                                /* typeNode */ undefined,
                                                createNew(
-                                                   createIdentifier('WeakMap'),
+                                                   createIdentifier("WeakMap"),
                                                    /* typeArguments */ undefined,
                                                    /* argumentsArray */ undefined
                                                ))]
@@ -222,7 +222,7 @@ namespace ts {
             const initializerStatements = Object.keys(privateNameEnvironment).map(name => {
                 return createStatement(
                     createCall(
-                        createPropertyAccess(privateNameEnvironment[name], 'set'),
+                        createPropertyAccess(privateNameEnvironment[name], "set"),
                         /* typeArguments */ undefined,
                         [createThis(), createVoidZero()]
                     )
@@ -421,8 +421,8 @@ namespace ts {
             else if (isAssignmentOperator(node.operatorToken.kind) &&
                      isPropertyAccessExpression(node.left) &&
                      isIdentifier(node.left.name) &&
-                     node.left.name.isPrivateName)
-            {
+                     node.left.name.isPrivateName) {
+
                 const weakMapName = addPrivateNameToEnvironment(node.left.name);
                 if (isCompoundAssignment(node.operatorToken.kind)) {
                     let setReceiver: Expression;
@@ -431,7 +431,8 @@ namespace ts {
                         getReceiver = createTempVariable(/* recordTempVariable */ undefined);
                         hoistVariableDeclaration(getReceiver);
                         setReceiver = createBinary(getReceiver, SyntaxKind.EqualsToken, node.left.expression);
-                    } else {
+                    }
+                    else {
                         getReceiver = node.left.expression as Identifier;
                         setReceiver = node.left.expression as Identifier;
                     }
@@ -448,7 +449,8 @@ namespace ts {
                         ),
                         node
                     );
-                } else {
+                }
+                else {
                     return setOriginalNode(
                         createClassPrivateFieldSetHelper(context, node.left.expression, weakMapName, node.right),
                         node
