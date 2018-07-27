@@ -1,0 +1,16 @@
+=== tests/cases/conformance/classes/members/privateNames/privateNamesNoConflictWhenInheriting.ts ===
+class A {
+>A : A
+
+    #foo: number;
+>#foo : number
+}
+
+class B extends A {
+>B : B
+>A : A
+
+    #foo: string;   // OK: private names are unique to each class
+>#foo : string
+}
+
