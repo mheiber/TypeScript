@@ -771,7 +771,6 @@ namespace ts {
 
     export function entityNameToString(name: EntityNameOrEntityNameExpression): string {
         switch (name.kind) {
-            // fall through
             case SyntaxKind.Identifier:
                 return getFullWidth(name) === 0 ? idText(name) : getTextOfNode(name);
             case SyntaxKind.QualifiedName:
