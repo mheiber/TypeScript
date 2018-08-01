@@ -138,10 +138,6 @@ namespace ts {
         : node;
     }
 
-    export function updatePrivateName(node: PrivateName): PrivateName {
-        return node;
-    }
-
     let nextAutoGenerateId = 0;
 
     /** Create a unique temporary variable. */
