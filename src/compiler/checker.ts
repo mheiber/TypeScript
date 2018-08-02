@@ -9106,6 +9106,7 @@ namespace ts {
                             let suggestion: string | undefined;
                             if (propName !== undefined && (suggestion = getSuggestionForNonexistentProperty(propName as string, objectType))) {
                                 if (suggestion !== undefined) {
+                                    console.log('here', new Error('here'))
                                     error(accessExpression.argumentExpression, Diagnostics.Property_0_does_not_exist_on_type_1_Did_you_mean_2, propName as string, typeToString(objectType), suggestion);
                                 }
                             }
@@ -9120,6 +9121,8 @@ namespace ts {
             if (accessNode) {
                 const indexNode = accessNode.kind === SyntaxKind.ElementAccessExpression ? accessNode.argumentExpression : accessNode.indexType;
                 if (indexType.flags & (TypeFlags.StringLiteral | TypeFlags.NumberLiteral)) {
+
+                                    throw Error('yo')
                     error(indexNode, Diagnostics.Property_0_does_not_exist_on_type_1, "" + (<LiteralType>indexType).value, typeToString(objectType));
                 }
                 else if (indexType.flags & (TypeFlags.String | TypeFlags.Number)) {
@@ -11183,6 +11186,7 @@ namespace ts {
                                 if (isJsxAttributes(errorNode) || isJsxOpeningLikeElement(errorNode)) {
                                     // JsxAttributes has an object-literal flag and undergo same type-assignablity check as normal object-literal.
                                     // However, using an object-literal error message will be very confusing to the users so we give different a message.
+                                    throw Error('yo')
                                     reportError(Diagnostics.Property_0_does_not_exist_on_type_1, symbolToString(prop), typeToString(target));
                                 }
                                 else {
@@ -11713,6 +11717,8 @@ namespace ts {
                             const sourceType = getTypeOfSymbol(sourceProp);
                             if (!(sourceType === undefinedType || sourceType === undefinedWideningType)) {
                                 if (reportErrors) {
+
+                                    throw Error('yo')
                                     reportError(Diagnostics.Property_0_does_not_exist_on_type_1, symbolToString(sourceProp), typeToString(target));
                                 }
                                 return Ternary.False;
@@ -16955,6 +16961,7 @@ namespace ts {
                         return links.resolvedSymbol = intrinsicElementsType.symbol;
                     }
 
+                    console.log('heyyyy', Error('yo'))
                     // Wasn't found
                     error(node, Diagnostics.Property_0_does_not_exist_on_type_1, idText(node.tagName), "JSX." + JsxNames.IntrinsicElements);
                     return links.resolvedSymbol = unknownSymbol;
@@ -17290,6 +17297,7 @@ namespace ts {
                     if (indexSignatureType) {
                         return indexSignatureType;
                     }
+                                    throw Error('yo')
                     error(openingLikeElement, Diagnostics.Property_0_does_not_exist_on_type_1, stringLiteralTypeName, "JSX." + JsxNames.IntrinsicElements);
                 }
                 // If we need to report an error, we already done so here. So just return any to prevent any more error downstream
@@ -17541,6 +17549,7 @@ namespace ts {
                     const attrName = attribute.name;
                     const isNotIgnoredJsxProperty = (isUnhyphenatedJsxName(idText(attrName)) || !!(getPropertyOfType(targetAttributesType, attrName.escapedText)));
                     if (isNotIgnoredJsxProperty && !isKnownProperty(targetAttributesType, attrName.escapedText, /*isComparingJsxAttributes*/ true)) {
+                                    throw Error('yo')
                         error(attribute, Diagnostics.Property_0_does_not_exist_on_type_1, idText(attrName), typeToString(targetAttributesType));
                         // We break here so that errors won't be cascading
                         break;
@@ -17911,6 +17920,7 @@ namespace ts {
             if (containingType.flags & TypeFlags.Union && !(containingType.flags & TypeFlags.Primitive)) {
                 for (const subtype of (containingType as UnionType).types) {
                     if (!getPropertyOfType(subtype, propNode.escapedText)) {
+                        console.log(new Error('afds'))
                         errorInfo = chainDiagnosticMessages(errorInfo, Diagnostics.Property_0_does_not_exist_on_type_1, declarationNameToString(propNode), typeToString(subtype));
                         break;
                     }
@@ -17918,16 +17928,20 @@ namespace ts {
             }
             const promisedType = getPromisedTypeOfPromise(containingType);
             if (promisedType && getPropertyOfType(promisedType, propNode.escapedText)) {
+                throw Error('yo')
                 errorInfo = chainDiagnosticMessages(errorInfo, Diagnostics.Property_0_does_not_exist_on_type_1_Did_you_forget_to_use_await, declarationNameToString(propNode), typeToString(containingType));
             }
             else {
                 const suggestion = getSuggestedSymbolForNonexistentProperty(propNode, containingType);
                 if (suggestion !== undefined) {
                     const suggestedName = symbolName(suggestion);
+
+                    console.log(new Error('afds3'))
                     errorInfo = chainDiagnosticMessages(errorInfo, Diagnostics.Property_0_does_not_exist_on_type_1_Did_you_mean_2, declarationNameToString(propNode), typeToString(containingType), suggestedName);
                     relatedInfo = suggestion.valueDeclaration && createDiagnosticForNode(suggestion.valueDeclaration, Diagnostics._0_is_declared_here, suggestedName);
                 }
                 else {
+                    console.log(new Error('afds4'))
                     errorInfo = chainDiagnosticMessages(errorInfo, Diagnostics.Property_0_does_not_exist_on_type_1, declarationNameToString(propNode), typeToString(containingType));
                 }
             }
