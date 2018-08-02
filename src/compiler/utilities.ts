@@ -2652,7 +2652,7 @@ namespace ts {
         return node.kind === SyntaxKind.Identifier && (<Identifier>node).escapedText === "Symbol";
     }
 
-    export function isPushOrUnshiftIdentifier(node: Identifier | PrivateName) {
+    export function isPushOrUnshiftIdentifier(node: Identifier) {
         return isIdentifier(node) && node.escapedText === "push" || node.escapedText === "unshift";
     }
 

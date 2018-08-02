@@ -14163,7 +14163,7 @@ namespace ts {
                 (<PropertyAccessExpression>parent).name.escapedText === "length" || (
                     parent.parent.kind === SyntaxKind.CallExpression
                     && isIdentifier((parent as PropertyAccessExpression).name)
-                    && isPushOrUnshiftIdentifier((parent as PropertyAccessExpression).name)));
+                    && isPushOrUnshiftIdentifier((parent as PropertyAccessExpression).name as Identifier)));
             const isElementAssignment = parent.kind === SyntaxKind.ElementAccessExpression &&
                 (<ElementAccessExpression>parent).expression === root &&
                 parent.parent.kind === SyntaxKind.BinaryExpression &&
