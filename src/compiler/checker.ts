@@ -17780,7 +17780,7 @@ namespace ts {
             }
             if (!prop) {
                 const indexInfo = getIndexInfoOfType(apparentType, IndexKind.String);
-                if (!(indexInfo && indexInfo.type)) {
+                if (!(indexInfo && indexInfo.type) || isPrivateName(right)) {
                     if (right.escapedText && !checkAndReportErrorForExtendingInterface(node)) {
                         reportNonexistentProperty(right, leftType.flags & TypeFlags.TypeParameter && (leftType as TypeParameter).isThisType ? apparentType : leftType);
                     }
