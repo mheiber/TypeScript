@@ -65,13 +65,13 @@ namespace ts {
 
     // Literals
 
-    /* @internal */ export function createLiteral(value: string | StringLiteral | NoSubstitutionTemplateLiteral | NumericLiteral | Identifier | PrivateName, isSingleQuote: boolean): StringLiteral; // tslint:disable-line unified-signatures
+    /* @internal */ export function createLiteral(value: string | StringLiteral | NoSubstitutionTemplateLiteral | NumericLiteral | Identifier, isSingleQuote: boolean): StringLiteral; // tslint:disable-line unified-signatures
     /** If a node is passed, creates a string literal whose source text is read from a source node during emit. */
-    export function createLiteral(value: string | StringLiteral | NoSubstitutionTemplateLiteral | NumericLiteral | Identifier | PrivateName): StringLiteral;
+    export function createLiteral(value: string | StringLiteral | NoSubstitutionTemplateLiteral | NumericLiteral | Identifier): StringLiteral;
     export function createLiteral(value: number): NumericLiteral;
     export function createLiteral(value: boolean): BooleanLiteral;
     export function createLiteral(value: string | number | boolean): PrimaryExpression;
-    export function createLiteral(value: string | number | boolean | StringLiteral | NoSubstitutionTemplateLiteral | NumericLiteral | Identifier | PrivateName, isSingleQuote?: boolean): PrimaryExpression {
+    export function createLiteral(value: string | number | boolean | StringLiteral | NoSubstitutionTemplateLiteral | NumericLiteral | Identifier, isSingleQuote?: boolean): PrimaryExpression {
         if (typeof value === "number") {
             return createNumericLiteral(value + "");
         }
@@ -105,7 +105,7 @@ namespace ts {
         return node;
     }
 
-    function createLiteralFromNode(sourceNode: PropertyNameLiteral): StringLiteral {
+    function createLiteralFromNode(sourceNode: Exclude<PropertyNameLiteral, PrivateName>): StringLiteral {
         const node = createStringLiteral(getTextOfIdentifierOrLiteral(sourceNode));
         node.textSourceNode = sourceNode;
         return node;
@@ -3569,8 +3569,8 @@ namespace ts {
         }
     }
 
-    export function createExpressionForPropertyName(memberName: PropertyName): Expression {
-        if (isIdentifier(memberName) || isPrivateName(memberName)) {
+    export function createExpressionForPropertyName(memberName: Exclude<PropertyName, PrivateName>): Expression {
+        if (isIdentifier(memberName)) {
             return createLiteral(memberName);
         }
         else if (isComputedPropertyName(memberName)) {
@@ -3581,11 +3581,17 @@ namespace ts {
         }
     }
 
+    /**
+     * accessor declaration that can be converted to an expression (`name` field cannot be a `PrivateName`)
+     */
+    type ExpressionableAccessorDeclaration = AccessorDeclaration & {name: Exclude<PropertyName, PrivateName>};
+
     export function createExpressionForObjectLiteralElementLike(node: ObjectLiteralExpression, property: ObjectLiteralElementLike, receiver: Expression): Expression | undefined {
         switch (property.kind) {
             case SyntaxKind.GetAccessor:
             case SyntaxKind.SetAccessor:
-                return createExpressionForAccessorDeclaration(node.properties, property, receiver, !!node.multiLine);
+                // type assertion `as ExpressionableAccessorDeclaration` is safe because PrivateNames are not allowed in object literals
+                return createExpressionForAccessorDeclaration(node.properties, property as ExpressionableAccessorDeclaration, receiver, !!node.multiLine);
             case SyntaxKind.PropertyAssignment:
                 return createExpressionForPropertyAssignment(property, receiver);
             case SyntaxKind.ShorthandPropertyAssignment:
@@ -3595,7 +3601,7 @@ namespace ts {
         }
     }
 
-    function createExpressionForAccessorDeclaration(properties: NodeArray<Declaration>, property: AccessorDeclaration, receiver: Expression, multiLine: boolean) {
+    function createExpressionForAccessorDeclaration(properties: NodeArray<Declaration>, property: ExpressionableAccessorDeclaration, receiver: Expression, multiLine: boolean) {
         const { firstAccessor, getAccessor, setAccessor } = getAllAccessorDeclarations(properties, property);
         if (property === firstAccessor) {
             const properties: ObjectLiteralElementLike[] = [];
