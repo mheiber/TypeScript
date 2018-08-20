@@ -31,7 +31,10 @@ namespace ts {
          * Maps private names to the generated name of the WeakMap.
          */
         interface PrivateNameEnvironment {
-            [name: string]: Identifier;
+            [name: string]: {
+                weakMap: Identifier;
+                initializer?: Expression;
+            };
         }
         const privateNameEnvironmentStack: PrivateNameEnvironment[] = [];
         let privateNameEnvironmentIndex = -1;
@@ -111,8 +114,6 @@ namespace ts {
                     return visitParenthesizedExpression(node as ParenthesizedExpression, noDestructuringValue);
                 case SyntaxKind.CatchClause:
                     return visitCatchClause(node as CatchClause);
-                case SyntaxKind.PropertyDeclaration:
-                    return visitPropertyDeclaration(node as PropertyDeclaration);
                 case SyntaxKind.PropertyAccessExpression:
                     return visitPropertyAccessExpression(node as PropertyAccessExpression);
                 case SyntaxKind.ClassDeclaration:
@@ -128,20 +129,32 @@ namespace ts {
             return privateNameEnvironmentStack[privateNameEnvironmentIndex];
         }
 
-        function addPrivateNameToEnvironment(name: Identifier,
-                                             environment: PrivateNameEnvironment = currentPrivateNameEnvironment()) {
-            const nameString = getTextOfIdentifierOrLiteral(name);
+        function addPrivateName(name: PrivateName, initializer?: Expression) {
+            const environment = currentPrivateNameEnvironment();
+            const nameString = getTextOfNode(name);
             if (nameString in environment) {
-                return environment[nameString];
+                throw new Error("Redeclaring private name " + nameString + ".");
             }
-            const weakMapName = createFileLevelUniqueName("_" + nameString.substring(1));
-            environment[nameString] = weakMapName;
-            return weakMapName;
+            const weakMap = createFileLevelUniqueName("_" + nameString.substring(1));
+            environment[nameString] = {
+                weakMap,
+                initializer
+            };
+            return weakMap;
+        }
+
+        function accessPrivateName(name: PrivateName) {
+            const environment = currentPrivateNameEnvironment();
+            const nameString = getTextOfNode(name);
+            if (nameString in environment) {
+                return environment[nameString].weakMap;
+            }
+            throw new Error("Accessing undeclared private name.");
         }
 
         function visitPropertyAccessExpression(node: PropertyAccessExpression): Expression {
-            if (node.name.isPrivateName) {
-                const weakMapName = addPrivateNameToEnvironment(node.name);
+            if (isPrivateName(node.name)) {
+                const weakMapName = accessPrivateName(node.name);
                 return setOriginalNode(
                     setTextRange(
                         createClassPrivateFieldGetHelper(context, node.expression, weakMapName),
@@ -153,15 +166,21 @@ namespace ts {
             return visitEachChild(node, visitor, context);
         }
 
-        function visitPropertyDeclaration(node: PropertyDeclaration): VisitResult<PropertyDeclaration> {
-            if (isIdentifier(node.name) && node.name.isPrivateName) {
-                addPrivateNameToEnvironment(node.name);
+        function visitorCollectPrivateNames(node: Node): VisitResult<Node> {
+            if (isPropertyDeclaration(node) && isPrivateName(node.name)) {
+                addPrivateName(node.name, node.initializer);
+                return undefined;
             }
-            return visitEachChild(node, visitor, context);
+            // Don't collect private names from nested classes.
+            if (isClassLike(node)) {
+                return node;
+            }
+            return visitEachChild(node, visitorCollectPrivateNames, context);
         }
 
         function visitClassDeclaration(node: ClassDeclaration) {
             startPrivateNameEnvironment();
+            node = visitEachChild(node, visitorCollectPrivateNames, context);
             node = visitEachChild(node, visitor, context);
             node = updateClassDeclaration(
                 node,
@@ -172,7 +191,7 @@ namespace ts {
                 node.heritageClauses,
                 transformClassMembers(node.members)
             );
-            return [...endPrivateNameEnvironment(), node];
+            return [node, ...endPrivateNameEnvironment()];
         }
 
         function visitClassExpression(node: ClassExpression) {
@@ -186,7 +205,7 @@ namespace ts {
                 node.heritageClauses,
                 transformClassMembers(node.members)
             );
-            return [...endPrivateNameEnvironment(), node];
+            return [node, ...endPrivateNameEnvironment()];
         }
 
         function startPrivateNameEnvironment() {
@@ -198,10 +217,10 @@ namespace ts {
         function endPrivateNameEnvironment(): Statement[] {
             const privateNameEnvironment = currentPrivateNameEnvironment();
             const weakMapDeclarations = Object.keys(privateNameEnvironment).map(name => {
-                const weakMapName = privateNameEnvironment[name];
+                const privateName = privateNameEnvironment[name];
                 return createVariableStatement(
                     /* modifiers */ undefined,
-                    [createVariableDeclaration(weakMapName,
+                    [createVariableDeclaration(privateName.weakMap,
                                                /* typeNode */ undefined,
                                                createNew(
                                                    createIdentifier("WeakMap"),
@@ -220,11 +239,12 @@ namespace ts {
             const privateNameEnvironment = currentPrivateNameEnvironment();
             // Initialize private properties.
             const initializerStatements = Object.keys(privateNameEnvironment).map(name => {
+                const privateName = privateNameEnvironment[name];
                 return createStatement(
                     createCall(
-                        createPropertyAccess(privateNameEnvironment[name], "set"),
+                        createPropertyAccess(privateName.weakMap, "set"),
                         /* typeArguments */ undefined,
-                        [createThis(), createVoidZero()]
+                        [createThis(), privateName.initializer || createVoidZero()]
                     )
                 );
             });
@@ -420,10 +440,9 @@ namespace ts {
             }
             else if (isAssignmentOperator(node.operatorToken.kind) &&
                      isPropertyAccessExpression(node.left) &&
-                     isIdentifier(node.left.name) &&
-                     node.left.name.isPrivateName) {
+                     isPrivateName(node.left.name)) {
 
-                const weakMapName = addPrivateNameToEnvironment(node.left.name);
+                const weakMapName = accessPrivateName(node.left.name);
                 if (isCompoundAssignment(node.operatorToken.kind)) {
                     let setReceiver: Expression;
                     let getReceiver: Identifier;

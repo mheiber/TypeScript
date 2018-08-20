@@ -593,9 +593,10 @@ namespace ts {
             return parameter.decorators !== undefined && parameter.decorators.length > 0;
         }
 
-        function getClassFacts(node: ClassDeclaration, staticProperties: ReadonlyArray<PropertyDeclaration>) {
+        function getClassFacts(node: ClassDeclaration, staticProperties: ReadonlyArray<PropertyDeclaration>, privateProperties: ReadonlyArray<PropertyDeclaration>) {
             let facts = ClassFacts.None;
             if (some(staticProperties)) facts |= ClassFacts.HasStaticInitializedProperties;
+            if (languageVersion < ScriptTarget.ESNext && some(privateProperties)) facts |= ClassFacts.UseImmediatelyInvokedFunctionExpression;
             const extendsClauseElement = getEffectiveBaseTypeNode(node);
             if (extendsClauseElement && skipOuterExpressions(extendsClauseElement.expression).kind !== SyntaxKind.NullKeyword) facts |= ClassFacts.IsDerivedClass;
             if (shouldEmitDecorateCallForClass(node)) facts |= ClassFacts.HasConstructorDecorators;
@@ -623,7 +624,7 @@ namespace ts {
             pendingExpressions = undefined;
 
             const staticProperties = getInitializedProperties(node, /*isStatic*/ true);
-            const facts = getClassFacts(node, staticProperties);
+            const facts = getClassFacts(node, staticProperties, getPrivateProperties(node));
 
             if (facts & ClassFacts.UseImmediatelyInvokedFunctionExpression) {
                 context.startLexicalEnvironment();
@@ -973,13 +974,13 @@ namespace ts {
             // Check if we have property assignment inside class declaration.
             // If there is a property assignment, we need to emit constructor whether users define it or not
             // If there is no property assignment, we can omit constructor if users do not define it
-            const hasInstancePropertyWithInitializer = forEach(node.members, isInstanceInitializedProperty);
+            const hasNonPrivateInstancePropertyWithInitializer = forEach(node.members, member => isInstanceInitializedProperty(member) && isPrivateProperty(member));
             const hasParameterPropertyAssignments = node.transformFlags & TransformFlags.ContainsParameterPropertyAssignments;
             const constructor = getFirstConstructorWithBody(node);
 
             // If the class does not contain nodes that require a synthesized constructor,
             // accept the current constructor if it exists.
-            if (!hasInstancePropertyWithInitializer && !hasParameterPropertyAssignments) {
+            if (!hasNonPrivateInstancePropertyWithInitializer && !hasParameterPropertyAssignments) {
                 return visitEachChild(constructor, visitor, context);
             }
 
@@ -1194,6 +1195,14 @@ namespace ts {
             );
         }
 
+        function isPrivateProperty(member: ClassElement): member is PropertyDeclaration {
+            return member.kind === SyntaxKind.PropertyDeclaration &&
+                !!member.name && isPrivateName(member.name);
+        }
+
+        function getPrivateProperties(node: ClassExpression | ClassDeclaration): ReadonlyArray<PropertyDeclaration> {
+            return filter(node.members, isPrivateProperty);
+        }
         /**
          * Gets all property declarations with initializers on either the static or instance side of a class.
          *
@@ -1242,11 +1251,12 @@ namespace ts {
          */
         function addInitializedPropertyStatements(statements: Statement[], properties: ReadonlyArray<PropertyDeclaration>, receiver: LeftHandSideExpression) {
             for (const property of properties) {
-                const statement = createExpressionStatement(transformInitializedProperty(property, receiver));
-                setSourceMapRange(statement, moveRangePastModifiers(property));
-                setCommentRange(statement, property);
-                setOriginalNode(statement, property);
-                statements.push(statement);
+                if (!isPrivateProperty(property)) {
+                    const statement = createStatement(transformInitializedProperty(property, receiver));
+                    setSourceMapRange(statement, moveRangePastModifiers(property));
+                    setCommentRange(statement, property);
+                    statements.push(statement);
+                }
             }
         }
 
@@ -2237,7 +2247,11 @@ namespace ts {
             return !nodeIsMissing(node.body);
         }
 
-        function visitPropertyDeclaration(node: PropertyDeclaration): undefined {
+        function visitPropertyDeclaration(node: PropertyDeclaration): PropertyDeclaration | undefined {
+            if (isPrivateName(node.name)) {
+                // Keep the private name declaration.
+                return node;
+            }
             const expr = getPropertyNameExpressionIfNeeded(node.name, some(node.decorators) || !!node.initializer, /*omitSimple*/ true);
             if (expr && !isSimpleInlineableExpression(expr)) {
                 (pendingExpressions || (pendingExpressions = [])).push(expr);

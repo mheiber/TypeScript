@@ -3312,7 +3312,7 @@ namespace ts {
         }
 
         // Private names are an ESNext feature.
-        if (isIdentifier(node.name) && node.name.isPrivateName) {
+        if (isPrivateName(node.name)) {
             transformFlags |= TransformFlags.AssertESNext;
         }
 
@@ -3454,7 +3454,7 @@ namespace ts {
         }
 
         // Private names are an ESNext feature.
-        if (isIdentifier(node.name) && node.name.isPrivateName) {
+        if (isPrivateName(node.name)) {
             transformFlags |= TransformFlags.AssertESNext;
         }
 
