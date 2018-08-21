@@ -131,7 +131,7 @@ namespace ts {
 
         function addPrivateName(name: PrivateName, initializer?: Expression) {
             const environment = currentPrivateNameEnvironment();
-            const nameString = getTextOfNode(name);
+            const nameString = name.escapedText as string;
             if (nameString in environment) {
                 throw new Error("Redeclaring private name " + nameString + ".");
             }
@@ -145,7 +145,7 @@ namespace ts {
 
         function accessPrivateName(name: PrivateName) {
             const environment = currentPrivateNameEnvironment();
-            const nameString = getTextOfNode(name);
+            const nameString = name.escapedText as string;
             if (nameString in environment) {
                 return environment[nameString].weakMap;
             }
@@ -196,7 +196,7 @@ namespace ts {
                     transformClassMembers(node.members)
                 );
             }
-            prependStatements(statements, [node]);
+            statements.unshift(node);
             endPrivateNameEnvironment();
             return statements;
         }
