@@ -182,44 +182,45 @@ namespace ts {
             startPrivateNameEnvironment();
             node = visitEachChild(node, visitorCollectPrivateNames, context);
             node = visitEachChild(node, visitor, context);
-            if (!currentPrivateNameEnvironment().length) {
-                return node;
-            }
-            node = updateClassDeclaration(
-                node,
-                node.decorators,
-                node.modifiers,
-                node.name,
-                node.typeParameters,
-                node.heritageClauses,
-                transformClassMembers(node.members)
+            const statements = createPrivateNameWeakMapDeclarations(
+                currentPrivateNameEnvironment()
             );
-            const statements = [
-                node,
-                ...createPrivateNameWeakMapDeclarations(
-                    endPrivateNameEnvironment()
-                )
-            ];
+            if (statements.length) {
+                node = updateClassDeclaration(
+                    node,
+                    node.decorators,
+                    node.modifiers,
+                    node.name,
+                    node.typeParameters,
+                    node.heritageClauses,
+                    transformClassMembers(node.members)
+                );
+            }
+            prependStatements(statements, [node]);
+            endPrivateNameEnvironment();
             return statements;
         }
 
         function visitClassExpression(node: ClassExpression) {
             startPrivateNameEnvironment();
+            node = visitEachChild(node, visitorCollectPrivateNames, context);
             node = visitEachChild(node, visitor, context);
-            if (!currentPrivateNameEnvironment().length) {
-                return node;
-            }
-            node = updateClassExpression(
-                node,
-                node.modifiers,
-                node.name,
-                node.typeParameters,
-                node.heritageClauses,
-                transformClassMembers(node.members)
+            const expressions = createPrivateNameWeakMapAssignments(
+                currentPrivateNameEnvironment()
             );
-            const expressions = createPrivateNameWeakMapAssignments(endPrivateNameEnvironment());
+            if (expressions.length) {
+                node = updateClassExpression(
+                    node,
+                    node.modifiers,
+                    node.name,
+                    node.typeParameters,
+                    node.heritageClauses,
+                    transformClassMembers(node.members)
+                );
+            }
             expressions.push(node);
-            return createCommaList(expressions);
+            endPrivateNameEnvironment();
+            return expressions.length > 1 ? createCommaList(expressions) : expressions[0];
         }
 
         function startPrivateNameEnvironment() {
