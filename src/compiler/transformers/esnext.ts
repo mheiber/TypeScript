@@ -182,6 +182,9 @@ namespace ts {
             startPrivateNameEnvironment();
             node = visitEachChild(node, visitorCollectPrivateNames, context);
             node = visitEachChild(node, visitor, context);
+            if (!currentPrivateNameEnvironment().length) {
+                return node;
+            }
             node = updateClassDeclaration(
                 node,
                 node.decorators,
@@ -203,6 +206,9 @@ namespace ts {
         function visitClassExpression(node: ClassExpression) {
             startPrivateNameEnvironment();
             node = visitEachChild(node, visitor, context);
+            if (!currentPrivateNameEnvironment().length) {
+                return node;
+            }
             node = updateClassExpression(
                 node,
                 node.modifiers,
