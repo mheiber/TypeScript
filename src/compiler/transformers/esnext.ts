@@ -191,7 +191,13 @@ namespace ts {
                 node.heritageClauses,
                 transformClassMembers(node.members)
             );
-            return [node, ...endPrivateNameEnvironment()];
+            const statements = [
+                node,
+                ...createPrivateNameWeakMapDeclarations(
+                    endPrivateNameEnvironment()
+                )
+            ];
+            return statements;
         }
 
         function visitClassExpression(node: ClassExpression) {
@@ -205,7 +211,9 @@ namespace ts {
                 node.heritageClauses,
                 transformClassMembers(node.members)
             );
-            return [node, ...endPrivateNameEnvironment()];
+            const expressions = createPrivateNameWeakMapAssignments(endPrivateNameEnvironment());
+            expressions.push(node);
+            return createCommaList(expressions);
         }
 
         function startPrivateNameEnvironment() {
@@ -214,24 +222,39 @@ namespace ts {
             return currentPrivateNameEnvironment();
         }
 
-        function endPrivateNameEnvironment(): Statement[] {
+        function endPrivateNameEnvironment(): PrivateNameEnvironment {
             const privateNameEnvironment = currentPrivateNameEnvironment();
-            const weakMapDeclarations = Object.keys(privateNameEnvironment).map(name => {
-                const privateName = privateNameEnvironment[name];
+            // Destroy private name environment.
+            delete privateNameEnvironmentStack[privateNameEnvironmentIndex--];
+            return privateNameEnvironment;
+        }
+
+        function createPrivateNameWeakMapDeclarations(environment: PrivateNameEnvironment): Statement[] {
+            return Object.keys(environment).map(name => {
+                const privateName = environment[name];
                 return createVariableStatement(
                     /* modifiers */ undefined,
                     [createVariableDeclaration(privateName.weakMap,
                                                /* typeNode */ undefined,
-                                               createNew(
-                                                   createIdentifier("WeakMap"),
+                        createNew(
+                            createIdentifier("WeakMap"),
                                                    /* typeArguments */ undefined,
                                                    /* argumentsArray */ undefined
-                                               ))]
+                        ))]
                 );
             });
-            // Destroy private name environment.
-            delete privateNameEnvironmentStack[privateNameEnvironmentIndex--];
-            return weakMapDeclarations;
+        }
+
+        function createPrivateNameWeakMapAssignments(environment: PrivateNameEnvironment): Expression[] {
+            return Object.keys(environment).map(name => {
+                const privateName = environment[name];
+                hoistVariableDeclaration(privateName.weakMap);
+                return createBinary(
+                    privateName.weakMap,
+                    SyntaxKind.EqualsToken,
+                    createNew(createIdentifier("WeakMap"), /* typeArguments */ undefined, /* argumentsArray */ undefined)
+                );
+            });
         }
 
         function transformClassMembers(members: ReadonlyArray<ClassElement>): ClassElement[] {

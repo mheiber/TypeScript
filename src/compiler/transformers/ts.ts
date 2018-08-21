@@ -593,10 +593,9 @@ namespace ts {
             return parameter.decorators !== undefined && parameter.decorators.length > 0;
         }
 
-        function getClassFacts(node: ClassDeclaration, staticProperties: ReadonlyArray<PropertyDeclaration>, privateProperties: ReadonlyArray<PropertyDeclaration>) {
+        function getClassFacts(node: ClassDeclaration, staticProperties: ReadonlyArray<PropertyDeclaration>) {
             let facts = ClassFacts.None;
             if (some(staticProperties)) facts |= ClassFacts.HasStaticInitializedProperties;
-            if (languageVersion < ScriptTarget.ESNext && some(privateProperties)) facts |= ClassFacts.UseImmediatelyInvokedFunctionExpression;
             const extendsClauseElement = getEffectiveBaseTypeNode(node);
             if (extendsClauseElement && skipOuterExpressions(extendsClauseElement.expression).kind !== SyntaxKind.NullKeyword) facts |= ClassFacts.IsDerivedClass;
             if (shouldEmitDecorateCallForClass(node)) facts |= ClassFacts.HasConstructorDecorators;
@@ -624,7 +623,7 @@ namespace ts {
             pendingExpressions = undefined;
 
             const staticProperties = getInitializedProperties(node, /*isStatic*/ true);
-            const facts = getClassFacts(node, staticProperties, getPrivateProperties(node));
+            const facts = getClassFacts(node, staticProperties);
 
             if (facts & ClassFacts.UseImmediatelyInvokedFunctionExpression) {
                 context.startLexicalEnvironment();
@@ -974,13 +973,13 @@ namespace ts {
             // Check if we have property assignment inside class declaration.
             // If there is a property assignment, we need to emit constructor whether users define it or not
             // If there is no property assignment, we can omit constructor if users do not define it
-            const hasNonPrivateInstancePropertyWithInitializer = forEach(node.members, member => isInstanceInitializedProperty(member) && isPrivateProperty(member));
+            const hasInstancePropertyWithInitializer = forEach(node.members, member => isInstanceInitializedProperty(member) && !isPrivateProperty(member));
             const hasParameterPropertyAssignments = node.transformFlags & TransformFlags.ContainsParameterPropertyAssignments;
             const constructor = getFirstConstructorWithBody(node);
 
             // If the class does not contain nodes that require a synthesized constructor,
             // accept the current constructor if it exists.
-            if (!hasNonPrivateInstancePropertyWithInitializer && !hasParameterPropertyAssignments) {
+            if (!hasInstancePropertyWithInitializer && !hasParameterPropertyAssignments) {
                 return visitEachChild(constructor, visitor, context);
             }
 
@@ -1200,9 +1199,6 @@ namespace ts {
                 !!member.name && isPrivateName(member.name);
         }
 
-        function getPrivateProperties(node: ClassExpression | ClassDeclaration): ReadonlyArray<PropertyDeclaration> {
-            return filter(node.members, isPrivateProperty);
-        }
         /**
          * Gets all property declarations with initializers on either the static or instance side of a class.
          *
@@ -1251,12 +1247,13 @@ namespace ts {
          */
         function addInitializedPropertyStatements(statements: Statement[], properties: ReadonlyArray<PropertyDeclaration>, receiver: LeftHandSideExpression) {
             for (const property of properties) {
-                if (!isPrivateProperty(property)) {
-                    const statement = createStatement(transformInitializedProperty(property, receiver));
-                    setSourceMapRange(statement, moveRangePastModifiers(property));
-                    setCommentRange(statement, property);
-                    statements.push(statement);
+                if (isPrivateProperty(property)) {
+                    continue;
                 }
+                const statement = createStatement(transformInitializedProperty(property, receiver));
+                setSourceMapRange(statement, moveRangePastModifiers(property));
+                setCommentRange(statement, property);
+                statements.push(statement);
             }
         }
 
@@ -1269,6 +1266,9 @@ namespace ts {
         function generateInitializedPropertyExpressions(properties: ReadonlyArray<PropertyDeclaration>, receiver: LeftHandSideExpression) {
             const expressions: Expression[] = [];
             for (const property of properties) {
+                if (isPrivateProperty(property)) {
+                    continue;
+                }
                 const expression = transformInitializedProperty(property, receiver);
                 startOnNewLine(expression);
                 setSourceMapRange(expression, moveRangePastModifiers(property));
