@@ -1,4 +1,4 @@
-//// [privateNameContructorReserved.ts]
+//// [privateNameConstructorReserved.ts]
 class A {
     #constructor() {}      // Error: `#constructor` is a reserved word.
 }
@@ -7,7 +7,7 @@ class A {
     #constructor = 5       // Error: `#constructor` is a reserved word.
 }
 
-//// [privateNameContructorReserved.js]
+//// [privateNameConstructorReserved.js]
 var A = /** @class */ (function () {
     function A() {
     }
