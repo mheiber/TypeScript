@@ -13187,6 +13187,9 @@ namespace ts {
             const properties = target.flags & TypeFlags.Intersection ? getPropertiesOfUnionOrIntersectionType(<IntersectionType>target) : getPropertiesOfObjectType(target);
             for (const targetProp of properties) {
                 if (requireOptionalProperties || !(targetProp.flags & SymbolFlags.Optional)) {
+                    if (targetProp.flags & SymbolFlags.PrivateNamed) {
+                        return targetProp;
+                    }
                     const sourceProp = getPropertyOfType(source, targetProp.escapedName);
                     if (!sourceProp) {
                         return targetProp;
