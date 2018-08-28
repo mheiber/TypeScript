@@ -732,6 +732,7 @@ namespace ts {
         }
 
         function error(location: Node | undefined, message: DiagnosticMessage, arg0?: string | number, arg1?: string | number, arg2?: string | number, arg3?: string | number): Diagnostic {
+            debugger
             const diagnostic = location
                 ? createDiagnosticForNode(location, message, arg0, arg1, arg2, arg3)
                 : createCompilerDiagnostic(message, arg0, arg1, arg2, arg3);
@@ -7276,11 +7277,12 @@ namespace ts {
          * @param type a type to look up property from
          * @param name a name of property to look up in a given type
          */
-        function getPropertyOfType(type: Type, name: __String): Symbol | undefined {
+        function getPropertyOfType(type: Type, name: __String, isPrivateName: boolean = false): Symbol | undefined {
             type = getApparentType(type);
             if (type.flags & TypeFlags.Object) {
                 const resolved = resolveStructuredTypeMembers(<ObjectType>type);
-                const symbol = resolved.members.get(name);
+                const symbolTableKey = isPrivateName ? getPropertyNameForPrivateName(type.symbol, name) : name;
+                const symbol = resolved.members.get(symbolTableKey);
                 if (symbol && symbolIsValue(symbol)) {
                     return symbol;
                 }
@@ -17996,13 +17998,13 @@ namespace ts {
                 return apparentType;
             }
             const assignmentKind = getAssignmentTargetKind(node);
-            const prop = getPropertyOfType(apparentType, right.escapedText);
+            const prop = getPropertyOfType(apparentType, right.escapedText, isPrivateName(right));
             if (isIdentifier(left) && parentSymbol && !(prop && isConstEnumOrConstEnumOnlyModule(prop))) {
                 markAliasReferenced(parentSymbol, node);
             }
             if (!prop) {
                 const indexInfo = getIndexInfoOfType(apparentType, IndexKind.String);
-                if (!(indexInfo && indexInfo.type) || isPrivateName(right)) {
+                if (!(indexInfo && indexInfo.type)) {
                     if (isJSLiteralType(leftType)) {
                         return anyType;
                     }

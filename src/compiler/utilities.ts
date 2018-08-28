@@ -2672,6 +2672,10 @@ namespace ts {
         return "__@" + symbolName as __String;
     }
 
+    export function getPropertyNameForPrivateName(containingClassSymbol: Symbol, escapedText: __String): __String {
+        return `__#${getSymbolId(containingClassSymbol)}@${escapedText}` as __String;
+    }
+
     export function isKnownSymbol(symbol: Symbol): boolean {
         return startsWith(symbol.escapedName as string, "__@");
     }

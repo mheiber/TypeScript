@@ -266,6 +266,11 @@ namespace ts {
                     Debug.assert(isWellKnownSymbolSyntactically(nameExpression));
                     return getPropertyNameForKnownSymbolName(idText((<PropertyAccessExpression>nameExpression).name));
                 }
+                if (isPrivateName(name)) {
+                    // containingClass exists because private names only allowed inside classes
+                    const containingClassSymbol = getContainingClass(name.parent)!.symbol;
+                    return getPropertyNameForPrivateName(containingClassSymbol, name.escapedText);
+                }
                 return isPropertyNameLiteral(name) ? getEscapedTextOfIdentifierOrLiteral(name) : undefined;
             }
             switch (node.kind) {
@@ -322,6 +327,10 @@ namespace ts {
 
             const isDefaultExport = hasModifier(node, ModifierFlags.Default);
 
+            // need this before getDeclarationName
+            if (isNamedDeclaration(node)) {
+                node.name.parent = node;
+            }
             // The exported symbol for an export default function/class node is always named "default"
             const name = isDefaultExport && parent ? InternalSymbolName.Default : getDeclarationName(node);
 
@@ -374,10 +383,6 @@ namespace ts {
                         symbolTable.set(name, symbol = createSymbol(SymbolFlags.None, name));
                     }
                     else {
-                        if (isNamedDeclaration(node)) {
-                            node.name.parent = node;
-                        }
-
                         // Report errors every position with duplicate declaration
                         // Report errors on previous encountered declarations
                         let message = symbol.flags & SymbolFlags.BlockScopedVariable
