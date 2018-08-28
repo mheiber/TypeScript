@@ -63,7 +63,7 @@
         "del": "latest",
         "fancy-log": "latest",
         "fs-extra": "^6.0.1",
-        "gulp": "3.X",
+        "gulp": "^3.9.1",
         "gulp-clone": "latest",
         "gulp-concat": "latest",
         "gulp-help": "latest",
