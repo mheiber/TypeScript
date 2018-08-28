@@ -225,10 +225,6 @@ namespace ts {
             node.symbol = symbol;
             symbol.declarations = append(symbol.declarations, node);
 
-            if (isNamedDeclaration(node) && isPrivateName(node.name)) {
-                symbol.flags |= SymbolFlags.PrivateNamed;
-            }
-
             if (symbolFlags & (SymbolFlags.Class | SymbolFlags.Enum | SymbolFlags.Module | SymbolFlags.Variable) && !symbol.exports) {
                 symbol.exports = createSymbolTable();
             }
