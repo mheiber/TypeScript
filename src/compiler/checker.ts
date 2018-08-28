@@ -13187,9 +13187,6 @@ namespace ts {
             const properties = target.flags & TypeFlags.Intersection ? getPropertiesOfUnionOrIntersectionType(<IntersectionType>target) : getPropertiesOfObjectType(target);
             for (const targetProp of properties) {
                 if (requireOptionalProperties || !(targetProp.flags & SymbolFlags.Optional)) {
-                    if (targetProp.flags & SymbolFlags.PrivateNamed) {
-                        return targetProp;
-                    }
                     const sourceProp = getPropertyOfType(source, targetProp.escapedName);
                     if (!sourceProp) {
                         return targetProp;
@@ -25442,10 +25439,6 @@ namespace ts {
                 const declaredProp = member.name && getSymbolAtLocation(member.name) || getSymbolAtLocation(member);
                 if (declaredProp) {
                     const prop = getPropertyOfType(typeWithThis, declaredProp.escapedName);
-                    // skip inheritance checks because private names are unique to each class
-                    if (member.name && isPrivateName(member.name)) {
-                        return;
-                    }
                     const baseProp = getPropertyOfType(baseWithThis, declaredProp.escapedName);
                     if (prop && baseProp) {
                         const rootChain = () => chainDiagnosticMessages(
