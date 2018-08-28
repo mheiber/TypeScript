@@ -9044,7 +9044,9 @@ namespace ts {
         }
 
         function getLiteralTypeFromPropertyName(prop: Symbol, include: TypeFlags) {
-            if (!(getDeclarationModifierFlagsFromSymbol(prop) & ModifierFlags.NonPublicAccessibilityModifier)) {
+            const hasNonPublicModifier = !!(getDeclarationModifierFlagsFromSymbol(prop) & ModifierFlags.NonPublicAccessibilityModifier);
+            const hasPrivateName = prop.valueDeclaration && isNamedDeclaration(prop.valueDeclaration) && isPrivateName(prop.valueDeclaration.name);
+            if (!hasNonPublicModifier && !hasPrivateName) {
                 let type = getLateBoundSymbol(prop).nameType;
                 if (!type && !isKnownSymbol(prop)) {
                     const name = prop.valueDeclaration && getNameOfDeclaration(prop.valueDeclaration);
