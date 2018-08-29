@@ -732,7 +732,6 @@ namespace ts {
         }
 
         function error(location: Node | undefined, message: DiagnosticMessage, arg0?: string | number, arg1?: string | number, arg2?: string | number, arg3?: string | number): Diagnostic {
-            debugger
             const diagnostic = location
                 ? createDiagnosticForNode(location, message, arg0, arg1, arg2, arg3)
                 : createCompilerDiagnostic(message, arg0, arg1, arg2, arg3);
@@ -2595,15 +2594,16 @@ namespace ts {
             return getUnionType(arrayFrom(typeofEQFacts.keys(), getLiteralType));
         }
 
-        // A reserved member name starts with two underscores, but the third character cannot be an underscore
-        // or the @ symbol. A third underscore indicates an escaped form of an identifer that started
+        // A reserved member name starts with two underscores, but the third character cannot be an underscore,
+        // @ or #. A third underscore indicates an escaped form of an identifer that started
         // with at least two underscores. The @ character indicates that the name is denoted by a well known ES
-        // Symbol instance.
+        // Symbol instance and the # indicates that the name is a PrivateName.
         function isReservedMemberName(name: __String) {
             return (name as string).charCodeAt(0) === CharacterCodes._ &&
                 (name as string).charCodeAt(1) === CharacterCodes._ &&
                 (name as string).charCodeAt(2) !== CharacterCodes._ &&
-                (name as string).charCodeAt(2) !== CharacterCodes.at;
+                (name as string).charCodeAt(2) !== CharacterCodes.at &&
+                (name as string).charCodeAt(2) !== CharacterCodes.hash;
         }
 
         function getNamedMembers(members: SymbolTable): Symbol[] {
@@ -7277,7 +7277,7 @@ namespace ts {
          * @param type a type to look up property from
          * @param name a name of property to look up in a given type
          */
-        function getPropertyOfType(type: Type, name: __String, isPrivateName: boolean = false): Symbol | undefined {
+        function getPropertyOfType(type: Type, name: __String, isPrivateName = false): Symbol | undefined {
             type = getApparentType(type);
             if (type.flags & TypeFlags.Object) {
                 const resolved = resolveStructuredTypeMembers(<ObjectType>type);
