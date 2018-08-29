@@ -1,4 +1,4 @@
-tests/cases/conformance/classes/members/privateNames/privateNamesInGenericClasses.ts(10,3): error TS18007: Property '#foo' is only accessible within class 'C<T>' because it has a private name.
+tests/cases/conformance/classes/members/privateNames/privateNamesInGenericClasses.ts(10,3): error TS18007: Property '#foo' is not accessible outside class 'C<T>' because it has a private name.
 tests/cases/conformance/classes/members/privateNames/privateNamesInGenericClasses.ts(11,1): error TS2322: Type 'C<string>' is not assignable to type 'C<number>'.
   Type 'string' is not assignable to type 'number'.
 tests/cases/conformance/classes/members/privateNames/privateNamesInGenericClasses.ts(12,1): error TS2322: Type 'C<number>' is not assignable to type 'C<string>'.
@@ -17,7 +17,7 @@ tests/cases/conformance/classes/members/privateNames/privateNamesInGenericClasse
     declare let b: C<string>;
     a.#foo;                                   // OK
       ~~~~
-!!! error TS18007: Property '#foo' is only accessible within class 'C<T>' because it has a private name.
+!!! error TS18007: Property '#foo' is not accessible outside class 'C<T>' because it has a private name.
     a = b;                                    // Error
     ~
 !!! error TS2322: Type 'C<string>' is not assignable to type 'C<number>'.

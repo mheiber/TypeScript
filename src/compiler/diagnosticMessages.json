@@ -4178,7 +4178,7 @@
         "category": "Error",
         "code": 18006
     },
-    "Property '{0}' is only accessible within class '{1}' because it has a private name.": {
+    "Property '{0}' is not accessible outside class '{1}' because it has a private name.": {
         "category": "Error",
         "code": 18007
     },
