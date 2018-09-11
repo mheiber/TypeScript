@@ -503,7 +503,7 @@ namespace ts {
                             createBinary(
                                 createClassPrivateFieldGetHelper(context, getReceiver, weakMapName),
                                 getOperatorForCompoundAssignment(node.operatorToken.kind),
-                                node.right
+                                visitNode(node.right, visitor)
                             )
                         ),
                         node
@@ -511,7 +511,12 @@ namespace ts {
                 }
                 else {
                     return setOriginalNode(
-                        createClassPrivateFieldSetHelper(context, node.left.expression, weakMapName, node.right),
+                        createClassPrivateFieldSetHelper(
+                            context,
+                            node.left.expression,
+                            weakMapName,
+                            visitNode(node.right, visitor)
+                        ),
                         node
                     );
                 }
