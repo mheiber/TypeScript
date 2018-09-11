@@ -1,0 +1,21 @@
+=== tests/cases/conformance/classes/members/privateNames/privateNameInitializationOrder.ts ===
+let a = 0;
+>a : Symbol(a, Decl(privateNameInitializationOrder.ts, 0, 3))
+
+class Test {
+>Test : Symbol(Test, Decl(privateNameInitializationOrder.ts, 0, 10))
+
+    #one = ++a;
+>#one : Symbol(Test[#one], Decl(privateNameInitializationOrder.ts, 1, 12))
+>a : Symbol(a, Decl(privateNameInitializationOrder.ts, 0, 3))
+
+    normalProp = ++a;
+>normalProp : Symbol(Test.normalProp, Decl(privateNameInitializationOrder.ts, 2, 15))
+>a : Symbol(a, Decl(privateNameInitializationOrder.ts, 0, 3))
+
+    #two = this.#one + 1;
+>#two : Symbol(Test[#two], Decl(privateNameInitializationOrder.ts, 3, 21))
+>this.#one : Symbol(Test[#one], Decl(privateNameInitializationOrder.ts, 1, 12))
+>this : Symbol(Test, Decl(privateNameInitializationOrder.ts, 0, 10))
+}
+

@@ -1,0 +1,26 @@
+=== tests/cases/conformance/classes/members/privateNames/privateNameInitializationOrder.ts ===
+let a = 0;
+>a : number
+>0 : 0
+
+class Test {
+>Test : Test
+
+    #one = ++a;
+>#one : number
+>++a : number
+>a : number
+
+    normalProp = ++a;
+>normalProp : number
+>++a : number
+>a : number
+
+    #two = this.#one + 1;
+>#two : number
+>this.#one + 1 : number
+>this.#one : number
+>this : this
+>1 : 1
+}
+
