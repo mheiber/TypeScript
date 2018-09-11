@@ -1,0 +1,16 @@
+=== tests/cases/conformance/classes/members/privateNames/privateNameFieldMutate.ts ===
+class Test {
+>Test : Test
+
+    #field: number;
+>#field : number
+
+    constructor() {
+        this.#field = 100;
+>this.#field = 100 : 100
+>this.#field : number
+>this : this
+>100 : 100
+    }
+}
+
