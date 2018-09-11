@@ -167,8 +167,8 @@ namespace ts {
         }
 
         function visitorCollectPrivateNames(node: Node): VisitResult<Node> {
-            if (isPropertyDeclaration(node) && isPrivateName(node.name)) {
-                addPrivateName(node.name, node.initializer);
+            if (isPrivateNamedPropertyDeclaration(node)) {
+                addPrivateName(node.name);
                 return undefined;
             }
             // Don't collect private names from nested classes.

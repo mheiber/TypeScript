@@ -973,7 +973,7 @@ namespace ts {
             // Check if we have property assignment inside class declaration.
             // If there is a property assignment, we need to emit constructor whether users define it or not
             // If there is no property assignment, we can omit constructor if users do not define it
-            const hasInstancePropertyWithInitializer = forEach(node.members, member => isInstanceInitializedProperty(member) && !isPrivateProperty(member));
+            const hasInstancePropertyWithInitializer = forEach(node.members, member => isInstanceInitializedProperty(member));
             const hasParameterPropertyAssignments = node.transformFlags & TransformFlags.ContainsParameterPropertyAssignments;
             const constructor = getFirstConstructorWithBody(node);
 
@@ -1194,11 +1194,6 @@ namespace ts {
             );
         }
 
-        function isPrivateProperty(member: ClassElement): member is PropertyDeclaration {
-            return member.kind === SyntaxKind.PropertyDeclaration &&
-                !!member.name && isPrivateName(member.name);
-        }
-
         /**
          * Gets all property declarations with initializers on either the static or instance side of a class.
          *
@@ -1247,12 +1242,10 @@ namespace ts {
          */
         function addInitializedPropertyStatements(statements: Statement[], properties: ReadonlyArray<PropertyDeclaration>, receiver: LeftHandSideExpression) {
             for (const property of properties) {
-                if (isPrivateProperty(property)) {
-                    continue;
-                }
                 const statement = createStatement(transformInitializedProperty(property, receiver));
                 setSourceMapRange(statement, moveRangePastModifiers(property));
                 setCommentRange(statement, property);
+                setOriginalNode(statement, property);
                 statements.push(statement);
             }
         }
@@ -1266,9 +1259,6 @@ namespace ts {
         function generateInitializedPropertyExpressions(properties: ReadonlyArray<PropertyDeclaration>, receiver: LeftHandSideExpression) {
             const expressions: Expression[] = [];
             for (const property of properties) {
-                if (isPrivateProperty(property)) {
-                    continue;
-                }
                 const expression = transformInitializedProperty(property, receiver);
                 startOnNewLine(expression);
                 setSourceMapRange(expression, moveRangePastModifiers(property));
