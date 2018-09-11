@@ -475,15 +475,17 @@ namespace ts {
                 const weakMapName = accessPrivateName(node.left.name);
                 if (isCompoundAssignment(node.operatorToken.kind)) {
                     let setReceiver: Expression;
-                    let getReceiver: Identifier;
-                    if (!isIdentifier(node.left.expression) && !isKeyword(node.left.expression.kind)) {
-                        getReceiver = createTempVariable(/* recordTempVariable */ undefined);
-                        hoistVariableDeclaration(getReceiver);
-                        setReceiver = createBinary(getReceiver, SyntaxKind.EqualsToken, node.left.expression);
+                    let getReceiver: Expression;
+                    const receiverExpr = node.left.expression;
+                    if (!isIdentifier(receiverExpr) && !isThisProperty(node.left) && !isSuperProperty(node.left)) {
+                        const tempVariable = createTempVariable(/* recordTempVariable */ undefined);
+                        hoistVariableDeclaration(tempVariable);
+                        setReceiver = createBinary(tempVariable, SyntaxKind.EqualsToken, node.left.expression);
+                        getReceiver = tempVariable;
                     }
                     else {
-                        getReceiver = node.left.expression as Identifier;
-                        setReceiver = node.left.expression as Identifier;
+                        getReceiver = node.left.expression;
+                        setReceiver = node.left.expression;
                     }
                     return setOriginalNode(
                         createClassPrivateFieldSetHelper(
