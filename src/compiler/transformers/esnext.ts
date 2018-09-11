@@ -149,12 +149,16 @@ namespace ts {
             if (nameString in environment) {
                 return environment[nameString].weakMap;
             }
-            throw new Error("Accessing undeclared private name.");
+            // Undeclared private name.
+            return undefined;
         }
 
         function visitPropertyAccessExpression(node: PropertyAccessExpression): Expression {
             if (isPrivateName(node.name)) {
                 const weakMapName = accessPrivateName(node.name);
+                if (!weakMapName) {
+                    return node;
+                }
                 return setOriginalNode(
                     setTextRange(
                         createClassPrivateFieldGetHelper(context, node.expression, weakMapName),
@@ -473,6 +477,10 @@ namespace ts {
                      isPrivateName(node.left.name)) {
 
                 const weakMapName = accessPrivateName(node.left.name);
+                if (!weakMapName) {
+                    // Don't change output for undeclared private names (error).
+                    return node;
+                }
                 if (isCompoundAssignment(node.operatorToken.kind)) {
                     let setReceiver: Expression;
                     let getReceiver: Expression;
