@@ -1,0 +1,104 @@
+=== tests/cases/conformance/classes/members/privateNames/privateNameFieldMutateNontrivialReceiver.ts ===
+class Test {
+>Test : Test
+
+    #field: number;
+>#field : number
+
+    static mutate(getReceiver: () => Test) {
+>mutate : (getReceiver: () => Test) => void
+>getReceiver : () => Test
+
+        getReceiver().#field = 100;
+>getReceiver().#field = 100 : 100
+>getReceiver().#field : number
+>getReceiver() : Test
+>getReceiver : () => Test
+>100 : 100
+
+        getReceiver().#field += 1;
+>getReceiver().#field += 1 : number
+>getReceiver().#field : number
+>getReceiver() : Test
+>getReceiver : () => Test
+>1 : 1
+
+        getReceiver().#field -= 2;
+>getReceiver().#field -= 2 : number
+>getReceiver().#field : number
+>getReceiver() : Test
+>getReceiver : () => Test
+>2 : 2
+
+        getReceiver().#field /= 3;
+>getReceiver().#field /= 3 : number
+>getReceiver().#field : number
+>getReceiver() : Test
+>getReceiver : () => Test
+>3 : 3
+
+        getReceiver().#field *= 4;
+>getReceiver().#field *= 4 : number
+>getReceiver().#field : number
+>getReceiver() : Test
+>getReceiver : () => Test
+>4 : 4
+
+        getReceiver().#field |= 5;
+>getReceiver().#field |= 5 : number
+>getReceiver().#field : number
+>getReceiver() : Test
+>getReceiver : () => Test
+>5 : 5
+
+        getReceiver().#field **= 6;
+>getReceiver().#field **= 6 : number
+>getReceiver().#field : number
+>getReceiver() : Test
+>getReceiver : () => Test
+>6 : 6
+
+        getReceiver().#field %= 7;
+>getReceiver().#field %= 7 : number
+>getReceiver().#field : number
+>getReceiver() : Test
+>getReceiver : () => Test
+>7 : 7
+
+        getReceiver().#field <<= 8;
+>getReceiver().#field <<= 8 : number
+>getReceiver().#field : number
+>getReceiver() : Test
+>getReceiver : () => Test
+>8 : 8
+
+        getReceiver().#field >>= 9;
+>getReceiver().#field >>= 9 : number
+>getReceiver().#field : number
+>getReceiver() : Test
+>getReceiver : () => Test
+>9 : 9
+
+        getReceiver().#field >>>= 10;
+>getReceiver().#field >>>= 10 : number
+>getReceiver().#field : number
+>getReceiver() : Test
+>getReceiver : () => Test
+>10 : 10
+
+        getReceiver().#field &= 11;
+>getReceiver().#field &= 11 : number
+>getReceiver().#field : number
+>getReceiver() : Test
+>getReceiver : () => Test
+>11 : 11
+
+        getReceiver().#field ^= 12;
+>getReceiver().#field ^= 12 : number
+>getReceiver().#field : number
+>getReceiver() : Test
+>getReceiver : () => Test
+>12 : 12
+    }
+}
+
