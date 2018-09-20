@@ -3253,7 +3253,6 @@ namespace ts {
             || hasModifier(node, ModifierFlags.TypeScriptModifier)
             || node.typeParameters
             || node.type
-            || (node.name && isComputedPropertyName(node.name)) // While computed method names aren't typescript, the TS transform must visit them to emit property declarations correctly
             || !node.body) {
             transformFlags |= TransformFlags.AssertTypeScript;
         }
@@ -3284,7 +3283,6 @@ namespace ts {
         if (node.decorators
             || hasModifier(node, ModifierFlags.TypeScriptModifier)
             || node.type
-            || (node.name && isComputedPropertyName(node.name)) // While computed accessor names aren't typescript, the TS transform must visit them to emit property declarations correctly
             || !node.body) {
             transformFlags |= TransformFlags.AssertTypeScript;
         }
@@ -3301,6 +3299,13 @@ namespace ts {
     function computePropertyDeclaration(node: PropertyDeclaration, subtreeFlags: TransformFlags) {
         // A PropertyDeclaration is ESnext syntax.
         let transformFlags = subtreeFlags | TransformFlags.AssertESNext;
+
+        // Decorators, TypeScript-specific modifiers, and type annotations are TypeScript syntax.
+        if (node.decorators
+            || hasModifier(node, ModifierFlags.TypeScriptModifier)
+            || node.type) {
+            transformFlags |= TransformFlags.AssertTypeScript;
+        }
 
         // If the PropertyDeclaration has an initializer or a computed name, we need to inform its ancestor
         // so that it handle the transformation.
@@ -3701,6 +3706,8 @@ namespace ts {
                 break;
 
             case SyntaxKind.ComputedPropertyName:
+                // Computed property names are transformed by the ESNext transformer.
+                transformFlags |= TransformFlags.AssertESNext;
                 // Even though computed property names are ES6, we don't treat them as such.
                 // This is so that they can flow through PropertyName transforms unaffected.
                 // Instead, we mark the container as ES6, so that it can properly handle the transform.

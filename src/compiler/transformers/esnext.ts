@@ -125,6 +125,8 @@ namespace ts {
                     return visitPropertyDeclaration(node as PropertyDeclaration);
                 case SyntaxKind.VariableStatement:
                     return visitVariableStatement(node as VariableStatement);
+                case SyntaxKind.ComputedPropertyName:
+                    return visitComputedPropertyName(node as ComputedPropertyName);
                 default:
                     return visitEachChild(node, visitor, context);
             }
@@ -179,6 +181,20 @@ namespace ts {
             }
         }
 
+        function visitComputedPropertyName(name: ComputedPropertyName) {
+            let node = visitEachChild(name, visitor, context);
+            if (some(pendingExpressions)) {
+                const expressions = pendingExpressions;
+                expressions.push(name.expression);
+                pendingExpressions = [];
+                node = updateComputedPropertyName(
+                    node,
+                    inlineExpressions(expressions)
+                );
+            }
+            return node;
+        }
+
         function visitPropertyDeclaration(node: PropertyDeclaration) {
             Debug.assert(!some(node.decorators));
             const expr = getPropertyNameExpressionIfNeeded(node.name, !!node.initializer, /*omitSimple*/ true);
@@ -211,7 +227,7 @@ namespace ts {
             if (some(pendingExpressions)) {
                 statements.push(createExpressionStatement(inlineExpressions(pendingExpressions!)));
             }
-            pendingExpressions = savedPendingExpressions; 
+            pendingExpressions = savedPendingExpressions;
 
             // Emit static property assignment. Because classDeclaration is lexically evaluated,
             // it is safe to emit static property assignment after classDeclaration
@@ -234,7 +250,7 @@ namespace ts {
             // then we want to output the pendingExpressions as statements, not as inlined
             // expressions with the class statement.
             //
-            // In this case, we use pendingStatements to produce the same output as the 
+            // In this case, we use pendingStatements to produce the same output as the
             // class declaration transformation. The VariableStatement visitor will insert
             // these statements after the class expression variable statement.
             const isDecoratedClassDeclaration = isClassDeclaration(getOriginalNode(node));
@@ -248,7 +264,7 @@ namespace ts {
                 node.modifiers,
                 node.name,
                 node.typeParameters,
-                node.heritageClauses,
+                visitNodes(node.heritageClauses, visitor, isHeritageClause),
                 transformClassMembers(node, isDerivedClass)
             );
 
@@ -266,7 +282,8 @@ namespace ts {
                         addInitializedPropertyStatements(pendingStatements!, staticProperties, getInternalName(node));
                     }
                     return classExpression;
-                } else {
+                }
+                else {
                     const expressions: Expression[] = [];
                     const isClassWithConstructorReference = resolver.getNodeCheckFlags(node) & NodeCheckFlags.ClassWithConstructorReference;
                     const temp = createTempVariable(hoistVariableDeclaration, !!isClassWithConstructorReference);
@@ -307,7 +324,7 @@ namespace ts {
         }
 
         function transformConstructor(node: ClassDeclaration | ClassExpression, isDerivedClass: boolean) {
-            const constructor = getFirstConstructorWithBody(node);
+            const constructor = visitNode(getFirstConstructorWithBody(node), visitor, isConstructorDeclaration);
             if (!(node.transformFlags & TransformFlags.ContainsPropertyInitializer)) {
                 return visitEachChild(constructor, visitor, context);
             }
@@ -325,7 +342,7 @@ namespace ts {
                             parameters,
                             body
                         ),
-                        constructor
+                        constructor || node
                     ),
                     constructor
                 )
