@@ -41,7 +41,13 @@ namespace ts {
          * Tracks what computed name expressions originating from elided names must be inlined
          * at the next execution site, in document order
          */
-        let addPendingExpression: (expr: Expression) => void | undefined;
+        let pendingExpressions: Expression[] | undefined;
+
+        /**
+         * Tracks what computed name expression statements and static property initializers must be
+         * emitted at the next execution site, in document order (for decorated classes).
+         */
+        let pendingStatements: Statement[] | undefined;
 
         return chainBundle(transformSourceFile);
 
@@ -193,15 +199,14 @@ namespace ts {
             Debug.assert(!some(node.decorators));
             const expr = getPropertyNameExpressionIfNeeded(node.name, !!node.initializer, /*omitSimple*/ true);
             if (expr && !isSimpleInlineableExpression(expr)) {
-                addPendingExpression(expr);
+                (pendingExpressions || (pendingExpressions = [])).push(expr);
             }
             return undefined;
         }
 
         function visitClassDeclaration(node: ClassDeclaration) {
-            const savedAddPendingExpression = addPendingExpression;
-            const pendingExpressions: Expression[] = [];
-            addPendingExpression = (expr) => { pendingExpressions.push(expr); };
+            const savedPendingExpressions = pendingExpressions;
+            pendingExpressions = undefined;
 
             const extendsClauseElement = getEffectiveBaseTypeNode(node);
             const isDerivedClass = !!(extendsClauseElement && skipOuterExpressions(extendsClauseElement.expression).kind !== SyntaxKind.NullKeyword);
@@ -220,9 +225,9 @@ namespace ts {
 
             // Write any pending expressions from elided or moved computed property names
             if (some(pendingExpressions)) {
-                statements.push(createExpressionStatement(inlineExpressions(pendingExpressions)));
+                statements.push(createExpressionStatement(inlineExpressions(pendingExpressions!)));
             }
-            addPendingExpression = savedAddPendingExpression;
+            pendingExpressions = savedPendingExpressions; 
 
             // Emit static property assignment. Because classDeclaration is lexically evaluated,
             // it is safe to emit static property assignment after classDeclaration
@@ -238,13 +243,17 @@ namespace ts {
         }
 
         function visitClassExpression(node: ClassExpression): Expression {
-            const savedAddPendingExpression = addPendingExpression;
-            const pendingExpressions: Expression[] = [];
+            const savedPendingExpressions = pendingExpressions;
+            pendingExpressions = undefined;
 
+            // If this class expression is a transformation of a decorated class declaration,
+            // then we want to output the pendingExpressions as statements, not as inlined
+            // expressions with the class statement.
+            //
+            // In this case, we use pendingStatements to produce the same output as the 
+            // class declaration transformation. The VariableStatement visitor will insert
+            // these statements after the class expression variable statement.
             const isDecoratedClassDeclaration = isClassDeclaration(getOriginalNode(node));
-            if (!isDecoratedClassDeclaration) {
-                addPendingExpression = (expr) => { pendingExpressions.push(expr); };
-            }
 
             const staticProperties = getInitializedProperties(node, /*isStatic*/ true);
             const extendsClauseElement = getEffectiveBaseTypeNode(node);
@@ -259,33 +268,47 @@ namespace ts {
                 transformClassMembers(node, isDerivedClass)
             );
 
-            addPendingExpression = savedAddPendingExpression;
+            if (some(staticProperties) || some(pendingExpressions)) {
+                if (isDecoratedClassDeclaration) {
+                    Debug.assertDefined(pendingStatements, "Decorated classes transformed by TypeScript are expected to be within a variable declaration.");
 
-            if (isDecoratedClassDeclaration) {
-                generateInitializedPropertyExpressions(staticProperties, getInternalName(node)).forEach(addPendingExpression);
-            }
-            else if (some(staticProperties) || some(pendingExpressions)) {
-                const expressions: Expression[] = [];
-                const isClassWithConstructorReference = resolver.getNodeCheckFlags(node) & NodeCheckFlags.ClassWithConstructorReference;
-                const temp = createTempVariable(hoistVariableDeclaration, !!isClassWithConstructorReference);
-                if (isClassWithConstructorReference) {
-                    // record an alias as the class name is not in scope for statics.
-                    enableSubstitutionForClassAliases();
-                    const alias = getSynthesizedClone(temp);
-                    alias.autoGenerateFlags &= ~GeneratedIdentifierFlags.ReservedInNestedScopes;
-                    classAliases[getOriginalNodeId(node)] = alias;
+                    // Write any pending expressions from elided or moved computed property names
+                    if (some(pendingExpressions)) {
+                        pendingStatements!.push(createExpressionStatement(inlineExpressions(pendingExpressions!)));
+                    }
+                    pendingExpressions = savedPendingExpressions;
+
+                    if (some(staticProperties)) {
+                        addInitializedPropertyStatements(pendingStatements!, staticProperties, getInternalName(node));
+                    }
+                    return classExpression;
+                } else {
+                    const expressions: Expression[] = [];
+                    const isClassWithConstructorReference = resolver.getNodeCheckFlags(node) & NodeCheckFlags.ClassWithConstructorReference;
+                    const temp = createTempVariable(hoistVariableDeclaration, !!isClassWithConstructorReference);
+                    if (isClassWithConstructorReference) {
+                        // record an alias as the class name is not in scope for statics.
+                        enableSubstitutionForClassAliases();
+                        const alias = getSynthesizedClone(temp);
+                        alias.autoGenerateFlags &= ~GeneratedIdentifierFlags.ReservedInNestedScopes;
+                        classAliases[getOriginalNodeId(node)] = alias;
+                    }
+
+                    // To preserve the behavior of the old emitter, we explicitly indent
+                    // the body of a class with static initializers.
+                    setEmitFlags(classExpression, EmitFlags.Indented | getEmitFlags(classExpression));
+                    expressions.push(startOnNewLine(createAssignment(temp, classExpression)));
+                    // Add any pending expressions leftover from elided or relocated computed property names
+                    addRange(expressions, map(pendingExpressions, startOnNewLine));
+                    addRange(expressions, generateInitializedPropertyExpressions(staticProperties, temp));
+                    expressions.push(startOnNewLine(temp));
+
+                    pendingExpressions = savedPendingExpressions;
+                    return inlineExpressions(expressions);
                 }
-
-                // To preserve the behavior of the old emitter, we explicitly indent
-                // the body of a class with static initializers.
-                setEmitFlags(classExpression, EmitFlags.Indented | getEmitFlags(classExpression));
-                expressions.push(startOnNewLine(createAssignment(temp, classExpression)));
-                // Add any pending expressions leftover from elided or relocated computed property names
-                addRange(expressions, map(pendingExpressions, startOnNewLine));
-                addRange(expressions, generateInitializedPropertyExpressions(staticProperties, temp));
-                expressions.push(startOnNewLine(temp));
-                return inlineExpressions(expressions);
             }
+
+            pendingExpressions = savedPendingExpressions;
             return classExpression;
         }
 
@@ -331,6 +354,14 @@ namespace ts {
 
             let indexOfFirstStatement = 0;
             let statements: Statement[] = [];
+
+            const properties = getInitializedProperties(node, /*isStatic*/ false);
+
+            // Only generate synthetic constructor when there are property initializers to move.
+            if (!constructor && !some(properties)) {
+                return undefined;
+            }
+
             if (!constructor && isDerivedClass) {
                 // Add a synthetic `super` call:
                 //
@@ -361,7 +392,6 @@ namespace ts {
             //      this.x = 1;
             //  }
             //
-            const properties = getInitializedProperties(node, /*isStatic*/ false);
             addInitializedPropertyStatements(statements, properties, createThis());
 
             // Add existing statements, skipping the initial super call.
@@ -371,10 +401,6 @@ namespace ts {
 
             statements = mergeLexicalEnvironment(statements, endLexicalEnvironment());
 
-            // Don't generate synthetic empty constructor.
-            if (!statements.length && !constructor) {
-                return undefined;
-            }
             return setTextRange(
                 createBlock(
                     setTextRange(
@@ -636,12 +662,17 @@ namespace ts {
         }
 
         function visitVariableStatement(node: VariableStatement) {
-            const savedAddPendingExpression = addPendingExpression;
-            const statements: Statement[] = [node];
-            addPendingExpression = (expr) => { statements.push(createExpressionStatement(expr)); }
-            statements[0] = visitEachChild(node, visitor, context);
-            addPendingExpression = savedAddPendingExpression;
-            return statements;
+            const savedPendingStatements = pendingStatements;
+            pendingStatements = [];
+            const visitedNode = visitEachChild(node, visitor, context);
+            if (some(pendingStatements)) {
+                return [
+                    visitedNode,
+                    ...pendingStatements
+                ];
+            }
+            pendingStatements = savedPendingStatements;
+            return visitedNode;
         }
 
         function visitForStatement(node: ForStatement): VisitResult<Statement> {
