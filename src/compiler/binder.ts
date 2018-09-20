@@ -3299,8 +3299,8 @@ namespace ts {
     }
 
     function computePropertyDeclaration(node: PropertyDeclaration, subtreeFlags: TransformFlags) {
-        // A PropertyDeclaration is TypeScript syntax.
-        let transformFlags = subtreeFlags | TransformFlags.AssertTypeScript;
+        // A PropertyDeclaration is ESnext syntax.
+        let transformFlags = subtreeFlags | TransformFlags.AssertESNext;
 
         // If the PropertyDeclaration has an initializer or a computed name, we need to inform its ancestor
         // so that it handle the transformation.
