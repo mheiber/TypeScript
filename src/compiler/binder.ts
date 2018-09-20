@@ -3137,8 +3137,7 @@ namespace ts {
             // A ClassDeclaration is ES6 syntax.
             transformFlags = subtreeFlags | TransformFlags.AssertES2015;
 
-            // A class with a parameter property assignment, property initializer, computed property name, or decorator is
-            // TypeScript syntax.
+            // A class with a parameter property assignment or decorator is TypeScript syntax.
             // An exported declaration may be TypeScript syntax, but is handled by the visitor
             // for a namespace declaration.
             if ((subtreeFlags & TransformFlags.ContainsTypeScriptClassSyntax)
@@ -3161,8 +3160,7 @@ namespace ts {
         // A ClassExpression is ES6 syntax.
         let transformFlags = subtreeFlags | TransformFlags.AssertES2015;
 
-        // A class with a parameter property assignment, property initializer, or decorator is
-        // TypeScript syntax.
+        // A class with a parameter property assignment or decorator is TypeScript syntax.
         if (subtreeFlags & TransformFlags.ContainsTypeScriptClassSyntax
             || node.typeParameters) {
             transformFlags |= TransformFlags.AssertTypeScript;
@@ -3304,15 +3302,8 @@ namespace ts {
     }
 
     function computePropertyDeclaration(node: PropertyDeclaration, subtreeFlags: TransformFlags) {
-        // A PropertyDeclaration is TypeScript syntax.
-        let transformFlags = subtreeFlags | TransformFlags.AssertTypeScript;
-
-        // If the PropertyDeclaration has an initializer or a computed name, we need to inform its ancestor
-        // so that it handle the transformation.
-        if (node.initializer || isComputedPropertyName(node.name)) {
-            transformFlags |= TransformFlags.ContainsTypeScriptClassSyntax;
-        }
-
+        // A PropertyDeclaration is ESnext syntax.
+        const transformFlags = subtreeFlags | TransformFlags.AssertESNext;
         node.transformFlags = transformFlags | TransformFlags.HasComputedFlags;
         return transformFlags & ~TransformFlags.NodeExcludes;
     }
