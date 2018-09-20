@@ -664,15 +664,14 @@ namespace ts {
         function visitVariableStatement(node: VariableStatement) {
             const savedPendingStatements = pendingStatements;
             pendingStatements = [];
+
             const visitedNode = visitEachChild(node, visitor, context);
-            if (some(pendingStatements)) {
-                return [
-                    visitedNode,
-                    ...pendingStatements
-                ];
-            }
+            const statement = some(pendingStatements) ?
+                [visitedNode, ...pendingStatements] :
+                visitedNode;
+
             pendingStatements = savedPendingStatements;
-            return visitedNode;
+            return statement;
         }
 
         function visitForStatement(node: ForStatement): VisitResult<Statement> {
