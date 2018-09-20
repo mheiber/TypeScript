@@ -927,9 +927,23 @@ namespace ts {
                     members,
                     visitNodes(
                         existingMembers,
-                        member => isPropertyDeclaration(member) && !hasStaticModifier(member) && !!member.initializer ?
-                            updateProperty(member, member.decorators, member.modifiers, member.name,
-                                member.questionToken, member.type, /*initializer*/ undefined) : member,
+                        member => {
+                            if (isPropertyDeclaration(member) && !hasStaticModifier(member) && !!member.initializer) {
+                                const updated = updateProperty(
+                                    member,
+                                    member.decorators,
+                                    member.modifiers,
+                                    member.name,
+                                    member.questionToken,
+                                    member.type,
+                                    /*initializer*/ undefined
+                                );
+                                setCommentRange(updated, node);
+                                setSourceMapRange(updated, node);
+                                return updated;
+                            }
+                            return member;
+                        },
                         isClassElement
                     )
                 );
@@ -1006,9 +1020,14 @@ namespace ts {
                     const lhs = (!isComputedPropertyName(name) || isSimpleInlineableExpression(name.expression)) ?
                         createMemberAccessForPropertyName(createThis(), name, prop) :
                         createElementAccess(createThis(), getGeneratedNameForNode(name));
-                    return createExpressionStatement(
+                    const initializerNode = createExpressionStatement(
                         createAssignment(lhs, prop.initializer!)
                     );
+                    setOriginalNode(initializerNode, prop);
+                    setTextRange(initializerNode, prop);
+                    setCommentRange(initializerNode, prop);
+                    setSourceMapRange(initializerNode, prop);
+                    return initializerNode;
                 }
             ));
 
@@ -2011,7 +2030,7 @@ namespace ts {
         }
 
         function visitPropertyDeclaration(node: PropertyDeclaration) {
-            return updateProperty(
+            const updated = updateProperty(
                 node,
                 /*decorators*/ undefined,
                 visitNodes(node.modifiers, visitor, isModifier),
@@ -2020,6 +2039,13 @@ namespace ts {
                 /*type*/ undefined,
                 visitNode(node.initializer, visitor)
             );
+            if (updated !== node) {
+                // While we emit the source map for the node after skipping decorators and modifiers,
+                // we need to emit the comments for the original range.
+                setCommentRange(updated, node);
+                setSourceMapRange(updated, moveRangePastDecorators(node));
+            }
+            return updated;
         }
 
         function visitConstructor(node: ConstructorDeclaration) {
