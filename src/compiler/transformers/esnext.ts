@@ -3,7 +3,10 @@ namespace ts {
     const enum ESNextSubstitutionFlags {
         /** Enables substitutions for async methods with `super` calls. */
         AsyncMethodsWithSuper = 1 << 0,
-        /** Enables substitutions for class expressions with static fields which have initializers that reference the class name. */
+        /**
+         * Enables substitutions for class expressions with static fields
+         * which have initializers that reference the class name.
+         */
         ClassAliases = 1 << 1,
     }
 
@@ -156,9 +159,11 @@ namespace ts {
         function classElementVisitor(node: Node): VisitResult<Node> {
             switch (node.kind) {
                 case SyntaxKind.Constructor:
-                    // TypeScript constructors are transformed in `visitClassDeclaration`.
-                    // We elide them here as `visitorWorker` checks transform flags, which could
-                    // erronously include an ES6 constructor without ESNext syntax.
+                    // Constructors for classes using ESNext syntax (like class properties)
+                    // are transformed in `visitClassDeclaration` or `visitClassExpression`.
+                    // We elide them here. The default visitor checks the transformFlags to
+                    // determine whether the node contains ESNext syntax, so it can skip over
+                    // constructors.
                     return undefined;
 
                 case SyntaxKind.PropertyDeclaration:
@@ -180,9 +185,8 @@ namespace ts {
          * If the name is a computed property, this function transforms it, then either returns an expression which caches the
          * value of the result or the expression itself if the value is either unused or safe to inline into multiple locations
          * @param shouldHoist Does the expression need to be reused? (ie, for an initializer or a decorator)
-         * @param omitSimple Should expressions with no observable side-effects be elided? (ie, the expression is not hoisted for a decorator or initializer and is a literal)
          */
-        function getPropertyNameExpressionIfNeeded(name: PropertyName, shouldHoist: boolean, omitSimple: boolean): Expression | undefined {
+        function getPropertyNameExpressionIfNeeded(name: PropertyName, shouldHoist: boolean): Expression | undefined {
             if (isComputedPropertyName(name)) {
                 const expression = visitNode(name.expression, visitor, isExpression);
                 const innerExpression = skipPartiallyEmittedExpressions(expression);
@@ -193,7 +197,7 @@ namespace ts {
                     hoistVariableDeclaration(generatedName);
                     return createAssignment(generatedName, expression);
                 }
-                return (omitSimple && (inlinable || isIdentifier(innerExpression))) ? undefined : expression;
+                return (inlinable || isIdentifier(innerExpression)) ? undefined : expression;
             }
         }
 
@@ -213,7 +217,10 @@ namespace ts {
 
         function visitPropertyDeclaration(node: PropertyDeclaration) {
             Debug.assert(!some(node.decorators));
-            const expr = getPropertyNameExpressionIfNeeded(node.name, !!node.initializer, /*omitSimple*/ true);
+            // Create a temporary variable to store a computed property name (if necessary).
+            // If it's not inlineable, then we emit an expression after the class which assigns
+            // the property name to the temporary variable.
+            const expr = getPropertyNameExpressionIfNeeded(node.name, !!node.initializer);
             if (expr && !isSimpleInlineableExpression(expr)) {
                 (pendingExpressions || (pendingExpressions = [])).push(expr);
             }
@@ -340,10 +347,10 @@ namespace ts {
         }
 
         function transformConstructor(node: ClassDeclaration | ClassExpression, isDerivedClass: boolean) {
-            const constructor = getFirstConstructorWithBody(node);
+            const constructor = visitNode(getFirstConstructorWithBody(node), visitor, isConstructorDeclaration);
             const containsPropertyInitializer = forEach(node.members, isInitializedProperty);
             if (!containsPropertyInitializer) {
-                return visitEachChild(constructor, visitor, context);
+                return constructor;
             }
             const parameters = visitParameterList(constructor ? constructor.parameters : undefined, visitor, context);
             const body = transformConstructorBody(node, constructor, isDerivedClass);
@@ -1119,7 +1126,7 @@ namespace ts {
             // The function only needs to be transformed if there are object rest parameters.
             // It's not enough to rely on the ContainsESNext transform flag check to transform function bodies
             // because any function containing PropertyDeclaration nodes will contain ESNext syntax.
-            if (!(node.transformFlags & TransformFlags.ContainsObjectRest)) {
+            if (!(node.transformFlags & TransformFlags.ContainsObjectRestOrSpread)) {
                 return (node.body && visitFunctionBody(node.body, visitor, context)) || createBlock([]);
             }
             resumeLexicalEnvironment();
