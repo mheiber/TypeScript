@@ -1116,6 +1116,9 @@ namespace ts {
         function transformFunctionBody(node: FunctionDeclaration | FunctionExpression | ConstructorDeclaration | MethodDeclaration | AccessorDeclaration): FunctionBody;
         function transformFunctionBody(node: ArrowFunction): ConciseBody;
         function transformFunctionBody(node: FunctionLikeDeclaration): ConciseBody {
+            if (!(node.transformFlags & TransformFlags.ContainsObjectRest)) {
+                return (node.body && visitFunctionBody(node.body, visitor, context)) || createBlock([]);
+            }
             resumeLexicalEnvironment();
             let statementOffset = 0;
             const statements: Statement[] = [];
