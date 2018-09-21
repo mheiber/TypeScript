@@ -3,7 +3,7 @@ namespace ts {
     const enum ESNextSubstitutionFlags {
         /** Enables substitutions for async methods with `super` calls. */
         AsyncMethodsWithSuper = 1 << 0,
-        /** Enables substitutions for class expressions with static fields. */
+        /** Enables substitutions for class expressions with static fields which have initializers that reference the class name. */
         ClassAliases = 1 << 1,
     }
 
