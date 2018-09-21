@@ -1116,6 +1116,9 @@ namespace ts {
         function transformFunctionBody(node: FunctionDeclaration | FunctionExpression | ConstructorDeclaration | MethodDeclaration | AccessorDeclaration): FunctionBody;
         function transformFunctionBody(node: ArrowFunction): ConciseBody;
         function transformFunctionBody(node: FunctionLikeDeclaration): ConciseBody {
+            // The function only needs to be transformed if there are object rest parameters.
+            // It's not enough to rely on the ContainsESNext transform flag check to transform function bodies
+            // because any function containing PropertyDeclaration nodes will contain ESNext syntax.
             if (!(node.transformFlags & TransformFlags.ContainsObjectRest)) {
                 return (node.body && visitFunctionBody(node.body, visitor, context)) || createBlock([]);
             }
