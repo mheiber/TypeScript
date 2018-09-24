@@ -374,17 +374,17 @@ namespace ts {
         }
 
         function transformConstructorBody(node: ClassDeclaration | ClassExpression, constructor: ConstructorDeclaration | undefined, isDerivedClass: boolean) {
-            resumeLexicalEnvironment();
-
-            let indexOfFirstStatement = 0;
-            let statements: Statement[] = [];
-
             const properties = getInitializedProperties(node, /*isStatic*/ false);
 
             // Only generate synthetic constructor when there are property initializers to move.
             if (!constructor && !some(properties)) {
-                return undefined;
+                return visitFunctionBody(/*node*/ undefined, visitor, context);
             }
+
+            resumeLexicalEnvironment();
+
+            let indexOfFirstStatement = 0;
+            let statements: Statement[] = [];
 
             if (!constructor && isDerivedClass) {
                 // Add a synthetic `super` call:
