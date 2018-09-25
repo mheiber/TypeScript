@@ -1072,8 +1072,10 @@ namespace ts {
          * @param node The parameter declaration.
          */
         function transformParameterWithPropertyAssignment(node: ParameterPropertyDeclaration) {
-            Debug.assert(isIdentifier(node.name));
-            const name = node.name as Identifier;
+            const name = node.name;
+            if (!isIdentifier(name)) {
+                return undefined;
+            }
             const propertyName = getMutableClone(name);
             setEmitFlags(propertyName, EmitFlags.NoComments | EmitFlags.NoSourceMap);
 
