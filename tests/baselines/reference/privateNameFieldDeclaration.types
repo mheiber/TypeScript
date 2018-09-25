@@ -1,0 +1,8 @@
+=== tests/cases/conformance/classes/members/privateNames/privateNameFieldDeclaration.ts ===
+class A {
+>A : A
+
+    #name: string;
+>#name : string
+}
+

@@ -10,6 +10,23 @@ namespace ts {
         ClassAliases = 1 << 1,
     }
 
+    /**
+     * A mapping of private names to information needed for transformation.
+     */
+    type PrivateNameEnvironment = UnderscoreEscapedMap<PrivateNamedInstanceField>;
+
+    /**
+     * Identifies the type of private name.
+     */
+    const enum PrivateNameType {
+        InstanceField
+    }
+
+    interface PrivateNamedInstanceField {
+        type: PrivateNameType.InstanceField;
+        weakMapName: Identifier;
+    }
+
     export function transformESNext(context: TransformationContext) {
         const {
             resumeLexicalEnvironment,
@@ -51,6 +68,8 @@ namespace ts {
          * emitted at the next execution site, in document order (for decorated classes).
          */
         let pendingStatements: Statement[] | undefined;
+
+        const privateNameEnvironmentStack: PrivateNameEnvironment[] = [];
 
         return chainBundle(transformSourceFile);
 
@@ -230,6 +249,7 @@ namespace ts {
         function visitClassDeclaration(node: ClassDeclaration) {
             const savedPendingExpressions = pendingExpressions;
             pendingExpressions = undefined;
+            startPrivateNameEnvironment();
 
             const extendsClauseElement = getEffectiveBaseTypeNode(node);
             const isDerivedClass = !!(extendsClauseElement && skipOuterExpressions(extendsClauseElement.expression).kind !== SyntaxKind.NullKeyword);
@@ -250,6 +270,7 @@ namespace ts {
             if (some(pendingExpressions)) {
                 statements.push(createExpressionStatement(inlineExpressions(pendingExpressions!)));
             }
+            endPrivateNameEnvironment();
             pendingExpressions = savedPendingExpressions;
 
             // Emit static property assignment. Because classDeclaration is lexically evaluated,
@@ -268,6 +289,7 @@ namespace ts {
         function visitClassExpression(node: ClassExpression): Expression {
             const savedPendingExpressions = pendingExpressions;
             pendingExpressions = undefined;
+            startPrivateNameEnvironment();
 
             // If this class expression is a transformation of a decorated class declaration,
             // then we want to output the pendingExpressions as statements, not as inlined
@@ -295,7 +317,7 @@ namespace ts {
                 if (isDecoratedClassDeclaration) {
                     Debug.assertDefined(pendingStatements, "Decorated classes transformed by TypeScript are expected to be within a variable declaration.");
 
-                    // Write any pending expressions from elided or moved computed property names
+                    // Write any pending expressions from elided or moved computed property names or private names
                     if (some(pendingExpressions)) {
                         pendingStatements!.push(createExpressionStatement(inlineExpressions(pendingExpressions!)));
                     }
@@ -304,6 +326,7 @@ namespace ts {
                     if (some(staticProperties)) {
                         addInitializedPropertyStatements(pendingStatements!, staticProperties, getInternalName(node));
                     }
+                    endPrivateNameEnvironment();
                     return classExpression;
                 }
                 else {
@@ -328,28 +351,38 @@ namespace ts {
                     expressions.push(startOnNewLine(temp));
 
                     pendingExpressions = savedPendingExpressions;
+                    endPrivateNameEnvironment();
                     return inlineExpressions(expressions);
                 }
             }
 
             pendingExpressions = savedPendingExpressions;
+            endPrivateNameEnvironment();
             return classExpression;
         }
 
         function transformClassMembers(node: ClassDeclaration | ClassExpression, isDerivedClass: boolean) {
+            // Declare private names.
+            const privateNamedProperties = filter(node.members, isPrivateNamedPropertyDeclaration);
+            privateNamedProperties.forEach(property => addPrivateNameToEnvironment(property.name));
+
             const members: ClassElement[] = [];
             const constructor = transformConstructor(node, isDerivedClass);
             if (constructor) {
                 members.push(constructor);
             }
+
             addRange(members, visitNodes(node.members, classElementVisitor, isClassElement));
             return setTextRange(createNodeArray(members), /*location*/ node.members);
         }
 
         function transformConstructor(node: ClassDeclaration | ClassExpression, isDerivedClass: boolean) {
             const constructor = visitNode(getFirstConstructorWithBody(node), visitor, isConstructorDeclaration);
-            const containsPropertyInitializer = forEach(node.members, isInitializedProperty);
-            if (!containsPropertyInitializer) {
+            const containsPropertyInitializerOrPrivateProperty = forEach(
+                node.members,
+                member => isInitializedProperty(member) || isPrivateNamedPropertyDeclaration(member)
+            );
+            if (!containsPropertyInitializerOrPrivateProperty) {
                 return constructor;
             }
             const parameters = visitParameterList(constructor ? constructor.parameters : undefined, visitor, context);
@@ -374,9 +407,9 @@ namespace ts {
         }
 
         function transformConstructorBody(node: ClassDeclaration | ClassExpression, constructor: ConstructorDeclaration | undefined, isDerivedClass: boolean) {
-            const properties = getInitializedProperties(node, /*isStatic*/ false);
+            const properties = filter(node.members, (node): node is PropertyDeclaration => isPropertyDeclaration(node) && !hasStaticModifier(node));
 
-            // Only generate synthetic constructor when there are property initializers to move.
+            // Only generate synthetic constructor when there are property declarations to move.
             if (!constructor && !some(properties)) {
                 return visitFunctionBody(/*node*/ undefined, visitor, context);
             }
@@ -445,7 +478,11 @@ namespace ts {
          */
         function addInitializedPropertyStatements(statements: Statement[], properties: ReadonlyArray<PropertyDeclaration>, receiver: LeftHandSideExpression) {
             for (const property of properties) {
-                const statement = createExpressionStatement(transformInitializedProperty(property, receiver));
+                const expression = transformProperty(property, receiver);
+                if (!expression) {
+                    continue;
+                }
+                const statement = createExpressionStatement(expression);
                 setSourceMapRange(statement, moveRangePastModifiers(property));
                 setCommentRange(statement, property);
                 setOriginalNode(statement, property);
@@ -462,7 +499,10 @@ namespace ts {
         function generateInitializedPropertyExpressions(properties: ReadonlyArray<PropertyDeclaration>, receiver: LeftHandSideExpression) {
             const expressions: Expression[] = [];
             for (const property of properties) {
-                const expression = transformInitializedProperty(property, receiver);
+                const expression = transformProperty(property, receiver);
+                if (!expression) {
+                    continue;
+                }
                 startOnNewLine(expression);
                 setSourceMapRange(expression, moveRangePastModifiers(property));
                 setCommentRange(expression, property);
@@ -479,15 +519,72 @@ namespace ts {
          * @param property The property declaration.
          * @param receiver The object receiving the property assignment.
          */
-        function transformInitializedProperty(property: PropertyDeclaration, receiver: LeftHandSideExpression) {
+        function transformProperty(property: PropertyDeclaration, receiver: LeftHandSideExpression) {
             // We generate a name here in order to reuse the value cached by the relocated computed name expression (which uses the same generated name)
             const propertyName = isComputedPropertyName(property.name) && !isSimpleInlineableExpression(property.name.expression)
                 ? updateComputedPropertyName(property.name, getGeneratedNameForNode(property.name))
                 : property.name;
-            const initializer = visitNode(property.initializer!, visitor, isExpression);
+            const initializer = visitNode(property.initializer, visitor, isExpression);
+
+            if (isPrivateName(propertyName)) {
+                const privateNameInfo = accessPrivateName(propertyName);
+                if (privateNameInfo) {
+                    switch (privateNameInfo.type) {
+                        case PrivateNameType.InstanceField: {
+                            return createCall(
+                                createPropertyAccess(privateNameInfo.weakMapName, "set"),
+                                /*typeArguments*/ undefined,
+                                [receiver, initializer || createVoidZero()]
+                            );
+                        }
+                    }
+                }
+            }
+            if (!initializer) {
+                return undefined;
+            }
             const memberAccess = createMemberAccessForPropertyName(receiver, propertyName, /*location*/ propertyName);
 
             return createAssignment(memberAccess, initializer);
+        }
+
+        function startPrivateNameEnvironment() {
+            const env: PrivateNameEnvironment = createUnderscoreEscapedMap();
+            privateNameEnvironmentStack.push(env);
+            return env;
+        }
+
+        function endPrivateNameEnvironment() {
+            privateNameEnvironmentStack.pop();
+        }
+
+        function addPrivateNameToEnvironment(name: PrivateName) {
+            const env = last(privateNameEnvironmentStack);
+            const text = getTextOfPropertyName(name) as string;
+            const weakMapName = createOptimisticUniqueName("_" + text.substring(1));
+            weakMapName.autoGenerateFlags |= GeneratedIdentifierFlags.ReservedInNestedScopes;
+            hoistVariableDeclaration(weakMapName);
+            env.set(name.escapedText, { type: PrivateNameType.InstanceField, weakMapName });
+            (pendingExpressions || (pendingExpressions = [])).push(
+                createAssignment(
+                    weakMapName,
+                    createNew(
+                        createIdentifier("WeakMap"),
+                        /*typeArguments*/ undefined,
+                        []
+                    )
+                )
+            );
+        }
+
+        function accessPrivateName(name: PrivateName) {
+            for (let i = privateNameEnvironmentStack.length - 1; i >= 0; --i) {
+                const env = privateNameEnvironmentStack[i];
+                if (env.has(name.escapedText)) {
+                    return env.get(name.escapedText);
+                }
+            }
+            return undefined;
         }
 
         function enableSubstitutionForClassAliases() {

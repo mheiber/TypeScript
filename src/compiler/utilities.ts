@@ -6111,6 +6111,11 @@ namespace ts {
             || kind === SyntaxKind.ComputedPropertyName;
     }
 
+    /*@internal*/
+    export function isPrivateNamedPropertyDeclaration(node: Node): node is PrivateNamedPropertyDeclaration {
+        return isPropertyDeclaration(node) && isPrivateName(node.name);
+    }
+
     export function isBindingName(node: Node): node is BindingName {
         const kind = node.kind;
         return kind === SyntaxKind.Identifier
