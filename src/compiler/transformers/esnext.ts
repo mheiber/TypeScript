@@ -10,6 +10,23 @@ namespace ts {
         ClassAliases = 1 << 1,
     }
 
+    /**
+     * A mapping of private names to information needed for transformation.
+     */
+    type PrivateNameEnvironment = UnderscoreEscapedMap<PrivateNamedInstanceField>;
+
+    /**
+     * Identifies the type of private name.
+     */
+    const enum PrivateNameType {
+        InstanceField
+    }
+
+    interface PrivateNamedInstanceField {
+        type: PrivateNameType.InstanceField;
+        weakMapName: Identifier;
+    }
+
     export function transformESNext(context: TransformationContext) {
         const {
             resumeLexicalEnvironment,
@@ -44,6 +61,8 @@ namespace ts {
          * emitted at the next execution site, in document order (for decorated classes).
          */
         let pendingStatements: Statement[] | undefined;
+
+        const privateNameEnvironmentStack: PrivateNameEnvironment[] = [];
 
         return chainBundle(transformSourceFile);
 
@@ -214,6 +233,7 @@ namespace ts {
         function visitClassDeclaration(node: ClassDeclaration) {
             const savedPendingExpressions = pendingExpressions;
             pendingExpressions = undefined;
+            startPrivateNameEnvironment();
 
             const extendsClauseElement = getEffectiveBaseTypeNode(node);
             const isDerivedClass = !!(extendsClauseElement && skipOuterExpressions(extendsClauseElement.expression).kind !== SyntaxKind.NullKeyword);
@@ -234,6 +254,7 @@ namespace ts {
             if (some(pendingExpressions)) {
                 statements.push(createExpressionStatement(inlineExpressions(pendingExpressions!)));
             }
+            endPrivateNameEnvironment();
             pendingExpressions = savedPendingExpressions;
 
             // Emit static property assignment. Because classDeclaration is lexically evaluated,
@@ -252,6 +273,7 @@ namespace ts {
         function visitClassExpression(node: ClassExpression): Expression {
             const savedPendingExpressions = pendingExpressions;
             pendingExpressions = undefined;
+            startPrivateNameEnvironment();
 
             // If this class expression is a transformation of a decorated class declaration,
             // then we want to output the pendingExpressions as statements, not as inlined
@@ -279,7 +301,7 @@ namespace ts {
                 if (isDecoratedClassDeclaration) {
                     Debug.assertDefined(pendingStatements, "Decorated classes transformed by TypeScript are expected to be within a variable declaration.");
 
-                    // Write any pending expressions from elided or moved computed property names
+                    // Write any pending expressions from elided or moved computed property names or private names
                     if (some(pendingExpressions)) {
                         pendingStatements!.push(createExpressionStatement(inlineExpressions(pendingExpressions!)));
                     }
@@ -288,6 +310,7 @@ namespace ts {
                     if (some(staticProperties)) {
                         addInitializedPropertyStatements(pendingStatements!, staticProperties, getInternalName(node));
                     }
+                    endPrivateNameEnvironment();
                     return classExpression;
                 }
                 else {
@@ -312,11 +335,13 @@ namespace ts {
                     expressions.push(startOnNewLine(temp));
 
                     pendingExpressions = savedPendingExpressions;
+                    endPrivateNameEnvironment();
                     return inlineExpressions(expressions);
                 }
             }
 
             pendingExpressions = savedPendingExpressions;
+            endPrivateNameEnvironment();
             return classExpression;
         }
 
@@ -326,6 +351,10 @@ namespace ts {
             if (constructor) {
                 members.push(constructor);
             }
+            // Declare private names.
+            const privateProperties = filter(node.members, isPrivatePropertyDeclaration);
+            privateProperties.forEach(property => addPrivateNameToEnvironment(property.name));
+
             addRange(members, visitNodes(node.members, classElementVisitor, isClassElement));
             return setTextRange(createNodeArray(members), /*location*/ node.members);
         }
@@ -471,6 +500,34 @@ namespace ts {
             const memberAccess = createMemberAccessForPropertyName(receiver, propertyName, /*location*/ propertyName);
 
             return createAssignment(memberAccess, initializer);
+        }
+
+        function startPrivateNameEnvironment() {
+            const env: PrivateNameEnvironment = createUnderscoreEscapedMap();
+            privateNameEnvironmentStack.push(env);
+            return env;
+        }
+
+        function endPrivateNameEnvironment() {
+            privateNameEnvironmentStack.pop();
+        }
+
+        function addPrivateNameToEnvironment(name: PrivateName) {
+            const env = last(privateNameEnvironmentStack);
+            const text = getTextOfPropertyName(name) as string;
+            const weakMapName = createFileLevelUniqueName("_" + text.substring(1));
+            hoistVariableDeclaration(weakMapName);
+            env.set(name.escapedText, { type: PrivateNameType.InstanceField, weakMapName });
+            (pendingExpressions || (pendingExpressions = [])).push(
+                createAssignment(
+                    weakMapName,
+                    createNew(
+                        createIdentifier("WeakMap"),
+                        /*typeArguments*/ undefined,
+                        []
+                    )
+                )
+            );
         }
 
         function enableSubstitutionForClassAliases() {
