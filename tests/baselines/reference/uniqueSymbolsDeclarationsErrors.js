@@ -84,6 +84,8 @@ function funcInferredReturnType(obj) {
 }
 exports.funcInferredReturnType = funcInferredReturnType;
 class ClassWithPrivateNamedProperties {
+    [s];
+    static [s];
 }
 exports.ClassWithPrivateNamedProperties = ClassWithPrivateNamedProperties;
 class ClassWithPrivateNamedMethods {

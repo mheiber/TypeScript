@@ -308,14 +308,13 @@ async function* asyncGenFuncYieldLetCall() { yield letCall; }
 async function* asyncGenFuncYieldVarCall() { yield varCall; }
 // classes
 class C {
-    constructor() {
-        this.readonlyCall = Symbol();
-        this.readwriteCall = Symbol();
-    }
+    static readonlyStaticCall = Symbol();
+    static readonlyStaticType;
+    static readonlyStaticTypeAndCall = Symbol();
+    static readwriteStaticCall = Symbol();
+    readonlyCall = Symbol();
+    readwriteCall = Symbol();
 }
-C.readonlyStaticCall = Symbol();
-C.readonlyStaticTypeAndCall = Symbol();
-C.readwriteStaticCall = Symbol();
 const constInitToCReadonlyStaticCall = C.readonlyStaticCall;
 const constInitToCReadonlyStaticType = C.readonlyStaticType;
 const constInitToCReadonlyStaticTypeAndCall = C.readonlyStaticTypeAndCall;
@@ -364,26 +363,24 @@ const o2 = {
 };
 // property initializers
 class C0 {
-    constructor() {
-        this.a = s;
-        this.b = N.s;
-        this.c = N["s"];
-        this.d = s;
-        this.e = N.s;
-        this.f = N["s"];
-    }
+    static a = s;
+    static b = N.s;
+    static c = N["s"];
+    static d = s;
+    static e = N.s;
+    static f = N["s"];
+    a = s;
+    b = N.s;
+    c = N["s"];
+    d = s;
+    e = N.s;
+    f = N["s"];
     method1() { return s; }
     async method2() { return s; }
     async *method3() { yield s; }
     *method4() { yield s; }
     method5(p = s) { return p; }
 }
-C0.a = s;
-C0.b = N.s;
-C0.c = N["s"];
-C0.d = s;
-C0.e = N.s;
-C0.f = N["s"];
 // non-widening positions
 // element access
 o[s];
@@ -410,8 +407,11 @@ Math.random() * 2 ? N["s"] : "a";
     [N.s]: "b",
 });
 class C1 {
+    static [s];
+    static [N.s];
+    [s];
+    [N.s];
 }
-N.s, N.s;
 const o3 = {
     method1() {
         return s; // return type should not widen due to contextual type
