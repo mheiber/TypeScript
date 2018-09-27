@@ -91,6 +91,8 @@ const shouldNotBeAssignable: string = Symbol();
 // classes
 class InvalidClass {
     constructor(invalidConstructorArgType) { }
+    invalidReadonlyPropertyType;
+    invalidPropertyType;
     invalidArgType(arg) { return; }
     invalidRestArgType(...args) { return; }
     invalidReturnType() { return; }
@@ -100,6 +102,7 @@ class InvalidClass {
     invalidTypeParameterDefault() { return; }
     get invalidGetter() { return; }
     set invalidSetter(arg) { return; }
+    static invalidStaticPropertyType;
     static invalidStaticArgType(arg) { return; }
     static invalidStaticRestArgType(...args) { return; }
     static invalidStaticReturnType() { return; }

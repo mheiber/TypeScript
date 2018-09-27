@@ -35,9 +35,7 @@ export function foo() { return "foo"; }
 export function backup() { return "backup"; }
 //// [2.js]
 class C {
-    constructor() {
-        this.myModule = import("./0");
-    }
+    myModule = import("./0");
     method() {
         const loadAsync = import("./0");
         this.myModule.then(Zero => {
