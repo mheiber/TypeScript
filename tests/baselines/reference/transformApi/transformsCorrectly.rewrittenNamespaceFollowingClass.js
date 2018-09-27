@@ -1,9 +1,7 @@
 class C {
-    constructor() {
-        this.foo = 10;
-    }
+    foo = 10;
+    static bar = 20;
 }
-C.bar = 20;
 (function (C) {
     C.x = 10;
 })(C || (C = {}));

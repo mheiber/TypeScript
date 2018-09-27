@@ -78,9 +78,7 @@ System.register([], function (exports_1, context_1) {
         setters: [],
         execute: function () {
             C = class C {
-                constructor() {
-                    this.myModule = context_1.import("./0");
-                }
+                myModule = context_1.import("./0");
                 method() {
                     const loadAsync = context_1.import("./0");
                     this.myModule.then(Zero => {
@@ -93,9 +91,7 @@ System.register([], function (exports_1, context_1) {
                 }
             };
             D = class D {
-                constructor() {
-                    this.myModule = context_1.import("./0");
-                }
+                myModule = context_1.import("./0");
                 method() {
                     const loadAsync = context_1.import("./0");
                     this.myModule.then(Zero => {
