@@ -1969,10 +1969,7 @@ namespace ts {
                 if (!isSimpleInlineableExpression(innerExpression)) {
                     const generatedName = getGeneratedNameForNode(name);
                     hoistVariableDeclaration(generatedName);
-                    return updateComputedPropertyName(
-                        name as ComputedPropertyName,
-                        createAssignment(generatedName, expression)
-                    );
+                    return updateComputedPropertyName(name, createAssignment(generatedName, expression));
                 }
             }
             return visitNode(name, visitor, isPropertyName);
