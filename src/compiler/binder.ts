@@ -3304,9 +3304,7 @@ namespace ts {
         let transformFlags = subtreeFlags | TransformFlags.AssertESNext;
 
         // Decorators, TypeScript-specific modifiers, and type annotations are TypeScript syntax.
-        if (node.decorators
-            || hasModifier(node, ModifierFlags.TypeScriptModifier)
-            || node.type) {
+        if (some(node.decorators) || hasModifier(node, ModifierFlags.TypeScriptModifier) || node.type) {
             transformFlags |= TransformFlags.AssertTypeScript;
         }
 

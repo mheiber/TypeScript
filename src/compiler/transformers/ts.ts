@@ -330,6 +330,8 @@ namespace ts {
                     return undefined;
 
                 case SyntaxKind.PropertyDeclaration:
+                    // Property declarations are not TypeScript syntax, but they must be visited
+                    // for the decorator transformation.
                     return visitPropertyDeclaration(node as PropertyDeclaration);
                 case SyntaxKind.IndexSignature:
                 case SyntaxKind.GetAccessor:
@@ -897,7 +899,6 @@ namespace ts {
          * Transforms the members of a class.
          *
          * @param node The current class.
-         * @param isDerivedClass A value indicating whether the class has an extends clause that does not extend 'null'.
          */
         function transformClassMembers(node: ClassDeclaration | ClassExpression) {
             const members: ClassElement[] = [];

@@ -254,6 +254,8 @@ namespace ts {
      * Adds super call and preceding prologue directives into the list of statements.
      *
      * @param ctor The constructor node.
+     * @param result The list of statements.
+     * @param visitor The visitor to apply to each node added to the result array.
      * @returns index of the statement that follows super call
      */
     export function addPrologueDirectivesAndInitialSuperCall(ctor: ConstructorDeclaration, result: Statement[], visitor: Visitor): number {
