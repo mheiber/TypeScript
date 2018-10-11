@@ -27,15 +27,19 @@ namespace ts {
         let enclosingSuperContainerFlags: NodeCheckFlags = 0;
 
 
+        const enum PrivateNamePlacement { InstancePropertyLike, InstanceMethod };
+
         /**
-         * Maps private names to the generated name of the WeakMap.
+         * Maps private names to the generated name and (if applicable) accessor
          */
         interface PrivateNameEnvironment {
             [name: string]: {
-                weakMap: Identifier;
+                placement: PrivateNamePlacement
+                accumulator: Identifier;
                 initializer?: Expression;
-            };
+            }
         }
+
         const privateNameEnvironmentStack: PrivateNameEnvironment[] = [];
         let privateNameEnvironmentIndex = -1;
 
@@ -129,25 +133,53 @@ namespace ts {
             return privateNameEnvironmentStack[privateNameEnvironmentIndex];
         }
 
-        function addPrivateName(name: PrivateName, initializer?: Expression) {
+        function getPrivateNamePlacement (declaration: PrivateNamedDeclaration): PrivateNamePlacement | undefined {
+            if (declaration.kind === SyntaxKind.PropertyDeclaration) {
+                if (hasModifier(declaration, ModifierFlags.Static)) {
+                    // todo: static property
+                    return undefined;
+                }
+                else {
+                    return PrivateNamePlacement.InstancePropertyLike;
+                }
+            }
+            else if (declaration.kind === SyntaxKind.MethodDeclaration) {
+                if (hasModifier(declaration, ModifierFlags.Static)) {
+                    // todo: static method
+                    return undefined;
+                }
+                else {
+                    return PrivateNamePlacement.InstanceMethod;
+                }
+            }
+            else {
+                return undefined;
+            }
+        }
+
+        function addPrivateName(declaration: PrivateNamedDeclaration, initializer?: Expression): void {
             const environment = currentPrivateNameEnvironment();
-            const nameString = name.escapedText as string;
+            const nameString = declaration.name.escapedText as string;
             if (nameString in environment) {
                 throw new Error("Redeclaring private name " + nameString + ".");
             }
-            const weakMap = createFileLevelUniqueName("_" + nameString.substring(1));
+            const accumulator = createFileLevelUniqueName("_" + nameString.substring(1));
+            const placement = getPrivateNamePlacement(declaration);
+            if (!placement) {
+                return;
+            }
             environment[nameString] = {
-                weakMap,
+                placement,
+                accumulator,
                 initializer
             };
-            return weakMap;
         }
 
-        function accessPrivateName(name: PrivateName) {
+        function getPrivateNameRecord(name: PrivateName) {
             const environment = currentPrivateNameEnvironment();
             const nameString = name.escapedText as string;
             if (nameString in environment) {
-                return environment[nameString].weakMap;
+                return environment[nameString];
             }
             // Undeclared private name.
             return undefined;
@@ -155,24 +187,40 @@ namespace ts {
 
         function visitPropertyAccessExpression(node: PropertyAccessExpression): Expression {
             if (isPrivateName(node.name)) {
-                const weakMapName = accessPrivateName(node.name);
-                if (!weakMapName) {
+                const record = getPrivateNameRecord(node.name);
+                if (!record) {
                     return node;
                 }
-                return setOriginalNode(
-                    setTextRange(
-                        createClassPrivateFieldGetHelper(context, node.expression, weakMapName),
-                        /* location */ node
-                    ),
-                    node
-                );
+                const { placement, accumulator } = record;
+
+                switch (placement) {
+                    case PrivateNamePlacement.InstancePropertyLike:
+                        return setOriginalNode(
+                            setTextRange(
+                                createClassPrivateFieldGetHelper(context, node.expression, accumulator),
+                                /* location */ node
+                            ),
+                            node
+                        );
+                    case PrivateNamePlacement.InstanceMethod:
+                        // TODO: use private instance method helper instead here
+                        return setOriginalNode(
+                            setTextRange(
+                                createClassPrivateFieldGetHelper(context, node.expression, accumulator),
+                                /* location */ node
+                            ),
+                            node
+                        );
+                    default:
+                        Debug.assertNever(placement);
+                }
             }
             return visitEachChild(node, visitor, context);
         }
 
         function visitorCollectPrivateNames(node: Node): VisitResult<Node> {
-            if (isPrivateNamedPropertyDeclaration(node)) {
-                addPrivateName(node.name);
+            if (isPrivateNamedDeclaration(node)) {
+                addPrivateName(node);
                 return undefined;
             }
             // Don't collect private names from nested classes.
@@ -186,7 +234,7 @@ namespace ts {
             startPrivateNameEnvironment();
             node = visitEachChild(node, visitorCollectPrivateNames, context);
             node = visitEachChild(node, visitor, context);
-            const statements = createPrivateNameWeakMapDeclarations(
+            const statements = createPrivateNameaccumulatorDeclarations(
                 currentPrivateNameEnvironment()
             );
             if (statements.length) {
@@ -209,7 +257,7 @@ namespace ts {
             startPrivateNameEnvironment();
             node = visitEachChild(node, visitorCollectPrivateNames, context);
             node = visitEachChild(node, visitor, context);
-            const expressions = createPrivateNameWeakMapAssignments(
+            const expressions = createPrivateNameaccumulatorAssignments(
                 currentPrivateNameEnvironment()
             );
             if (expressions.length) {
@@ -240,12 +288,12 @@ namespace ts {
             return privateNameEnvironment;
         }
 
-        function createPrivateNameWeakMapDeclarations(environment: PrivateNameEnvironment): Statement[] {
+        function createPrivateNameaccumulatorDeclarations(environment: PrivateNameEnvironment): Statement[] {
             return Object.keys(environment).map(name => {
                 const privateName = environment[name];
                 return createVariableStatement(
                     /* modifiers */ undefined,
-                    [createVariableDeclaration(privateName.weakMap,
+                    [createVariableDeclaration(privateName.accumulator,
                                                /* typeNode */ undefined,
                         createNew(
                             createIdentifier("WeakMap"),
@@ -256,12 +304,12 @@ namespace ts {
             });
         }
 
-        function createPrivateNameWeakMapAssignments(environment: PrivateNameEnvironment): Expression[] {
+        function createPrivateNameaccumulatorAssignments(environment: PrivateNameEnvironment): Expression[] {
             return Object.keys(environment).map(name => {
                 const privateName = environment[name];
-                hoistVariableDeclaration(privateName.weakMap);
+                hoistVariableDeclaration(privateName.accumulator);
                 return createBinary(
-                    privateName.weakMap,
+                    privateName.accumulator,
                     SyntaxKind.EqualsToken,
                     createNew(createIdentifier("WeakMap"), /* typeArguments */ undefined, /* argumentsArray */ undefined)
                 );
@@ -276,7 +324,7 @@ namespace ts {
                 const privateName = privateNameEnvironment[name];
                 return createStatement(
                     createCall(
-                        createPropertyAccess(privateName.weakMap, "set"),
+                        createPropertyAccess(privateName.accumulator, "set"),
                         /* typeArguments */ undefined,
                         [createThis(), privateName.initializer || createVoidZero()]
                     )
@@ -476,8 +524,8 @@ namespace ts {
                      isPropertyAccessExpression(node.left) &&
                      isPrivateName(node.left.name)) {
 
-                const weakMapName = accessPrivateName(node.left.name);
-                if (!weakMapName) {
+                const accumulatorName = getPrivateNameRecord(node.left.name);
+                if (!accumulatorName) {
                     // Don't change output for undeclared private names (error).
                     return node;
                 }
@@ -499,9 +547,9 @@ namespace ts {
                         createClassPrivateFieldSetHelper(
                             context,
                             setReceiver,
-                            weakMapName,
+                            accumulatorName,
                             createBinary(
-                                createClassPrivateFieldGetHelper(context, getReceiver, weakMapName),
+                                createClassPrivateFieldGetHelper(context, getReceiver, accumulatorName),
                                 getOperatorForCompoundAssignment(node.operatorToken.kind),
                                 visitNode(node.right, visitor)
                             )
@@ -514,7 +562,7 @@ namespace ts {
                         createClassPrivateFieldSetHelper(
                             context,
                             node.left.expression,
-                            weakMapName,
+                            accumulatorName,
                             visitNode(node.right, visitor)
                         ),
                         node

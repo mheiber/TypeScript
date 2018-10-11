@@ -864,7 +864,7 @@ namespace ts {
         initializer?: Expression;           // Optional initializer
     }
 
-    export interface PrivateNamedPropertyDeclaration extends PropertyDeclaration {
+    export interface PrivateNamedDeclaration extends PropertyDeclaration {
         name: PrivateName;
     }
 

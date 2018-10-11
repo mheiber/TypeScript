@@ -6091,8 +6091,8 @@ namespace ts {
         }
     }
 
-    export function isPrivateNamedPropertyDeclaration(node: Node): node is PrivateNamedPropertyDeclaration {
-        return node && isPropertyDeclaration(node) && isPrivateName(node.name);
+    export function isPrivateNamedDeclaration(node: Node): node is PrivateNamedDeclaration {
+        return node && isNamedDeclaration(node) && isPrivateName(node.name);
     }
 
     // Type members
