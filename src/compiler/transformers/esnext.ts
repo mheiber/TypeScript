@@ -207,7 +207,7 @@ namespace ts {
                         // TODO: use private instance method helper instead here
                         return setOriginalNode(
                             setTextRange(
-                                createClassPrivateNamedCallHelper(context, node.expression, accumulator),
+                                createClassPrivateNamedCallCheckHelper(context, node.expression, accumulator),
                                 /* location */ node
                             ),
                             node
@@ -346,14 +346,30 @@ namespace ts {
             const privateNameEnvironment = currentPrivateNameEnvironment();
             // Initialize private properties.
             const initializerStatements = Object.keys(privateNameEnvironment).map(name => {
-                const privateName = privateNameEnvironment[name];
-                return createStatement(
-                    createCall(
-                        createPropertyAccess(privateName.accumulator, "set"),
-                        /* typeArguments */ undefined,
-                        [createThis(), privateName.initializer || createVoidZero()]
-                    )
-                );
+                const { accumulator, placement, initializer} = privateNameEnvironment[name];
+
+                switch(placement) {
+                    case PrivateNamePlacement.InstancePropertyLike:
+                        return createStatement(
+                            createCall(
+                                createPropertyAccess(accumulator, "set"),
+                                /* typeArguments */ undefined,
+                                [createThis(), initializer || createVoidZero()]
+                            )
+                        );
+                    case PrivateNamePlacement.InstanceMethod:
+                        return createStatement(
+                            createCall(
+                                createPropertyAccess(accumulator, "add"),
+                                /* typeArguments */ undefined,
+                                [createThis()]
+                            )
+                        );
+                    default:
+                        return Debug.assertNever(placement);
+
+                }
+
             });
             const ctor = find(
                 members,
@@ -1257,15 +1273,15 @@ namespace ts {
         return createCall(getHelperName("_classPrivateFieldGet"), /* typeArguments */ undefined, [ receiver, privateField ]);
     }
 
-    const classPrivateNamedCallHelper: EmitHelper = {
+    const classPrivateNamedCallCheckHelper: EmitHelper = {
         name: "typescript:classPrivateNamedCall",
         scoped: false,
-        text: `var _classPrivateNamedCall = function classPrivateNamedCall (receiver, privateMap) { if (!privateMap.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return privateMap.get(receiver); };`
+        text: `var _classPrivateNamedCall = function (receiver, privateSet) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); }};`
     };
 
-    function createClassPrivateNamedCallHelper(context: TransformationContext, receiver: Expression, privateField: Identifier) {
-        context.requestEmitHelper(classPrivateNamedCallHelper);
-        return createCall(getHelperName("_classPrivateNamedCall"), /* typeArguments */ undefined, [ receiver, privateField ]);
+    function createClassPrivateNamedCallCheckHelper(context: TransformationContext, receiver: Expression, privateField: Identifier) {
+        context.requestEmitHelper(classPrivateNamedCallCheckHelper);
+        return createCall(getHelperName("_classPrivateNamedCallCheck"), /* typeArguments */ undefined, [ receiver, privateField ]);
     }
 
     const classPrivateFieldSetHelper: EmitHelper = {
