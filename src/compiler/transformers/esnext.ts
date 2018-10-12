@@ -197,6 +197,7 @@ namespace ts {
                     case PrivateNamePlacement.InstancePropertyLike:
                         return setOriginalNode(
                             setTextRange(
+                                // todo: rename
                                 createClassPrivateFieldGetHelper(context, node.expression, accumulator),
                                 /* location */ node
                             ),
@@ -206,7 +207,7 @@ namespace ts {
                         // TODO: use private instance method helper instead here
                         return setOriginalNode(
                             setTextRange(
-                                createClassPrivateFieldGetHelper(context, node.expression, accumulator),
+                                createClassPrivateNamedCallHelper(context, node.expression, accumulator),
                                 /* location */ node
                             ),
                             node
@@ -219,7 +220,7 @@ namespace ts {
         }
 
         function visitorCollectPrivateNames(node: Node): VisitResult<Node> {
-            if (isPrivateNamedDeclaration(node)) {
+            if (isPrivateNamedDeclaration(node) && (isPropertyDeclaration(node) || isMethodDeclaration(node))) {
                 addPrivateName(node);
                 return undefined;
             }
@@ -524,11 +525,12 @@ namespace ts {
                      isPropertyAccessExpression(node.left) &&
                      isPrivateName(node.left.name)) {
 
-                const accumulatorName = getPrivateNameRecord(node.left.name);
-                if (!accumulatorName) {
+                const privateNameRecord = getPrivateNameRecord(node.left.name);
+                if (!privateNameRecord) {
                     // Don't change output for undeclared private names (error).
                     return node;
                 }
+                const accumulatorName = privateNameRecord.accumulator;
                 if (isCompoundAssignment(node.operatorToken.kind)) {
                     let setReceiver: Expression;
                     let getReceiver: Expression;
@@ -1229,6 +1231,17 @@ namespace ts {
     function createClassPrivateFieldGetHelper(context: TransformationContext, receiver: Expression, privateField: Identifier) {
         context.requestEmitHelper(classPrivateFieldGetHelper);
         return createCall(getHelperName("_classPrivateFieldGet"), /* typeArguments */ undefined, [ receiver, privateField ]);
+    }
+
+    const classPrivateNamedCallHelper: EmitHelper = {
+        name: "typescript:classPrivateNamedCall",
+        scoped: false,
+        text: `var _classPrivateNamedCall = function classPrivateNamedCall (receiver, privateMap) { if (!privateMap.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return privateMap.get(receiver); };`
+    };
+
+    function createClassPrivateNamedCallHelper(context: TransformationContext, receiver: Expression, privateField: Identifier) {
+        context.requestEmitHelper(classPrivateNamedCallHelper);
+        return createCall(getHelperName("_classPrivateNamedCall"), /* typeArguments */ undefined, [ receiver, privateField ]);
     }
 
     const classPrivateFieldSetHelper: EmitHelper = {
