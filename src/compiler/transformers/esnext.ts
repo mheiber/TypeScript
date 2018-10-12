@@ -165,7 +165,7 @@ namespace ts {
             }
             const accumulator = createFileLevelUniqueName("_" + nameString.substring(1));
             const placement = getPrivateNamePlacement(declaration);
-            if (!placement) {
+            if (placement === undefined) {
                 return;
             }
             environment[nameString] = {
@@ -220,7 +220,15 @@ namespace ts {
         }
 
         function visitorCollectPrivateNames(node: Node): VisitResult<Node> {
-            if (isPrivateNamedDeclaration(node) && (isPropertyDeclaration(node) || isMethodDeclaration(node))) {
+            if (
+                isPrivateNamedDeclaration(node)
+                && (isPropertyDeclaration(node)
+                    || isMethodDeclaration(node)
+                    // TODO: getters/setters
+                )
+                // TODO: statics
+                && !hasModifier(node, ModifierFlags.Static)
+            ) {
                 addPrivateName(node);
                 return undefined;
             }
@@ -291,26 +299,42 @@ namespace ts {
 
         function createPrivateNameaccumulatorDeclarations(environment: PrivateNameEnvironment): Statement[] {
             return Object.keys(environment).map(name => {
-                const privateName = environment[name];
-                return createVariableStatement(
-                    /* modifiers */ undefined,
-                    [createVariableDeclaration(privateName.accumulator,
-                                               /* typeNode */ undefined,
-                        createNew(
-                            createIdentifier("WeakMap"),
-                                                   /* typeArguments */ undefined,
-                                                   /* argumentsArray */ undefined
-                        ))]
-                );
+                const { placement, accumulator } = environment[name];
+                switch (placement) {
+                    case PrivateNamePlacement.InstancePropertyLike:
+                        return createVariableStatement(
+                            /* modifiers */ undefined,
+                            [createVariableDeclaration(accumulator,
+                                                    /* typeNode */ undefined,
+                                createNew(
+                                    createIdentifier("WeakMap"),
+                                                        /* typeArguments */ undefined,
+                                                        /* argumentsArray */ undefined
+                                ))]
+                        );
+                    case PrivateNamePlacement.InstanceMethod:
+                        return createVariableStatement(
+                            /* modifiers */ undefined,
+                            [createVariableDeclaration(accumulator,
+                                                    /* typeNode */ undefined,
+                                createNew(
+                                    createIdentifier("WeakSet"),
+                                                        /* typeArguments */ undefined,
+                                                        /* argumentsArray */ undefined
+                                ))]
+                        );
+                    default:
+                        return Debug.assertNever(placement);
+                }
             });
         }
 
         function createPrivateNameaccumulatorAssignments(environment: PrivateNameEnvironment): Expression[] {
             return Object.keys(environment).map(name => {
-                const privateName = environment[name];
-                hoistVariableDeclaration(privateName.accumulator);
+                const { accumulator } = environment[name];
+                hoistVariableDeclaration(accumulator);
                 return createBinary(
-                    privateName.accumulator,
+                    accumulator,
                     SyntaxKind.EqualsToken,
                     createNew(createIdentifier("WeakMap"), /* typeArguments */ undefined, /* argumentsArray */ undefined)
                 );
