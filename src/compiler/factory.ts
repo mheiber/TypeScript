@@ -3025,6 +3025,16 @@ namespace ts {
         return node;
     }
 
+    export function replaceNode<T extends Node>(original: Node | undefined, node: T) : T {
+        return setOriginalNode(
+            setTextRange(
+                node,
+                /* location */ original
+            ),
+            original
+        );
+    }
+
     function mergeEmitNode(sourceEmitNode: EmitNode, destEmitNode: EmitNode | undefined) {
         const {
             flags,

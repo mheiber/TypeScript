@@ -27,18 +27,27 @@ namespace ts {
         let enclosingSuperContainerFlags: NodeCheckFlags = 0;
 
 
-        const enum PrivateNamePlacement { InstancePropertyLike, InstanceMethod };
+        const enum PrivateNamePlacement { InstanceField, InstanceMethod };
 
         /**
          * Maps private names to the generated name and (if applicable) accessor
          */
         interface PrivateNameEnvironment {
-            [name: string]: {
-                placement: PrivateNamePlacement
-                accumulator: Identifier;
-                initializer?: Expression;
-            }
+            [name: string]: PrivateNamedInstanceFieldEntry | PrivateNamedInstanceMethodEntry;
         }
+
+        interface PrivateNamedInstanceFieldEntry {
+            placement: PrivateNamePlacement.InstanceField;
+            accumulator: Identifier;
+            initializer?: Expression;
+        }
+
+        interface PrivateNamedInstanceMethodEntry {
+            accumulator: Identifier;
+            placement: PrivateNamePlacement.InstanceField;
+            parameters
+        }
+
 
         const privateNameEnvironmentStack: PrivateNameEnvironment[] = [];
         let privateNameEnvironmentIndex = -1;
@@ -195,22 +204,15 @@ namespace ts {
 
                 switch (placement) {
                     case PrivateNamePlacement.InstancePropertyLike:
-                        return setOriginalNode(
-                            setTextRange(
-                                // todo: rename
+                        return replaceNode(
                                 createClassPrivateFieldGetHelper(context, node.expression, accumulator),
-                                /* location */ node
-                            ),
-                            node
-                        );
+                                node
+                            );
                     case PrivateNamePlacement.InstanceMethod:
                         // TODO: use private instance method helper instead here
-                        return setOriginalNode(
-                            setTextRange(
+                        return replaceNode(
                                 createClassPrivateNamedCallCheckHelper(context, node.expression, accumulator),
-                                /* location */ node
-                            ),
-                            node
+                                node
                         );
                     default:
                         Debug.assertNever(placement);
@@ -1274,14 +1276,14 @@ namespace ts {
     }
 
     const classPrivateNamedCallCheckHelper: EmitHelper = {
-        name: "typescript:classPrivateNamedCall",
+        name: "typescript:classPrivateNamedCallCheck",
         scoped: false,
-        text: `var _classPrivateNamedCall = function (receiver, privateSet) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); }};`
+        text: `var _classPrivateNamedCall = function (receiver, weakSet) { if (!weakSet.has(receiver)) { throw new TypeError("attempted to get weak field on non-instance"); }};`
     };
 
-    function createClassPrivateNamedCallCheckHelper(context: TransformationContext, receiver: Expression, privateField: Identifier) {
+    function createClassPrivateNamedCallCheckHelper(context: TransformationContext, receiver: Expression, weakSet: Identifier) {
         context.requestEmitHelper(classPrivateNamedCallCheckHelper);
-        return createCall(getHelperName("_classPrivateNamedCallCheck"), /* typeArguments */ undefined, [ receiver, privateField ]);
+        return createCall(getHelperName("_classPrivateNamedCallCheck"), /* typeArguments */ undefined, [ receiver, weakSet ]);
     }
 
     const classPrivateFieldSetHelper: EmitHelper = {
