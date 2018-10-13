@@ -36,8 +36,8 @@ namespace ts {
                 initializer?: Expression;
             };
         }
-        const privateNameEnvironmentStack: PrivateNameEnvironment[] = [];
-        let privateNameEnvironmentIndex = -1;
+
+        let privateNameEnvironment: PrivateNameEnvironment = {};
 
         return chainBundle(transformSourceFile);
 
@@ -125,18 +125,13 @@ namespace ts {
             }
         }
 
-        function currentPrivateNameEnvironment() {
-            return privateNameEnvironmentStack[privateNameEnvironmentIndex];
-        }
-
         function addPrivateName(name: PrivateName, initializer?: Expression) {
-            const environment = currentPrivateNameEnvironment();
             const nameString = name.escapedText as string;
-            if (nameString in environment) {
+            if (nameString in privateNameEnvironment) {
                 throw new Error("Redeclaring private name " + nameString + ".");
             }
             const weakMap = createFileLevelUniqueName("_" + nameString.substring(1));
-            environment[nameString] = {
+            privateNameEnvironment[nameString] = {
                 weakMap,
                 initializer
             };
@@ -144,10 +139,9 @@ namespace ts {
         }
 
         function accessPrivateName(name: PrivateName) {
-            const environment = currentPrivateNameEnvironment();
             const nameString = name.escapedText as string;
-            if (nameString in environment) {
-                return environment[nameString].weakMap;
+            if (nameString in privateNameEnvironment) {
+                return privateNameEnvironment[nameString].weakMap;
             }
             // Undeclared private name.
             return undefined;
@@ -183,11 +177,12 @@ namespace ts {
         }
 
         function visitClassDeclaration(node: ClassDeclaration) {
-            startPrivateNameEnvironment();
+            const savedPrivateNameEnvironment = privateNameEnvironment;
+            privateNameEnvironment = {};
             node = visitEachChild(node, visitorCollectPrivateNames, context);
             node = visitEachChild(node, visitor, context);
             const statements = createPrivateNameWeakMapDeclarations(
-                currentPrivateNameEnvironment()
+                privateNameEnvironment
             );
             if (statements.length) {
                 node = updateClassDeclaration(
@@ -201,16 +196,17 @@ namespace ts {
                 );
             }
             statements.unshift(node);
-            endPrivateNameEnvironment();
+            privateNameEnvironment = savedPrivateNameEnvironment;
             return statements;
         }
 
         function visitClassExpression(node: ClassExpression) {
-            startPrivateNameEnvironment();
+            const savedPrivateNameEnvironment = privateNameEnvironment;
+            privateNameEnvironment = {};
             node = visitEachChild(node, visitorCollectPrivateNames, context);
             node = visitEachChild(node, visitor, context);
             const expressions = createPrivateNameWeakMapAssignments(
-                currentPrivateNameEnvironment()
+                privateNameEnvironment
             );
             if (expressions.length) {
                 node = updateClassExpression(
@@ -223,21 +219,8 @@ namespace ts {
                 );
             }
             expressions.push(node);
-            endPrivateNameEnvironment();
+            privateNameEnvironment = savedPrivateNameEnvironment;
             return expressions.length > 1 ? createCommaList(expressions) : expressions[0];
-        }
-
-        function startPrivateNameEnvironment() {
-            // Create private name environment.
-            privateNameEnvironmentStack[++privateNameEnvironmentIndex] = {};
-            return currentPrivateNameEnvironment();
-        }
-
-        function endPrivateNameEnvironment(): PrivateNameEnvironment {
-            const privateNameEnvironment = currentPrivateNameEnvironment();
-            // Destroy private name environment.
-            delete privateNameEnvironmentStack[privateNameEnvironmentIndex--];
-            return privateNameEnvironment;
         }
 
         function createPrivateNameWeakMapDeclarations(environment: PrivateNameEnvironment): Statement[] {
@@ -270,7 +253,6 @@ namespace ts {
 
         function transformClassMembers(members: ReadonlyArray<ClassElement>): ClassElement[] {
             // Rewrite constructor with private name initializers.
-            const privateNameEnvironment = currentPrivateNameEnvironment();
             // Initialize private properties.
             const initializerStatements = Object.keys(privateNameEnvironment).map(name => {
                 const privateName = privateNameEnvironment[name];
