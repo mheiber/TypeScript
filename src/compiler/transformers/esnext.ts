@@ -780,6 +780,46 @@ namespace ts {
                     visitNode(node.right, noDestructuringValue ? visitorNoDestructuringValue : visitor, isExpression)
                 );
             }
+            else if (isAssignmentExpression(node) && isPropertyAccessExpression(node.left) && isPrivateName(node.left.name)) {
+                const privateNameInfo = accessPrivateName(node.left.name);
+                if (privateNameInfo && privateNameInfo.type === PrivateNameType.InstanceField) {
+                    if (isCompoundAssignment(node.operatorToken.kind)) {
+                        const isReceiverInlineable = isSimpleInlineableExpression(node.left.expression);
+                        const getReceiver = isReceiverInlineable ? node.left.expression : createTempVariable(hoistVariableDeclaration);
+                        const setReceiver = isReceiverInlineable
+                            ? node.left.expression
+                            : createAssignment(getReceiver, node.left.expression);
+                        return setOriginalNode(
+                            createClassPrivateFieldSetHelper(
+                                context,
+                                setReceiver,
+                                privateNameInfo.weakMapName,
+                                createBinary(
+                                    createClassPrivateFieldGetHelper(
+                                        context,
+                                        getReceiver,
+                                        privateNameInfo.weakMapName
+                                    ),
+                                    getOperatorForCompoundAssignment(node.operatorToken.kind),
+                                    visitNode(node.right, visitor)
+                                )
+                            ),
+                            node
+                        );
+                    }
+                    else {
+                        return setOriginalNode(
+                            createClassPrivateFieldSetHelper(
+                                context,
+                                node.left.expression,
+                                privateNameInfo.weakMapName,
+                                visitNode(node.right, visitor)
+                            ),
+                            node
+                        );
+                    }
+                }
+            }
             return visitEachChild(node, visitor, context);
         }
 
@@ -1616,5 +1656,16 @@ namespace ts {
     function createClassPrivateFieldGetHelper(context: TransformationContext, receiver: Expression, privateField: Identifier) {
         context.requestEmitHelper(classPrivateFieldGetHelper);
         return createCall(getHelperName("_classPrivateFieldGet"), /* typeArguments */ undefined, [receiver, privateField]);
+    }
+
+    const classPrivateFieldSetHelper: EmitHelper = {
+        name: "typescript:classPrivateFieldSet",
+        scoped: false,
+        text: `var _classPrivateFieldSet = function (receiver, privateMap, value) { if (!privateMap.has(receiver)) { throw new TypeError("attempted to set private field on non-instance"); } privateMap.set(receiver, value); return value; };`
+    };
+
+    function createClassPrivateFieldSetHelper(context: TransformationContext, receiver: Expression, privateField: Identifier, value: Expression) {
+        context.requestEmitHelper(classPrivateFieldSetHelper);
+        return createCall(getHelperName("_classPrivateFieldSet"), /* typeArguments */ undefined, [receiver, privateField, value]);
     }
 }
