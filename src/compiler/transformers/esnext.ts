@@ -362,14 +362,15 @@ namespace ts {
         }
 
         function transformClassMembers(node: ClassDeclaration | ClassExpression, isDerivedClass: boolean) {
+            // Declare private names.
+            const privateProperties = filter(node.members, isPrivatePropertyDeclaration);
+            privateProperties.forEach(property => addPrivateNameToEnvironment(property.name));
+
             const members: ClassElement[] = [];
             const constructor = transformConstructor(node, isDerivedClass);
             if (constructor) {
                 members.push(constructor);
             }
-            // Declare private names.
-            const privateProperties = filter(node.members, isPrivatePropertyDeclaration);
-            privateProperties.forEach(property => addPrivateNameToEnvironment(property.name));
 
             addRange(members, visitNodes(node.members, classElementVisitor, isClassElement));
             return setTextRange(createNodeArray(members), /*location*/ node.members);
@@ -403,9 +404,9 @@ namespace ts {
         }
 
         function transformConstructorBody(node: ClassDeclaration | ClassExpression, constructor: ConstructorDeclaration | undefined, isDerivedClass: boolean) {
-            const properties = getInitializedProperties(node, /*isStatic*/ false);
+            const properties = filter(node.members, (node): node is PropertyDeclaration => isPropertyDeclaration(node) && !hasStaticModifier(node));
 
-            // Only generate synthetic constructor when there are property initializers to move.
+            // Only generate synthetic constructor when there are property declarations to move.
             if (!constructor && !some(properties)) {
                 return visitFunctionBody(/*node*/ undefined, visitor, context);
             }
@@ -474,7 +475,11 @@ namespace ts {
          */
         function addInitializedPropertyStatements(statements: Statement[], properties: ReadonlyArray<PropertyDeclaration>, receiver: LeftHandSideExpression) {
             for (const property of properties) {
-                const statement = createExpressionStatement(transformInitializedProperty(property, receiver));
+                const expression = transformProperty(property, receiver);
+                if (!expression) {
+                    continue;
+                }
+                const statement = createExpressionStatement(expression);
                 setSourceMapRange(statement, moveRangePastModifiers(property));
                 setCommentRange(statement, property);
                 setOriginalNode(statement, property);
@@ -491,7 +496,10 @@ namespace ts {
         function generateInitializedPropertyExpressions(properties: ReadonlyArray<PropertyDeclaration>, receiver: LeftHandSideExpression) {
             const expressions: Expression[] = [];
             for (const property of properties) {
-                const expression = transformInitializedProperty(property, receiver);
+                const expression = transformProperty(property, receiver);
+                if (!expression) {
+                    continue;
+                }
                 startOnNewLine(expression);
                 setSourceMapRange(expression, moveRangePastModifiers(property));
                 setCommentRange(expression, property);
@@ -508,12 +516,30 @@ namespace ts {
          * @param property The property declaration.
          * @param receiver The object receiving the property assignment.
          */
-        function transformInitializedProperty(property: PropertyDeclaration, receiver: LeftHandSideExpression) {
+        function transformProperty(property: PropertyDeclaration, receiver: LeftHandSideExpression) {
             // We generate a name here in order to reuse the value cached by the relocated computed name expression (which uses the same generated name)
             const propertyName = isComputedPropertyName(property.name) && !isSimpleInlineableExpression(property.name.expression)
                 ? updateComputedPropertyName(property.name, getGeneratedNameForNode(property.name))
                 : property.name;
-            const initializer = visitNode(property.initializer!, visitor, isExpression);
+            const initializer = visitNode(property.initializer, visitor, isExpression);
+
+            if (isPrivateName(propertyName)) {
+                const privateNameInfo = accessPrivateName(propertyName);
+                if (privateNameInfo) {
+                    switch (privateNameInfo.type) {
+                        case PrivateNameType.InstanceField: {
+                            return createCall(
+                                createPropertyAccess(privateNameInfo.weakMapName, "set"),
+                                /*typeArguments*/ undefined,
+                                [receiver, initializer || createVoidZero()]
+                            );
+                        }
+                    }
+                }
+            }
+            if (!initializer) {
+                return undefined;
+            }
             const memberAccess = createMemberAccessForPropertyName(receiver, propertyName, /*location*/ propertyName);
 
             return createAssignment(memberAccess, initializer);
@@ -545,6 +571,16 @@ namespace ts {
                     )
                 )
             );
+        }
+
+        function accessPrivateName(name: PrivateName) {
+            for (let i = privateNameEnvironmentStack.length - 1; i >= 0; --i) {
+                const env = privateNameEnvironmentStack[i];
+                if (env.has(name.escapedText)) {
+                    return env.get(name.escapedText);
+                }
+            }
+            return undefined;
         }
 
         function enableSubstitutionForClassAliases() {
