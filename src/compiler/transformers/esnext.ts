@@ -346,14 +346,15 @@ namespace ts {
         }
 
         function transformClassMembers(node: ClassDeclaration | ClassExpression, isDerivedClass: boolean) {
+            // Declare private names.
+            const privateProperties = filter(node.members, isPrivatePropertyDeclaration);
+            privateProperties.forEach(property => addPrivateNameToEnvironment(property.name));
+
             const members: ClassElement[] = [];
             const constructor = transformConstructor(node, isDerivedClass);
             if (constructor) {
                 members.push(constructor);
             }
-            // Declare private names.
-            const privateProperties = filter(node.members, isPrivatePropertyDeclaration);
-            privateProperties.forEach(property => addPrivateNameToEnvironment(property.name));
 
             addRange(members, visitNodes(node.members, classElementVisitor, isClassElement));
             return setTextRange(createNodeArray(members), /*location*/ node.members);
@@ -497,6 +498,21 @@ namespace ts {
                 ? updateComputedPropertyName(property.name, getGeneratedNameForNode(property.name))
                 : property.name;
             const initializer = visitNode(property.initializer!, visitor, isExpression);
+
+            if (isPrivateName(propertyName)) {
+                const privateNameInfo = accessPrivateName(propertyName);
+                if (privateNameInfo) {
+                    switch (privateNameInfo.type) {
+                        case PrivateNameType.InstanceField: {
+                            return createCall(
+                                createPropertyAccess(privateNameInfo.weakMapName, "set"),
+                                /*typeArguments*/ undefined,
+                                [receiver, initializer]
+                            );
+                        }
+                    }
+                }
+            }
             const memberAccess = createMemberAccessForPropertyName(receiver, propertyName, /*location*/ propertyName);
 
             return createAssignment(memberAccess, initializer);
@@ -528,6 +544,16 @@ namespace ts {
                     )
                 )
             );
+        }
+
+        function accessPrivateName(name: PrivateName) {
+            for (let i = privateNameEnvironmentStack.length - 1; i >= 0; --i) {
+                const env = privateNameEnvironmentStack[i];
+                if (env.has(name.escapedText)) {
+                    return env.get(name.escapedText);
+                }
+            }
+            return undefined;
         }
 
         function enableSubstitutionForClassAliases() {
