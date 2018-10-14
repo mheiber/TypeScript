@@ -336,4 +336,26 @@ namespace ts {
             && isStatic === hasModifier(member, ModifierFlags.Static)
             && (<PropertyDeclaration>member).initializer !== undefined;
     }
+
+    export function isCompoundAssignment(kind: BinaryOperator): kind is CompoundAssignmentOperator {
+        return kind >= SyntaxKind.FirstCompoundAssignment
+            && kind <= SyntaxKind.LastCompoundAssignment;
+    }
+
+    export function getOperatorForCompoundAssignment(kind: CompoundAssignmentOperator): BitwiseOperatorOrHigher {
+        switch (kind) {
+            case SyntaxKind.PlusEqualsToken: return SyntaxKind.PlusToken;
+            case SyntaxKind.MinusEqualsToken: return SyntaxKind.MinusToken;
+            case SyntaxKind.AsteriskEqualsToken: return SyntaxKind.AsteriskToken;
+            case SyntaxKind.AsteriskAsteriskEqualsToken: return SyntaxKind.AsteriskAsteriskToken;
+            case SyntaxKind.SlashEqualsToken: return SyntaxKind.SlashToken;
+            case SyntaxKind.PercentEqualsToken: return SyntaxKind.PercentToken;
+            case SyntaxKind.LessThanLessThanEqualsToken: return SyntaxKind.LessThanLessThanToken;
+            case SyntaxKind.GreaterThanGreaterThanEqualsToken: return SyntaxKind.GreaterThanGreaterThanToken;
+            case SyntaxKind.GreaterThanGreaterThanGreaterThanEqualsToken: return SyntaxKind.GreaterThanGreaterThanGreaterThanToken;
+            case SyntaxKind.AmpersandEqualsToken: return SyntaxKind.AmpersandToken;
+            case SyntaxKind.BarEqualsToken: return SyntaxKind.BarToken;
+            case SyntaxKind.CaretEqualsToken: return SyntaxKind.CaretToken;
+        }
+    }
 }
