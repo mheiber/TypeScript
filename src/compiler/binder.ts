@@ -3830,6 +3830,11 @@ namespace ts {
             case SyntaxKind.BreakStatement:
                 transformFlags |= TransformFlags.ContainsHoistedDeclarationOrCompletion;
                 break;
+
+            case SyntaxKind.PrivateName:
+                // Private names are ESNext syntax.
+                transformFlags |= TransformFlags.AssertESNext;
+                break;
         }
 
         node.transformFlags = transformFlags | TransformFlags.HasComputedFlags;
