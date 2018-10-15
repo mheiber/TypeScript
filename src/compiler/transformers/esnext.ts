@@ -43,11 +43,11 @@ namespace ts {
         }
 
         interface PrivateNamedInstanceMethodEntry {
+            placement: PrivateNamePlacement.InstanceMethod;
             accumulator: Identifier;
-            placement: PrivateNamePlacement.InstanceField;
-            parameters
+            parameters: NodeArray<ParameterDeclaration>;
+            functionBody: FunctionBody;
         }
-
 
         const privateNameEnvironmentStack: PrivateNameEnvironment[] = [];
         let privateNameEnvironmentIndex = -1;
@@ -142,30 +142,6 @@ namespace ts {
             return privateNameEnvironmentStack[privateNameEnvironmentIndex];
         }
 
-        function getPrivateNamePlacement (declaration: PrivateNamedDeclaration): PrivateNamePlacement | undefined {
-            if (declaration.kind === SyntaxKind.PropertyDeclaration) {
-                if (hasModifier(declaration, ModifierFlags.Static)) {
-                    // todo: static property
-                    return undefined;
-                }
-                else {
-                    return PrivateNamePlacement.InstancePropertyLike;
-                }
-            }
-            else if (declaration.kind === SyntaxKind.MethodDeclaration) {
-                if (hasModifier(declaration, ModifierFlags.Static)) {
-                    // todo: static method
-                    return undefined;
-                }
-                else {
-                    return PrivateNamePlacement.InstanceMethod;
-                }
-            }
-            else {
-                return undefined;
-            }
-        }
-
         function addPrivateName(declaration: PrivateNamedDeclaration, initializer?: Expression): void {
             const environment = currentPrivateNameEnvironment();
             const nameString = declaration.name.escapedText as string;
@@ -173,15 +149,36 @@ namespace ts {
                 throw new Error("Redeclaring private name " + nameString + ".");
             }
             const accumulator = createFileLevelUniqueName("_" + nameString.substring(1));
-            const placement = getPrivateNamePlacement(declaration);
-            if (placement === undefined) {
-                return;
+            if (declaration.kind === SyntaxKind.PropertyDeclaration) {
+                if (hasModifier(declaration, ModifierFlags.Static)) {
+                    // todo: static property
+                    return;
+                }
+                else {
+                    environment[nameString] = {
+                        placement: PrivateNamePlacement.InstanceField,
+                        accumulator: accumulator,
+                        initializer
+                    };
+                }
             }
-            environment[nameString] = {
-                placement,
-                accumulator,
-                initializer
-            };
+            else if (isMethodDeclaration(declaration)) {
+                if (hasModifier(declaration, ModifierFlags.Static)) {
+                    // todo: static method
+                    return;
+                }
+                else if (!declaration.body) {
+                    return;
+                }
+                else {
+                    environment[nameString] = {
+                        placement: PrivateNamePlacement.InstanceMethod,
+                        accumulator: accumulator,
+                        parameters: declaration.parameters,
+                        functionBody: declaration.body
+                    }
+                }
+            }
         }
 
         function getPrivateNameRecord(name: PrivateName) {
@@ -196,14 +193,14 @@ namespace ts {
 
         function visitPropertyAccessExpression(node: PropertyAccessExpression): Expression {
             if (isPrivateName(node.name)) {
-                const record = getPrivateNameRecord(node.name);
-                if (!record) {
+                const entry = getPrivateNameRecord(node.name);
+                if (!entry) {
                     return node;
                 }
-                const { placement, accumulator } = record;
 
+                const { placement, accumulator } = entry;
                 switch (placement) {
-                    case PrivateNamePlacement.InstancePropertyLike:
+                    case PrivateNamePlacement.InstanceField:
                         return replaceNode(
                                 createClassPrivateFieldGetHelper(context, node.expression, accumulator),
                                 node
@@ -303,7 +300,7 @@ namespace ts {
             return Object.keys(environment).map(name => {
                 const { placement, accumulator } = environment[name];
                 switch (placement) {
-                    case PrivateNamePlacement.InstancePropertyLike:
+                    case PrivateNamePlacement.InstanceField:
                         return createVariableStatement(
                             /* modifiers */ undefined,
                             [createVariableDeclaration(accumulator,
@@ -348,15 +345,16 @@ namespace ts {
             const privateNameEnvironment = currentPrivateNameEnvironment();
             // Initialize private properties.
             const initializerStatements = Object.keys(privateNameEnvironment).map(name => {
-                const { accumulator, placement, initializer} = privateNameEnvironment[name];
+                const entry = privateNameEnvironment[name];
+                const { accumulator, placement } = entry;
 
                 switch(placement) {
-                    case PrivateNamePlacement.InstancePropertyLike:
+                    case PrivateNamePlacement.InstanceField:
                         return createStatement(
                             createCall(
                                 createPropertyAccess(accumulator, "set"),
                                 /* typeArguments */ undefined,
-                                [createThis(), initializer || createVoidZero()]
+                                [createThis(), (entry as PrivateNamedInstanceFieldEntry).initializer || createVoidZero()]
                             )
                         );
                     case PrivateNamePlacement.InstanceMethod:
