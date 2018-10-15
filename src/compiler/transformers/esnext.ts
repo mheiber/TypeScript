@@ -165,6 +165,8 @@ namespace ts {
                     return visitVariableStatement(node as VariableStatement);
                 case SyntaxKind.ComputedPropertyName:
                     return visitComputedPropertyName(node as ComputedPropertyName);
+                case SyntaxKind.CallExpression:
+                    return visitCallExpression(node as CallExpression);
                 default:
                     return visitEachChild(node, visitor, context);
             }
@@ -602,6 +604,40 @@ namespace ts {
                             );
                     }
                 }
+            }
+            return visitEachChild(node, visitor, context);
+        }
+
+        function visitCallExpression(node: CallExpression) {
+            if (isPrivateNamedPropertyAccess(node.expression)) {
+                // Transform call expressions of private names to properly bind the `this` parameter.
+                let exprForPropertyAccess: Expression = node.expression.expression;
+                let receiver = node.expression.expression;
+                if (!isSimpleInlineableExpression(node.expression.expression)) {
+                    const generatedName = getGeneratedNameForNode(node);
+                    hoistVariableDeclaration(generatedName);
+                    exprForPropertyAccess = setOriginalNode(
+                        createAssignment(generatedName, exprForPropertyAccess),
+                        node.expression.expression
+                    );
+                    receiver = generatedName;
+                }
+                return visitNode(
+                    updateCall(
+                        node,
+                        createPropertyAccess(
+                            updatePropertyAccess(
+                                node.expression,
+                                exprForPropertyAccess,
+                                node.expression.name
+                            ),
+                            "call"
+                        ),
+                        /*typeArguments*/ undefined,
+                        [receiver, ...node.arguments]
+                    ),
+                    visitor
+                );
             }
             return visitEachChild(node, visitor, context);
         }
