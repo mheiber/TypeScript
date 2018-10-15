@@ -151,6 +151,8 @@ namespace ts {
                     return visitComputedPropertyName(node as ComputedPropertyName);
                 case SyntaxKind.PropertyAccessExpression:
                     return visitPropertyAccessExpression(node as PropertyAccessExpression);
+                case SyntaxKind.CallExpression:
+                    return visitCallExpression(node as CallExpression);
                 default:
                     return visitEachChild(node, visitor, context);
             }
@@ -569,6 +571,40 @@ namespace ts {
                 }
             }
             return node;
+        }
+
+        function visitCallExpression(node: CallExpression) {
+            if (isPrivateNamedPropertyAccess(node.expression)) {
+                // Transform call expressions of private names to properly bind the `this` parameter.
+                let exprForPropertyAccess: Expression = node.expression.expression;
+                let receiver = node.expression.expression;
+                if (!isSimpleInlineableExpression(node.expression.expression)) {
+                    const generatedName = getGeneratedNameForNode(node);
+                    hoistVariableDeclaration(generatedName);
+                    exprForPropertyAccess = setOriginalNode(
+                        createAssignment(generatedName, exprForPropertyAccess),
+                        node.expression.expression
+                    );
+                    receiver = generatedName;
+                }
+                return updateCall(
+                    node,
+                    createPropertyAccess(
+                        visitNode(
+                            updatePropertyAccess(
+                                node.expression,
+                                exprForPropertyAccess,
+                                node.expression.name
+                            ),
+                            visitor
+                        ),
+                        "call"
+                    ),
+                    /*typeArguments*/ undefined,
+                    [visitNode(receiver, visitor), ...visitNodes(node.arguments, visitor)]
+                );
+            }
+            return visitEachChild(node, visitor, context);
         }
 
         function enableSubstitutionForClassAliases() {
