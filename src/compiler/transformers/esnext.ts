@@ -202,14 +202,14 @@ namespace ts {
                 switch (placement) {
                     case PrivateNamePlacement.InstanceField:
                         return replaceNode(
+                                node,
                                 createClassPrivateFieldGetHelper(context, node.expression, accumulator),
-                                node
                             );
                     case PrivateNamePlacement.InstanceMethod:
                         // TODO: use private instance method helper instead here
                         return replaceNode(
+                                node,
                                 createClassPrivateNamedCallCheckHelper(context, node.expression, accumulator),
-                                node
                         );
                     default:
                         Debug.assertNever(placement);
@@ -1276,7 +1276,7 @@ namespace ts {
     const classPrivateNamedCallCheckHelper: EmitHelper = {
         name: "typescript:classPrivateNamedCallCheck",
         scoped: false,
-        text: `var _classPrivateNamedCall = function (receiver, weakSet) { if (!weakSet.has(receiver)) { throw new TypeError("attempted to get weak field on non-instance"); }};`
+        text: `var _classPrivateNamedCallCheck = function (receiver, weakSet) { if (!weakSet.has(receiver)) { throw new TypeError("attempted to get weak field on non-instance"); }};`
     };
 
     function createClassPrivateNamedCallCheckHelper(context: TransformationContext, receiver: Expression, weakSet: Identifier) {
