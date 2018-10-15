@@ -45,7 +45,7 @@ namespace ts {
         interface PrivateNamedInstanceMethodEntry {
             placement: PrivateNamePlacement.InstanceMethod;
             accumulator: Identifier;
-            func: FunctionDeclaration;
+            func: FunctionDeclaration & {name: Identifier};
         }
 
         const privateNameEnvironmentStack: PrivateNameEnvironment[] = [];
@@ -172,27 +172,33 @@ namespace ts {
                 else {
                     const params = declaration.parameters;
                     const body = getMutableClone(declaration.body);
+                    const toPrepend = startOnNewLine(
+                        createStatement(
+                            createClassPrivateNamedCallCheckHelper(context, createThis(), accumulator)
+                        )
+                    );
                     body.statements = setTextRange(
                         createNodeArray([
-                            startOnNewLine(createStatement(createLiteral("use strict"))),
+                            toPrepend,
                             ...body.statements
                         ]),
                         body.statements
                     );
+                    const funcName = createFileLevelUniqueName(`_${nameString.slice(1)}Func`);
                     const func = createFunctionDeclaration(
-                        undefined,
-                        undefined,
-                        undefined,
-                        "foo", // TODO: max
-                        undefined,
-                        params, // TODO: max
-                        undefined,
-                        body)
+                        /* decorators */      undefined,
+                        /* modifiers */       undefined,
+                        /* asteriskToken */   undefined,
+                                              funcName,
+                        /* typeParameters */  undefined,
+                                              params,
+                        /* type */            undefined,
+                        body) as FunctionDeclaration & {name: Identifier};
                     environment[nameString] = {
                         placement: PrivateNamePlacement.InstanceMethod,
                         accumulator,
                         func
-                    }
+                    };
                 }
             }
         }
@@ -222,10 +228,12 @@ namespace ts {
                                 createClassPrivateFieldGetHelper(context, node.expression, accumulator),
                             );
                     case PrivateNamePlacement.InstanceMethod:
+
+                        const { func } = entry as PrivateNamedInstanceMethodEntry;
                         // TODO: use private instance method helper instead here
                         return replaceNode(
                                 node,
-                                createClassPrivateNamedCallCheckHelper(context, node.expression, accumulator),
+                                createCall(func.name, undefined, [])
                         );
                     default:
                         Debug.assertNever(placement);
