@@ -169,6 +169,8 @@ namespace ts {
                     return visitPrefixUnaryExpression(node as PrefixUnaryExpression);
                 case SyntaxKind.PostfixUnaryExpression:
                     return visitPostfixUnaryExpression(node as PostfixUnaryExpression);
+                case SyntaxKind.CallExpression:
+                    return visitCallExpression(node as CallExpression);
                 default:
                     return visitEachChild(node, visitor, context);
             }
@@ -679,6 +681,40 @@ namespace ts {
                         return visited;
                     }
                 }
+            }
+            return visitEachChild(node, visitor, context);
+        }
+
+        function visitCallExpression(node: CallExpression) {
+            if (isPrivateNamedPropertyAccessExpression(node.expression)) {
+                // Transform call expressions of private names to properly bind the `this` parameter.
+                let exprForPropertyAccess: Expression = node.expression.expression;
+                let receiver = node.expression.expression;
+                if (!isSimpleInlineableExpression(node.expression.expression)) {
+                    const generatedName = getGeneratedNameForNode(node);
+                    hoistVariableDeclaration(generatedName);
+                    exprForPropertyAccess = setOriginalNode(
+                        createAssignment(generatedName, exprForPropertyAccess),
+                        node.expression.expression
+                    );
+                    receiver = generatedName;
+                }
+                return visitNode(
+                    updateCall(
+                        node,
+                        createPropertyAccess(
+                            updatePropertyAccess(
+                                node.expression,
+                                exprForPropertyAccess,
+                                node.expression.name
+                            ),
+                            "call"
+                        ),
+                        /*typeArguments*/ undefined,
+                        [receiver, ...node.arguments]
+                    ),
+                    visitor
+                );
             }
             return visitEachChild(node, visitor, context);
         }
