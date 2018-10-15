@@ -132,6 +132,8 @@ namespace ts {
                     return visitClassDeclaration(node as ClassDeclaration);
                 case SyntaxKind.ClassExpression:
                     return visitClassExpression(node as ClassExpression);
+                case SyntaxKind.CallExpression:
+                    return visitCallExpression(node as CallExpression);
                 default:
                     return visitEachChild(node, visitor, context);
             }
@@ -213,13 +215,39 @@ namespace ts {
             return undefined;
         }
 
+        function visitCallExpression(node: CallExpression): Expression {
+            if (isPropertyAccessExpression(node.expression)
+                && isPrivateName(node.expression.name)) {
+                const entry = getPrivateNameRecord(node.expression.name);
+                if (!entry) {
+                    return node;
+                }
+                const { placement } = entry;
+
+                switch (placement) {
+                    case PrivateNamePlacement.InstanceField:
+                        // handled by visitPropertyAccessExpression
+                        return node;
+                    case PrivateNamePlacement.InstanceMethod:
+                        const { func } = entry as PrivateNamedInstanceMethodEntry;
+                        return replaceNode(
+                                node,
+                                createCall(func.name, undefined, node.arguments)
+                        );
+                        return node;
+                    default:
+                        return Debug.assertNever(placement);
+                }
+            }
+            return visitEachChild(node, visitor, context);
+        }
+
         function visitPropertyAccessExpression(node: PropertyAccessExpression): Expression {
             if (isPrivateName(node.name)) {
                 const entry = getPrivateNameRecord(node.name);
                 if (!entry) {
                     return node;
                 }
-
                 const { placement, accumulator } = entry;
                 switch (placement) {
                     case PrivateNamePlacement.InstanceField:
@@ -228,13 +256,8 @@ namespace ts {
                                 createClassPrivateFieldGetHelper(context, node.expression, accumulator),
                             );
                     case PrivateNamePlacement.InstanceMethod:
-
-                        const { func } = entry as PrivateNamedInstanceMethodEntry;
-                        // TODO: use private instance method helper instead here
-                        return replaceNode(
-                                node,
-                                createCall(func.name, undefined, [])
-                        );
+                        // handled by visitCallExpression
+                        return node;
                     default:
                         Debug.assertNever(placement);
                 }
