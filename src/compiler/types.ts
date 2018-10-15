@@ -1676,6 +1676,10 @@ namespace ts {
         name: Identifier | PrivateName;
     }
 
+    export interface PrivateNamedPropertyAccess extends PropertyAccessExpression {
+        name: PrivateName;
+    }
+
     export interface SuperPropertyAccessExpression extends PropertyAccessExpression {
         expression: SuperExpression;
     }
