@@ -6076,6 +6076,10 @@ namespace ts {
         return isPropertyDeclaration(node) && isPrivateName(node.name);
     }
 
+    export function isPrivateNamedPropertyAccess(node: Node): node is PrivateNamedPropertyAccess {
+        return isPropertyAccessExpression(node) && isPrivateName(node.name);
+    }
+
     export function isBindingName(node: Node): node is BindingName {
         const kind = node.kind;
         return kind === SyntaxKind.Identifier
