@@ -149,7 +149,7 @@ namespace ts {
             if (nameString in environment) {
                 throw new Error("Redeclaring private name " + nameString + ".");
             }
-            const accumulator = createFileLevelUniqueName("_" + nameString.substring(1));
+            const accumulator = createFileLevelUniqueName(`_accumulator_${nameString.slice(1)}`);
             if (declaration.kind === SyntaxKind.PropertyDeclaration) {
                 if (hasModifier(declaration, ModifierFlags.Static)) {
                     // todo: static property
@@ -174,9 +174,10 @@ namespace ts {
                 else {
                     const params = declaration.parameters;
                     const body = getMutableClone(declaration.body);
+                    const receiver = createIdentifier("receiver");
                     const toPrepend = startOnNewLine(
                         createStatement(
-                            createClassPrivateNamedCallCheckHelper(context, createThis(), accumulator)
+                            createClassPrivateNamedCallCheckHelper(context, receiver, accumulator)
                         )
                     );
                     body.statements = setTextRange(
@@ -186,14 +187,17 @@ namespace ts {
                         ]),
                         body.statements
                     );
-                    const funcName = createFileLevelUniqueName(`_${nameString.slice(1)}Func`);
+                    const funcName = createFileLevelUniqueName(`_${nameString.slice(1)}`);
                     const func = createFunctionDeclaration(
                         /* decorators */      undefined,
                         /* modifiers */       undefined,
                         /* asteriskToken */   undefined,
                                               funcName,
                         /* typeParameters */  undefined,
-                                              params,
+                                              [
+                                                  createParameter(undefined, undefined, undefined, receiver),
+                                                  ...params
+                                              ],
                         /* type */            undefined,
                         body) as FunctionDeclaration & {name: Identifier};
                     environment[nameString] = {
@@ -222,20 +226,15 @@ namespace ts {
                 if (!entry) {
                     return node;
                 }
+                const receiver = node.expression.expression;
                 const { placement } = entry;
+                if (placement === PrivateNamePlacement.InstanceMethod) {
+                    const { func } = entry as PrivateNamedInstanceMethodEntry;
+                    return replaceNode(
+                            node,
+                            createCall(func.name, undefined, [receiver, ...node.arguments])
+                    );
 
-                switch (placement) {
-                    case PrivateNamePlacement.InstanceField:
-                        // handled by visitPropertyAccessExpression
-                        return node;
-                    case PrivateNamePlacement.InstanceMethod:
-                        const { func } = entry as PrivateNamedInstanceMethodEntry;
-                        return replaceNode(
-                                node,
-                                createCall(func.name, undefined, node.arguments)
-                        );
-                    default:
-                        return Debug.assertNever(placement);
                 }
             }
             return visitEachChild(node, visitor, context);
@@ -248,17 +247,11 @@ namespace ts {
                     return node;
                 }
                 const { placement, accumulator } = entry;
-                switch (placement) {
-                    case PrivateNamePlacement.InstanceField:
-                        return replaceNode(
-                                node,
-                                createClassPrivateFieldGetHelper(context, node.expression, accumulator),
-                            );
-                    case PrivateNamePlacement.InstanceMethod:
-                        // handled by visitCallExpression
-                        return node;
-                    default:
-                        Debug.assertNever(placement);
+                if (placement === PrivateNamePlacement.InstanceField) {
+                    return replaceNode(
+                            node,
+                            createClassPrivateFieldGetHelper(context, node.expression, accumulator),
+                        );
                 }
             }
             return visitEachChild(node, visitor, context);
@@ -1331,7 +1324,7 @@ namespace ts {
     const classPrivateNamedCallCheckHelper: EmitHelper = {
         name: "typescript:classPrivateNamedCallCheck",
         scoped: false,
-        text: `var _classPrivateNamedCallCheck = function (receiver, weakSet) { if (!weakSet.has(receiver)) { throw new TypeError("attempted to get weak field on non-instance"); }};`
+        text: `var _classPrivateNamedCallCheck = function (receiver, privateSet) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get weak field on non-instance"); }};`
     };
 
     function createClassPrivateNamedCallCheckHelper(context: TransformationContext, receiver: Expression, weakSet: Identifier) {
