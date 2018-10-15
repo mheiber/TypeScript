@@ -234,7 +234,6 @@ namespace ts {
                                 node,
                                 createCall(func.name, undefined, node.arguments)
                         );
-                        return node;
                     default:
                         return Debug.assertNever(placement);
                 }
