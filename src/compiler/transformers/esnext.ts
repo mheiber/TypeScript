@@ -45,8 +45,7 @@ namespace ts {
         interface PrivateNamedInstanceMethodEntry {
             placement: PrivateNamePlacement.InstanceMethod;
             accumulator: Identifier;
-            parameters: NodeArray<ParameterDeclaration>;
-            functionBody: FunctionBody;
+            func: FunctionDeclaration;
         }
 
         const privateNameEnvironmentStack: PrivateNameEnvironment[] = [];
@@ -171,11 +170,28 @@ namespace ts {
                     return;
                 }
                 else {
+                    const params = declaration.parameters;
+                    const body = getMutableClone(declaration.body);
+                    body.statements = setTextRange(
+                        createNodeArray([
+                            startOnNewLine(createStatement(createLiteral("use strict"))),
+                            ...body.statements
+                        ]),
+                        body.statements
+                    );
+                    const func = createFunctionDeclaration(
+                        undefined,
+                        undefined,
+                        undefined,
+                        "foo", // TODO: max
+                        undefined,
+                        params, // TODO: max
+                        undefined,
+                        body)
                     environment[nameString] = {
                         placement: PrivateNamePlacement.InstanceMethod,
-                        accumulator: accumulator,
-                        parameters: declaration.parameters,
-                        functionBody: declaration.body
+                        accumulator,
+                        func
                     }
                 }
             }
@@ -255,6 +271,15 @@ namespace ts {
                     node.heritageClauses,
                     transformClassMembers(node.members)
                 );
+                Object.keys(
+                    currentPrivateNameEnvironment()
+                )
+                .map(key => currentPrivateNameEnvironment()[key])
+                .filter(x => x.placement === PrivateNamePlacement.InstanceMethod)
+                .forEach(e => {
+                    const entry = e as PrivateNamedInstanceMethodEntry;
+                    statements.push(entry.func)
+                });
             }
             statements.unshift(node);
             endPrivateNameEnvironment();
