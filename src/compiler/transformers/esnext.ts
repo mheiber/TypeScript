@@ -758,20 +758,105 @@ namespace ts {
             return visitEachChild(node, visitor, context);
         }
 
+        function wrapPrivateNameForDestructuringTarget(node: PrivateNamedPropertyAccess) {
+            return createPropertyAccess(
+                createObjectLiteral([
+                    createSetAccessor(
+                        /*decorators*/ undefined,
+                        /*modifiers*/ undefined,
+                        "value",
+                        [createParameter(
+                            /*decorators*/ undefined,
+                            /*modifiers*/ undefined,
+                            /*dotDotDotToken*/ undefined, "x",
+                            /*questionToken*/ undefined,
+                            /*type*/ undefined,
+                            /*initializer*/ undefined
+                        )],
+                        createBlock(
+                            [createExpressionStatement(
+                                createAssignment(
+                                    visitNode(node, visitor),
+                                    createIdentifier("x")
+                                )
+                            )]
+                        )
+                    )
+                ]),
+                "value"
+            );
+        }
+
+        function transformDestructuringAssignmentTarget(node: ArrayLiteralExpression | ObjectLiteralExpression) {
+            const hasPrivateNames = isArrayLiteralExpression(node) ?
+                forEach(node.elements, isPrivateNamedPropertyAccess) :
+                forEach(node.properties, property => isPropertyAssignment(property) && isPrivateNamedPropertyAccess(property.initializer));
+            if (!hasPrivateNames) {
+                return node;
+            }
+            if (isArrayLiteralExpression(node)) {
+                // Transforms private names in destructuring assignment array bindings.
+                //
+                // Source:
+                // ([ this.#myProp ] = [ "hello" ]);
+                //
+                // Transformation:
+                // [ { set value(x) { this.#myProp = x; } }.value ] = [ "hello" ];
+                return updateArrayLiteral(
+                    node,
+                    node.elements.map(
+                        expr => isPrivateNamedPropertyAccess(expr) ?
+                            wrapPrivateNameForDestructuringTarget(expr) :
+                            expr
+                    )
+                );
+            }
+            else {
+                // Transforms private names in destructuring assignment object bindings.
+                //
+                // Source:
+                // ({ stringProperty: this.#myProp } = { stringProperty: "hello" });
+                //
+                // Transformation:
+                // ({ stringProperty: { set value(x) { this.#myProp = x; } }.value }) = { stringProperty: "hello" };
+                return updateObjectLiteral(
+                    node,
+                    node.properties.map(
+                        prop => isPropertyAssignment(prop) && isPrivateNamedPropertyAccess(prop.initializer) ?
+                            updatePropertyAssignment(
+                                prop,
+                                prop.name,
+                                wrapPrivateNameForDestructuringTarget(prop.initializer)
+                            ) :
+                            prop
+                    )
+                );
+            }
+        }
+
         /**
          * Visits a BinaryExpression that contains a destructuring assignment.
          *
          * @param node A BinaryExpression node.
          */
         function visitBinaryExpression(node: BinaryExpression, noDestructuringValue: boolean): Expression {
-            if (isDestructuringAssignment(node) && node.left.transformFlags & TransformFlags.ContainsObjectRestOrSpread) {
-                return flattenDestructuringAssignment(
-                    node,
-                    visitor,
-                    context,
-                    FlattenLevel.ObjectRest,
-                    !noDestructuringValue
-                );
+            if (isDestructuringAssignment(node)) {
+                const left = transformDestructuringAssignmentTarget(node.left);
+                if (left !== node.left || node.left.transformFlags & TransformFlags.ContainsObjectRestOrSpread) {
+                    return flattenDestructuringAssignment(
+                        left === node.left ? node : updateBinary(
+                            node,
+                            left,
+                            node.right,
+                            node.operatorToken.kind
+                        ) as DestructuringAssignment,
+                        visitor,
+                        context,
+                        node.left.transformFlags & TransformFlags.ContainsObjectRestOrSpread
+                            ? FlattenLevel.ObjectRest : FlattenLevel.All,
+                        !noDestructuringValue
+                    );
+                }
             }
             else if (node.operatorToken.kind === SyntaxKind.CommaToken) {
                 return updateBinary(
