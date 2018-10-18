@@ -904,12 +904,30 @@ namespace ts {
             const members: ClassElement[] = [];
             const existingMembers = visitNodes(node.members, classElementVisitor, isClassElement);
             const constructor = getFirstConstructorWithBody(node);
-            currentClassHasParameterProperties = constructor &&
-                !!(constructor.transformFlags & TransformFlags.ContainsTypeScriptClassSyntax) &&
-                forEach(constructor.parameters, isParameterWithPropertyAssignment);
-            if (currentClassHasParameterProperties && constructor) {
+            const parametersWithPropertyAssignments =
+                constructor && !!(constructor.transformFlags & TransformFlags.ContainsTypeScriptClassSyntax)
+                ? filter(constructor.parameters, isParameterPropertyDeclaration)
+                : undefined;
+            if (some(parametersWithPropertyAssignments) && constructor) {
+                currentClassHasParameterProperties = true;
+
+                // Create property declarations for constructor parameter properties.
+                addRange(
+                    members,
+                    parametersWithPropertyAssignments.map(param =>
+                        createProperty(
+                            /*decorators*/ undefined,
+                            /*modifiers*/ undefined,
+                            param.name,
+                            /*questionOrExclamationToken*/ undefined,
+                            /*type*/ undefined,
+                            /*initializer*/ undefined
+                        )
+                    )
+                );
+
                 const parameters = transformConstructorParameters(constructor);
-                const body = transformConstructorBody(node.members, constructor);
+                const body = transformConstructorBody(node.members, constructor, parametersWithPropertyAssignments);
                 members.push(startOnNewLine(
                     setOriginalNode(
                         setTextRange(
@@ -990,7 +1008,7 @@ namespace ts {
          * @param node The current class.
          * @param constructor The current class constructor.
          */
-        function transformConstructorBody(members: NodeArray<ClassElement>, constructor: ConstructorDeclaration) {
+        function transformConstructorBody(members: NodeArray<ClassElement>, constructor: ConstructorDeclaration, propertyAssignments: ReadonlyArray<ParameterPropertyDeclaration>) {
             let statements: Statement[] = [];
             let indexOfFirstStatement = 0;
 
@@ -1010,7 +1028,6 @@ namespace ts {
             //      this.y = y;
             //  }
             //
-            const propertyAssignments = getParametersWithPropertyAssignments(constructor);
             addRange(statements, map(propertyAssignments, transformParameterWithPropertyAssignment));
 
             // Get property initializers.
@@ -1050,30 +1067,11 @@ namespace ts {
         }
 
         /**
-         * Gets all parameters of a constructor that should be transformed into property assignments.
-         *
-         * @param node The constructor node.
-         */
-        function getParametersWithPropertyAssignments(node: ConstructorDeclaration): ReadonlyArray<ParameterDeclaration> {
-            return filter(node.parameters, isParameterWithPropertyAssignment);
-        }
-
-        /**
-         * Determines whether a parameter should be transformed into a property assignment.
-         *
-         * @param parameter The parameter node.
-         */
-        function isParameterWithPropertyAssignment(parameter: ParameterDeclaration) {
-            return hasModifier(parameter, ModifierFlags.ParameterPropertyModifier)
-                && isIdentifier(parameter.name);
-        }
-
-        /**
          * Transforms a parameter into a property assignment statement.
          *
          * @param node The parameter declaration.
          */
-        function transformParameterWithPropertyAssignment(node: ParameterDeclaration) {
+        function transformParameterWithPropertyAssignment(node: ParameterPropertyDeclaration) {
             Debug.assert(isIdentifier(node.name));
             const name = node.name as Identifier;
             const propertyName = getMutableClone(name);
