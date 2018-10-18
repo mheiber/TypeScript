@@ -1257,7 +1257,7 @@ namespace ts {
         }
 
         function substitutePropertyAccessExpression(node: PropertyAccessExpression) {
-            if (node.expression.kind === SyntaxKind.SuperKeyword) {
+            if (enclosingSuperContainerFlags && node.expression.kind === SyntaxKind.SuperKeyword) {
                 return setTextRange(
                     createPropertyAccess(
                         createFileLevelUniqueName("_super"),
@@ -1269,7 +1269,7 @@ namespace ts {
         }
 
         function substituteElementAccessExpression(node: ElementAccessExpression) {
-            if (node.expression.kind === SyntaxKind.SuperKeyword) {
+            if (enclosingSuperContainerFlags && node.expression.kind === SyntaxKind.SuperKeyword) {
                 return createSuperElementAccessInAsyncMethod(
                     node.argumentExpression,
                     node

@@ -3308,6 +3308,11 @@ namespace ts {
             transformFlags |= TransformFlags.AssertTypeScript;
         }
 
+        // Hoisted variables related to class properties should live within the TypeScript class wrapper.
+        if (isComputedPropertyName(node.name) || (hasStaticModifier(node) && node.initializer)) {
+            transformFlags |= TransformFlags.ContainsTypeScriptClassSyntax;
+        }
+
         node.transformFlags = transformFlags | TransformFlags.HasComputedFlags;
         return transformFlags & ~TransformFlags.NodeExcludes;
     }
