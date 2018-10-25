@@ -1757,6 +1757,11 @@ namespace ts {
         name: Identifier | PrivateName;
     }
 
+    /*@internal*/
+    export interface PrivateNamedPropertyAccessExpression extends PropertyAccessExpression {
+        name: PrivateName;
+    }
+
     export interface SuperPropertyAccessExpression extends PropertyAccessExpression {
         expression: SuperExpression;
     }
