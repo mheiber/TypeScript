@@ -149,7 +149,7 @@ namespace ts {
                     if (capturedSuperProperties && isPropertyAccessExpression(node) && node.expression.kind === SyntaxKind.SuperKeyword) {
                         capturedSuperProperties.set(node.name.escapedText, true);
                     }
-                    return visitEachChild(node, visitor, context);
+                    return visitPropertyAccessExpression(node as PropertyAccessExpression);
                 case SyntaxKind.ElementAccessExpression:
                     if (capturedSuperProperties && (<ElementAccessExpression>node).expression.kind === SyntaxKind.SuperKeyword) {
                         hasSuperElementAccess = true;
@@ -581,6 +581,29 @@ namespace ts {
                 }
             }
             return undefined;
+        }
+
+        function visitPropertyAccessExpression(node: PropertyAccessExpression) {
+            if (isPrivateName(node.name)) {
+                const privateNameInfo = accessPrivateName(node.name);
+                if (privateNameInfo) {
+                    switch (privateNameInfo.type) {
+                        case PrivateNameType.InstanceField:
+                            return setOriginalNode(
+                                setTextRange(
+                                    createClassPrivateFieldGetHelper(
+                                        context,
+                                        visitNode(node.expression, visitor, isExpression), 
+                                        privateNameInfo.weakMapName
+                                    ),
+                                    node
+                                ),
+                                node
+                            );
+                    }
+                }
+            }
+            return visitEachChild(node, visitor, context);
         }
 
         function enableSubstitutionForClassAliases() {
@@ -1582,5 +1605,16 @@ namespace ts {
             ),
             location
         );
+    }
+
+    const classPrivateFieldGetHelper: EmitHelper = {
+        name: "typescript:classPrivateFieldGet",
+        scoped: false,
+        text: `var _classPrivateFieldGet = function (receiver, privateMap) { if (!privateMap.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return privateMap.get(receiver); };`
+    };
+
+    function createClassPrivateFieldGetHelper(context: TransformationContext, receiver: Expression, privateField: Identifier) {
+        context.requestEmitHelper(classPrivateFieldGetHelper);
+        return createCall(getHelperName("_classPrivateFieldGet"), /* typeArguments */ undefined, [receiver, privateField]);
     }
 }
