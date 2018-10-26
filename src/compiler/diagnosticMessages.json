@@ -4303,9 +4303,13 @@
         "category": "Error",
         "code": 18004
     },
-    "Private names cannot be used as parameters": {
+    "Private names cannot be used as parameters.": {
         "category": "Error",
         "code": 18005
+    },
+    "Private names are not currently supported.": {
+        "category": "Error",
+        "code": 18006
     },
 
     "File is a CommonJS module; it may be converted to an ES6 module.": {

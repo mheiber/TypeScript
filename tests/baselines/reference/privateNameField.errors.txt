@@ -1,0 +1,12 @@
+tests/cases/conformance/classes/members/privateNames/privateNameField.ts(2,5): error TS18006: Private names are not currently supported.
+
+
+==== tests/cases/conformance/classes/members/privateNames/privateNameField.ts (1 errors) ====
+    class A {
+        #name: string;
+        ~~~~~
+!!! error TS18006: Private names are not currently supported.
+        constructor(name: string) {
+            this.#name = name;
+        }
+    }

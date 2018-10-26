@@ -1372,6 +1372,7 @@ namespace ts {
                 return parseComputedPropertyName();
             }
             if (token() === SyntaxKind.PrivateName) {
+                parseErrorAtCurrentToken(Diagnostics.Private_names_are_not_currently_supported);
                 return parsePrivateName();
             }
             return parseIdentifierName();
