@@ -1060,6 +1060,9 @@ declare namespace ts {
         expression: LeftHandSideExpression;
         name: Identifier | PrivateName;
     }
+    interface PrivateNamedPropertyAccess extends PropertyAccessExpression {
+        name: PrivateName;
+    }
     interface SuperPropertyAccessExpression extends PropertyAccessExpression {
         expression: SuperExpression;
     }
@@ -2757,11 +2760,15 @@ declare namespace ts {
         MappedTypeParameter = 3,
         Unspecified = 4
     }
+    enum LexicalEnvironmentScoping {
+        Function = 0,
+        Block = 1
+    }
     interface TransformationContext {
         /** Gets the compiler options supplied to the transformer. */
         getCompilerOptions(): CompilerOptions;
         /** Starts a new lexical environment. */
-        startLexicalEnvironment(): void;
+        startLexicalEnvironment(scoping?: LexicalEnvironmentScoping): void;
         /** Suspends the current lexical environment, usually after visiting a parameter list. */
         suspendLexicalEnvironment(): void;
         /** Resumes a suspended lexical environment, usually before visiting a function body. */
@@ -3479,6 +3486,7 @@ declare namespace ts {
     function isEntityName(node: Node): node is EntityName;
     function isPropertyName(node: Node): node is PropertyName;
     function isPrivatePropertyDeclaration(node: Node): node is PrivatePropertyDeclaration;
+    function isPrivateNamedPropertyAccess(node: Node): node is PrivateNamedPropertyAccess;
     function isBindingName(node: Node): node is BindingName;
     function isFunctionLike(node: Node): node is SignatureDeclaration;
     function isClassElement(node: Node): node is ClassElement;
