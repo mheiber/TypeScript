@@ -380,8 +380,11 @@ namespace ts {
 
         function transformConstructor(node: ClassDeclaration | ClassExpression, isDerivedClass: boolean) {
             const constructor = visitNode(getFirstConstructorWithBody(node), visitor, isConstructorDeclaration);
-            const containsPropertyInitializer = forEach(node.members, isInitializedProperty);
-            if (!containsPropertyInitializer) {
+            const containsPropertyInitializerOrPrivateProperty = forEach(
+                node.members,
+                member => isInitializedProperty(member) || isPrivatePropertyDeclaration(member)
+            );
+            if (!containsPropertyInitializerOrPrivateProperty) {
                 return constructor;
             }
             const parameters = visitParameterList(constructor ? constructor.parameters : undefined, visitor, context);
@@ -595,7 +598,7 @@ namespace ts {
                                 setTextRange(
                                     createClassPrivateFieldGetHelper(
                                         context,
-                                        visitNode(node.expression, visitor, isExpression), 
+                                        visitNode(node.expression, visitor, isExpression),
                                         privateNameInfo.weakMapName
                                     ),
                                     node
