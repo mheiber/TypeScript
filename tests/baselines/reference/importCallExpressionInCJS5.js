@@ -58,9 +58,7 @@ exports.backup = backup;
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 class C {
-    constructor() {
-        this.myModule = Promise.resolve().then(() => require("./0"));
-    }
+    myModule = Promise.resolve().then(() => require("./0"));
     method() {
         const loadAsync = Promise.resolve().then(() => require("./0"));
         this.myModule.then(Zero => {
@@ -73,9 +71,7 @@ class C {
     }
 }
 class D {
-    constructor() {
-        this.myModule = Promise.resolve().then(() => require("./0"));
-    }
+    myModule = Promise.resolve().then(() => require("./0"));
     method() {
         const loadAsync = Promise.resolve().then(() => require("./0"));
         this.myModule.then(Zero => {
