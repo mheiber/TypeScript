@@ -167,6 +167,10 @@ namespace ts {
                     return visitComputedPropertyName(node as ComputedPropertyName);
                 case SyntaxKind.CallExpression:
                     return visitCallExpression(node as CallExpression);
+                case SyntaxKind.PrefixUnaryExpression:
+                    return visitPrefixUnaryExpression(node as PrefixUnaryExpression);
+                case SyntaxKind.PostfixUnaryExpression:
+                    return visitPostfixUnaryExpression(node as PostfixUnaryExpression);
                 default:
                     return visitEachChild(node, visitor, context);
             }
@@ -606,6 +610,68 @@ namespace ts {
                                 node
                             );
                     }
+                }
+            }
+            return visitEachChild(node, visitor, context);
+        }
+
+        function visitPrefixUnaryExpression(node: PrefixUnaryExpression) {
+            if (isPrivateNamedPropertyAccess(node.operand)) {
+                const operator = (node.operator === SyntaxKind.PlusPlusToken) ?
+                    SyntaxKind.PlusToken : (node.operator === SyntaxKind.MinusMinusToken) ?
+                        SyntaxKind.MinusToken : undefined;
+                const privateName = accessPrivateName(node.operand.name);
+                if (operator && privateName && privateName.type === PrivateNameType.InstanceField) {
+                    const isReceiverTriviallyCopiable = isSimpleCopiableExpression(node.operand.expression);
+                    const expr = visitNode(node.operand.expression, visitor);
+                    const getReceiver = isReceiverTriviallyCopiable ? expr : createTempVariable(hoistVariableDeclaration);
+                    const setReceiver = isReceiverTriviallyCopiable ? expr : createAssignment(getReceiver, expr);
+                    return setOriginalNode(
+                        createClassPrivateFieldSetHelper(
+                            context,
+                            setReceiver,
+                            privateName.weakMapName,
+                            createBinary(
+                                createClassPrivateFieldGetHelper(context, getReceiver, privateName.weakMapName),
+                                operator,
+                                createNumericLiteral("1")
+                            )
+                        ),
+                        node
+                    );
+                }
+            }
+            return visitEachChild(node, visitor, context);
+        }
+
+        function visitPostfixUnaryExpression(node: PostfixUnaryExpression) {
+            if (isPrivateNamedPropertyAccess(node.operand)) {
+                const operator = (node.operator === SyntaxKind.PlusPlusToken) ?
+                    SyntaxKind.PlusToken : (node.operator === SyntaxKind.MinusMinusToken) ?
+                        SyntaxKind.MinusToken : undefined;
+                const privateName = accessPrivateName(node.operand.name);
+                if (operator && privateName && privateName.type === PrivateNameType.InstanceField) {
+                    const isReceiverTriviallyCopiable = isSimpleCopiableExpression(node.operand.expression);
+                    const expr = visitNode(node.operand.expression, visitor);
+                    const getReceiver = isReceiverTriviallyCopiable ? expr : createTempVariable(hoistVariableDeclaration);
+                    const setReceiver = isReceiverTriviallyCopiable ? expr : createAssignment(getReceiver, expr);
+                    const returnValue = createTempVariable(hoistVariableDeclaration);
+                    return setOriginalNode(
+                        createComma(
+                            createClassPrivateFieldSetHelper(
+                                context,
+                                setReceiver,
+                                privateName.weakMapName,
+                                createBinary(
+                                    createAssignment(returnValue, createClassPrivateFieldGetHelper(context, getReceiver, privateName.weakMapName)),
+                                    operator,
+                                    createNumericLiteral("1")
+                                )
+                            ),
+                            returnValue
+                        ),
+                        node
+                    );
                 }
             }
             return visitEachChild(node, visitor, context);
