@@ -929,17 +929,12 @@ namespace ts {
                 const parameters = transformConstructorParameters(constructor);
                 const body = transformConstructorBody(node.members, constructor, parametersWithPropertyAssignments);
                 members.push(startOnNewLine(
-                    setOriginalNode(
-                        setTextRange(
-                            createConstructor(
-                            /*decorators*/ undefined,
-                            /*modifiers*/ undefined,
-                                parameters,
-                                body
-                            ),
-                            constructor
-                        ),
-                        constructor
+                    updateConstructor(
+                        constructor,
+                        /*decorators*/ undefined,
+                        /*modifiers*/ undefined,
+                        parameters,
+                        body
                     )
                 ));
                 addRange(
