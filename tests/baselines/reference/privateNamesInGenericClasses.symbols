@@ -1,0 +1,23 @@
+=== tests/cases/conformance/classes/members/privateNames/privateNamesInGenericClasses.ts ===
+  #foo: T;
+  bar(x: C<T>) { return x.#foo; }          // OK
+>return : Symbol(return, Decl(privateNamesInGenericClasses.ts, 1, 16))
+
+  baz(x: C<number>) { return x.#foo; }     // OK
+>return : Symbol(return, Decl(privateNamesInGenericClasses.ts, 2, 21))
+
+  quux(x: C<string>) { return x.#foo; }    // OK
+>return : Symbol(return, Decl(privateNamesInGenericClasses.ts, 3, 22))
+}
+
+declare let a: C<number>;
+declare let b: C<string>;
+>b : Symbol(b, Decl(privateNamesInGenericClasses.ts, 7, 11))
+
+a.#foo;                                   // OK
+a = b;                                    // Error
+>b : Symbol(b, Decl(privateNamesInGenericClasses.ts, 7, 11))
+
+b = a;                                    // Error
+>b : Symbol(b, Decl(privateNamesInGenericClasses.ts, 7, 11))
+

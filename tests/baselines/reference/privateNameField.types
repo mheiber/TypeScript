@@ -1,17 +1,17 @@
 === tests/cases/conformance/classes/members/privateNames/privateNameField.ts ===
-class A {
->A : A
-
     #name: string;
->#name : string
+>string : any
 
     constructor(name: string) {
->name : string
+>constructor(name: string) : any
+>constructor : any
+>name : never
+>string : any
 
         this.#name = name;
->this.#name = name : string
->this.#name : string
->this : this
->name : string
+>this.#name = name : never
+>this.#name : any
+>this : any
+>name : never
     }
 }

@@ -1,0 +1,20 @@
+tests/cases/conformance/classes/members/privateNames/privateNamesAndkeyof.ts(2,5): error TS7008: Member '#foo' implicitly has an 'any' type.
+tests/cases/conformance/classes/members/privateNames/privateNamesAndkeyof.ts(3,5): error TS7008: Member 'bar' implicitly has an 'any' type.
+tests/cases/conformance/classes/members/privateNames/privateNamesAndkeyof.ts(4,5): error TS7008: Member 'baz' implicitly has an 'any' type.
+
+
+==== tests/cases/conformance/classes/members/privateNames/privateNamesAndkeyof.ts (3 errors) ====
+    class A {
+        #foo;
+        ~~~~
+!!! error TS7008: Member '#foo' implicitly has an 'any' type.
+        bar;
+        ~~~
+!!! error TS7008: Member 'bar' implicitly has an 'any' type.
+        baz;
+        ~~~
+!!! error TS7008: Member 'baz' implicitly has an 'any' type.
+    }
+    
+    type T = keyof A     // should not include '#foo'
+    

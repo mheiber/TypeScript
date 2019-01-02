@@ -10,6 +10,7 @@ class A {
 
 //// [privateNameNestedClassNameConflict.js]
 var _foo;
+"use strict";
 var A = /** @class */ (function () {
     function A() {
         _foo.set(this, void 0);

@@ -1,0 +1,153 @@
+tests/cases/conformance/classes/members/privateNames/privateNamesInGenericClasses.ts(1,3): error TS1128: Declaration or statement expected.
+tests/cases/conformance/classes/members/privateNames/privateNamesInGenericClasses.ts(1,7): error TS1128: Declaration or statement expected.
+tests/cases/conformance/classes/members/privateNames/privateNamesInGenericClasses.ts(1,9): error TS2304: Cannot find name 'T'.
+tests/cases/conformance/classes/members/privateNames/privateNamesInGenericClasses.ts(2,3): error TS2304: Cannot find name 'bar'.
+tests/cases/conformance/classes/members/privateNames/privateNamesInGenericClasses.ts(2,7): error TS2304: Cannot find name 'x'.
+tests/cases/conformance/classes/members/privateNames/privateNamesInGenericClasses.ts(2,8): error TS1005: ',' expected.
+tests/cases/conformance/classes/members/privateNames/privateNamesInGenericClasses.ts(2,10): error TS2304: Cannot find name 'C'.
+tests/cases/conformance/classes/members/privateNames/privateNamesInGenericClasses.ts(2,12): error TS2304: Cannot find name 'T'.
+tests/cases/conformance/classes/members/privateNames/privateNamesInGenericClasses.ts(2,14): error TS1005: '(' expected.
+tests/cases/conformance/classes/members/privateNames/privateNamesInGenericClasses.ts(2,16): error TS1005: ',' expected.
+tests/cases/conformance/classes/members/privateNames/privateNamesInGenericClasses.ts(2,25): error TS1005: ':' expected.
+tests/cases/conformance/classes/members/privateNames/privateNamesInGenericClasses.ts(2,25): error TS2304: Cannot find name 'x'.
+tests/cases/conformance/classes/members/privateNames/privateNamesInGenericClasses.ts(2,31): error TS1005: ',' expected.
+tests/cases/conformance/classes/members/privateNames/privateNamesInGenericClasses.ts(3,3): error TS1005: ',' expected.
+tests/cases/conformance/classes/members/privateNames/privateNamesInGenericClasses.ts(3,3): error TS2304: Cannot find name 'baz'.
+tests/cases/conformance/classes/members/privateNames/privateNamesInGenericClasses.ts(3,7): error TS2304: Cannot find name 'x'.
+tests/cases/conformance/classes/members/privateNames/privateNamesInGenericClasses.ts(3,8): error TS1005: ',' expected.
+tests/cases/conformance/classes/members/privateNames/privateNamesInGenericClasses.ts(3,10): error TS2304: Cannot find name 'C'.
+tests/cases/conformance/classes/members/privateNames/privateNamesInGenericClasses.ts(3,19): error TS1005: '(' expected.
+tests/cases/conformance/classes/members/privateNames/privateNamesInGenericClasses.ts(3,21): error TS1005: ',' expected.
+tests/cases/conformance/classes/members/privateNames/privateNamesInGenericClasses.ts(3,30): error TS1005: ':' expected.
+tests/cases/conformance/classes/members/privateNames/privateNamesInGenericClasses.ts(3,30): error TS2304: Cannot find name 'x'.
+tests/cases/conformance/classes/members/privateNames/privateNamesInGenericClasses.ts(3,36): error TS1005: ',' expected.
+tests/cases/conformance/classes/members/privateNames/privateNamesInGenericClasses.ts(4,3): error TS1005: ',' expected.
+tests/cases/conformance/classes/members/privateNames/privateNamesInGenericClasses.ts(4,3): error TS2304: Cannot find name 'quux'.
+tests/cases/conformance/classes/members/privateNames/privateNamesInGenericClasses.ts(4,8): error TS2304: Cannot find name 'x'.
+tests/cases/conformance/classes/members/privateNames/privateNamesInGenericClasses.ts(4,9): error TS1005: ',' expected.
+tests/cases/conformance/classes/members/privateNames/privateNamesInGenericClasses.ts(4,11): error TS2304: Cannot find name 'C'.
+tests/cases/conformance/classes/members/privateNames/privateNamesInGenericClasses.ts(4,20): error TS1005: '(' expected.
+tests/cases/conformance/classes/members/privateNames/privateNamesInGenericClasses.ts(4,22): error TS1005: ',' expected.
+tests/cases/conformance/classes/members/privateNames/privateNamesInGenericClasses.ts(4,31): error TS1005: ':' expected.
+tests/cases/conformance/classes/members/privateNames/privateNamesInGenericClasses.ts(4,31): error TS2304: Cannot find name 'x'.
+tests/cases/conformance/classes/members/privateNames/privateNamesInGenericClasses.ts(4,37): error TS1005: ',' expected.
+tests/cases/conformance/classes/members/privateNames/privateNamesInGenericClasses.ts(5,1): error TS1005: ',' expected.
+tests/cases/conformance/classes/members/privateNames/privateNamesInGenericClasses.ts(7,1): error TS2304: Cannot find name 'declare'.
+tests/cases/conformance/classes/members/privateNames/privateNamesInGenericClasses.ts(7,9): error TS1005: ',' expected.
+tests/cases/conformance/classes/members/privateNames/privateNamesInGenericClasses.ts(7,9): error TS2304: Cannot find name 'let'.
+tests/cases/conformance/classes/members/privateNames/privateNamesInGenericClasses.ts(7,13): error TS1005: ',' expected.
+tests/cases/conformance/classes/members/privateNames/privateNamesInGenericClasses.ts(7,13): error TS2304: Cannot find name 'a'.
+tests/cases/conformance/classes/members/privateNames/privateNamesInGenericClasses.ts(7,14): error TS1005: ',' expected.
+tests/cases/conformance/classes/members/privateNames/privateNamesInGenericClasses.ts(7,16): error TS2304: Cannot find name 'C'.
+tests/cases/conformance/classes/members/privateNames/privateNamesInGenericClasses.ts(7,25): error TS1005: '(' expected.
+tests/cases/conformance/classes/members/privateNames/privateNamesInGenericClasses.ts(8,16): error TS2304: Cannot find name 'C'.
+tests/cases/conformance/classes/members/privateNames/privateNamesInGenericClasses.ts(9,1): error TS2304: Cannot find name 'a'.
+tests/cases/conformance/classes/members/privateNames/privateNamesInGenericClasses.ts(10,1): error TS2304: Cannot find name 'a'.
+tests/cases/conformance/classes/members/privateNames/privateNamesInGenericClasses.ts(11,5): error TS2304: Cannot find name 'a'.
+
+
+==== tests/cases/conformance/classes/members/privateNames/privateNamesInGenericClasses.ts (46 errors) ====
+      #foo: T;
+      ~~~~
+!!! error TS1128: Declaration or statement expected.
+          ~
+!!! error TS1128: Declaration or statement expected.
+            ~
+!!! error TS2304: Cannot find name 'T'.
+      bar(x: C<T>) { return x.#foo; }          // OK
+      ~~~
+!!! error TS2304: Cannot find name 'bar'.
+          ~
+!!! error TS2304: Cannot find name 'x'.
+           ~
+!!! error TS1005: ',' expected.
+             ~
+!!! error TS2304: Cannot find name 'C'.
+               ~
+!!! error TS2304: Cannot find name 'T'.
+                 ~
+!!! error TS1005: '(' expected.
+                   ~
+!!! error TS1005: ',' expected.
+                            ~
+!!! error TS1005: ':' expected.
+                            ~
+!!! error TS2304: Cannot find name 'x'.
+                                  ~
+!!! error TS1005: ',' expected.
+      baz(x: C<number>) { return x.#foo; }     // OK
+      ~~~
+!!! error TS1005: ',' expected.
+      ~~~
+!!! error TS2304: Cannot find name 'baz'.
+          ~
+!!! error TS2304: Cannot find name 'x'.
+           ~
+!!! error TS1005: ',' expected.
+             ~
+!!! error TS2304: Cannot find name 'C'.
+                      ~
+!!! error TS1005: '(' expected.
+                        ~
+!!! error TS1005: ',' expected.
+                                 ~
+!!! error TS1005: ':' expected.
+                                 ~
+!!! error TS2304: Cannot find name 'x'.
+                                       ~
+!!! error TS1005: ',' expected.
+      quux(x: C<string>) { return x.#foo; }    // OK
+      ~~~~
+!!! error TS1005: ',' expected.
+      ~~~~
+!!! error TS2304: Cannot find name 'quux'.
+           ~
+!!! error TS2304: Cannot find name 'x'.
+            ~
+!!! error TS1005: ',' expected.
+              ~
+!!! error TS2304: Cannot find name 'C'.
+                       ~
+!!! error TS1005: '(' expected.
+                         ~
+!!! error TS1005: ',' expected.
+                                  ~
+!!! error TS1005: ':' expected.
+                                  ~
+!!! error TS2304: Cannot find name 'x'.
+                                        ~
+!!! error TS1005: ',' expected.
+    }
+    ~
+!!! error TS1005: ',' expected.
+    
+    declare let a: C<number>;
+    ~~~~~~~
+!!! error TS2304: Cannot find name 'declare'.
+            ~~~
+!!! error TS1005: ',' expected.
+            ~~~
+!!! error TS2304: Cannot find name 'let'.
+                ~
+!!! error TS1005: ',' expected.
+                ~
+!!! error TS2304: Cannot find name 'a'.
+                 ~
+!!! error TS1005: ',' expected.
+                   ~
+!!! error TS2304: Cannot find name 'C'.
+                            ~
+!!! error TS1005: '(' expected.
+    declare let b: C<string>;
+                   ~
+!!! error TS2304: Cannot find name 'C'.
+    a.#foo;                                   // OK
+    ~
+!!! error TS2304: Cannot find name 'a'.
+    a = b;                                    // Error
+    ~
+!!! error TS2304: Cannot find name 'a'.
+    b = a;                                    // Error
+        ~
+!!! error TS2304: Cannot find name 'a'.
+    

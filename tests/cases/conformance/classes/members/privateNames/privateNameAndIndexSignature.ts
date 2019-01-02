@@ -1,3 +1,4 @@
+// @strict: true
 class A {
     [k: string]: any;
     constructor(message: string) {

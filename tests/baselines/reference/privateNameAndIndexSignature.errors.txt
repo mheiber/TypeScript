@@ -1,13 +1,46 @@
-tests/cases/conformance/classes/members/privateNames/privateNameAndIndexSignature.ts(4,14): error TS2339: Property '#f' does not exist on type 'A'.
+tests/cases/conformance/classes/members/privateNames/privateNameAndIndexSignature.ts(1,6): error TS2304: Cannot find name 'k'.
+tests/cases/conformance/classes/members/privateNames/privateNameAndIndexSignature.ts(1,7): error TS1005: ',' expected.
+tests/cases/conformance/classes/members/privateNames/privateNameAndIndexSignature.ts(1,9): error TS2693: 'string' only refers to a type, but is being used as a value here.
+tests/cases/conformance/classes/members/privateNames/privateNameAndIndexSignature.ts(1,16): error TS1005: ';' expected.
+tests/cases/conformance/classes/members/privateNames/privateNameAndIndexSignature.ts(1,18): error TS2693: 'any' only refers to a type, but is being used as a value here.
+tests/cases/conformance/classes/members/privateNames/privateNameAndIndexSignature.ts(2,5): error TS2304: Cannot find name 'constructor'.
+tests/cases/conformance/classes/members/privateNames/privateNameAndIndexSignature.ts(2,17): error TS2552: Cannot find name 'message'. Did you mean 'onmessage'?
+tests/cases/conformance/classes/members/privateNames/privateNameAndIndexSignature.ts(2,24): error TS1005: ',' expected.
+tests/cases/conformance/classes/members/privateNames/privateNameAndIndexSignature.ts(2,26): error TS2693: 'string' only refers to a type, but is being used as a value here.
+tests/cases/conformance/classes/members/privateNames/privateNameAndIndexSignature.ts(2,34): error TS1005: ';' expected.
+tests/cases/conformance/classes/members/privateNames/privateNameAndIndexSignature.ts(3,9): error TS2683: 'this' implicitly has type 'any' because it does not have a type annotation.
+tests/cases/conformance/classes/members/privateNames/privateNameAndIndexSignature.ts(5,1): error TS1128: Declaration or statement expected.
 
 
-==== tests/cases/conformance/classes/members/privateNames/privateNameAndIndexSignature.ts (1 errors) ====
-    class A {
+==== tests/cases/conformance/classes/members/privateNames/privateNameAndIndexSignature.ts (12 errors) ====
         [k: string]: any;
+         ~
+!!! error TS2304: Cannot find name 'k'.
+          ~
+!!! error TS1005: ',' expected.
+            ~~~~~~
+!!! error TS2693: 'string' only refers to a type, but is being used as a value here.
+                   ~
+!!! error TS1005: ';' expected.
+                     ~~~
+!!! error TS2693: 'any' only refers to a type, but is being used as a value here.
         constructor(message: string) {
+        ~~~~~~~~~~~
+!!! error TS2304: Cannot find name 'constructor'.
+                    ~~~~~~~
+!!! error TS2552: Cannot find name 'message'. Did you mean 'onmessage'?
+!!! related TS2728 /.ts/lib.dom.d.ts:17590:13: 'onmessage' is declared here.
+                           ~
+!!! error TS1005: ',' expected.
+                             ~~~~~~
+!!! error TS2693: 'string' only refers to a type, but is being used as a value here.
+                                     ~
+!!! error TS1005: ';' expected.
             this.#f = 3                 // Error Property '#f' does not exist on type 'A'.
-                 ~~
-!!! error TS2339: Property '#f' does not exist on type 'A'.
+            ~~~~
+!!! error TS2683: 'this' implicitly has type 'any' because it does not have a type annotation.
         }
     }
+    ~
+!!! error TS1128: Declaration or statement expected.
     

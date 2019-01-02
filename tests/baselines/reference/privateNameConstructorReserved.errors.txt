@@ -1,0 +1,15 @@
+tests/cases/conformance/classes/members/privateNames/privateNameConstructorReserved.ts(1,5): error TS1128: Declaration or statement expected.
+tests/cases/conformance/classes/members/privateNames/privateNameConstructorReserved.ts(1,20): error TS1005: '=>' expected.
+tests/cases/conformance/classes/members/privateNames/privateNameConstructorReserved.ts(2,1): error TS1128: Declaration or statement expected.
+
+
+==== tests/cases/conformance/classes/members/privateNames/privateNameConstructorReserved.ts (3 errors) ====
+        #constructor() {}      // Error: `#constructor` is a reserved word.
+        ~~~~~~~~~~~~
+!!! error TS1128: Declaration or statement expected.
+                       ~
+!!! error TS1005: '=>' expected.
+    }
+    ~
+!!! error TS1128: Declaration or statement expected.
+    

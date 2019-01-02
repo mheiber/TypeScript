@@ -1,0 +1,44 @@
+tests/cases/conformance/classes/members/privateNames/privateNamesAndStaticMethods.ts(23,7): error TS2417: Class static side 'typeof B' incorrectly extends base class static side 'typeof A'.
+  Types of property '#foo' are incompatible.
+    Type '(a: string) => void' is not assignable to type '(a: number) => void'.
+      Types of parameters 'a' and 'a' are incompatible.
+        Type 'number' is not assignable to type 'string'.
+
+
+==== tests/cases/conformance/classes/members/privateNames/privateNamesAndStaticMethods.ts (1 errors) ====
+    class A {
+        static #foo(a: number) {}
+        static async #bar(a: number) {}
+        static async *#baz(a: number) {
+            return 3;
+        }
+        static #_quux: number;
+        static get #quux (): number {
+            return this.#_quux;
+        }
+        static set #quux (val: number) {
+            this.#_quux = val; 
+        }
+        constructor () {
+            A.#foo(30);
+            A.#bar(30);
+            A.#bar(30);
+            A.#quux = A.#quux + 1;
+            A.#quux++;
+     }
+    }
+    
+    class B extends A {
+          ~
+!!! error TS2417: Class static side 'typeof B' incorrectly extends base class static side 'typeof A'.
+!!! error TS2417:   Types of property '#foo' are incompatible.
+!!! error TS2417:     Type '(a: string) => void' is not assignable to type '(a: number) => void'.
+!!! error TS2417:       Types of parameters 'a' and 'a' are incompatible.
+!!! error TS2417:         Type 'number' is not assignable to type 'string'.
+        static #foo(a: string) {}
+        constructor () {
+            super();
+            B.#foo("str");
+        }
+    }
+    

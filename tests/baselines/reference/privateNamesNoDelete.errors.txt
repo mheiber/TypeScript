@@ -1,0 +1,27 @@
+tests/cases/conformance/classes/members/privateNames/privateNamesNoDelete.ts(1,5): error TS1128: Declaration or statement expected.
+tests/cases/conformance/classes/members/privateNames/privateNamesNoDelete.ts(1,8): error TS1128: Declaration or statement expected.
+tests/cases/conformance/classes/members/privateNames/privateNamesNoDelete.ts(2,5): error TS2304: Cannot find name 'constructor'.
+tests/cases/conformance/classes/members/privateNames/privateNamesNoDelete.ts(2,19): error TS1005: ';' expected.
+tests/cases/conformance/classes/members/privateNames/privateNamesNoDelete.ts(3,16): error TS2683: 'this' implicitly has type 'any' because it does not have a type annotation.
+tests/cases/conformance/classes/members/privateNames/privateNamesNoDelete.ts(5,1): error TS1128: Declaration or statement expected.
+
+
+==== tests/cases/conformance/classes/members/privateNames/privateNamesNoDelete.ts (6 errors) ====
+        #v = 1;
+        ~~
+!!! error TS1128: Declaration or statement expected.
+           ~
+!!! error TS1128: Declaration or statement expected.
+        constructor() {
+        ~~~~~~~~~~~
+!!! error TS2304: Cannot find name 'constructor'.
+                      ~
+!!! error TS1005: ';' expected.
+            delete this.#v; // Error: The operand of a delete operator cannot be a private name.
+                   ~~~~
+!!! error TS2683: 'this' implicitly has type 'any' because it does not have a type annotation.
+        }
+    }
+    ~
+!!! error TS1128: Declaration or statement expected.
+    

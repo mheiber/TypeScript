@@ -1,0 +1,8 @@
+=== tests/cases/conformance/classes/members/privateNames/privateNamesNoAccessibilityModifiers.ts ===
+    public #foo;         // Error
+No type information for this code.    private #bar;        // Error
+No type information for this code.    protected #baz;      // Error
+No type information for this code.    readonly #qux;       // OK
+No type information for this code.}
+No type information for this code.
+No type information for this code.

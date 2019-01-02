@@ -1,0 +1,24 @@
+tests/cases/conformance/classes/members/privateNames/privateNamesNotAllowedAsParameters.ts(1,5): error TS2304: Cannot find name 'setFoo'.
+tests/cases/conformance/classes/members/privateNames/privateNamesNotAllowedAsParameters.ts(1,12): error TS1135: Argument expression expected.
+tests/cases/conformance/classes/members/privateNames/privateNamesNotAllowedAsParameters.ts(1,16): error TS1135: Argument expression expected.
+tests/cases/conformance/classes/members/privateNames/privateNamesNotAllowedAsParameters.ts(1,18): error TS2693: 'string' only refers to a type, but is being used as a value here.
+tests/cases/conformance/classes/members/privateNames/privateNamesNotAllowedAsParameters.ts(1,26): error TS1005: ';' expected.
+tests/cases/conformance/classes/members/privateNames/privateNamesNotAllowedAsParameters.ts(2,1): error TS1128: Declaration or statement expected.
+
+
+==== tests/cases/conformance/classes/members/privateNames/privateNamesNotAllowedAsParameters.ts (6 errors) ====
+        setFoo(#foo: string) {}
+        ~~~~~~
+!!! error TS2304: Cannot find name 'setFoo'.
+               ~~~~
+!!! error TS1135: Argument expression expected.
+                   ~
+!!! error TS1135: Argument expression expected.
+                     ~~~~~~
+!!! error TS2693: 'string' only refers to a type, but is being used as a value here.
+                             ~
+!!! error TS1005: ';' expected.
+    }
+    ~
+!!! error TS1128: Declaration or statement expected.
+    

@@ -1,0 +1,8 @@
+=== tests/cases/conformance/classes/members/privateNames/privateNamesNoDelete.ts ===
+    #v = 1;
+No type information for this code.    constructor() {
+No type information for this code.        delete this.#v; // Error: The operand of a delete operator cannot be a private name.
+No type information for this code.    }
+No type information for this code.}
+No type information for this code.
+No type information for this code.

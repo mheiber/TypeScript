@@ -1,3 +1,4 @@
+// @strict: true
 class A {
     #fieldFunc = () => this.x = 10;
     x = 1;

@@ -18,6 +18,7 @@ class A {
 //// [privateNameFieldDestructuredBinding.js]
 var _classPrivateFieldGet = function (receiver, privateMap) { if (!privateMap.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return privateMap.get(receiver); };
 var _field;
+"use strict";
 var A = /** @class */ (function () {
     function A() {
         _field.set(this, 1);

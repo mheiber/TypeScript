@@ -1,0 +1,15 @@
+=== tests/cases/conformance/classes/members/privateNames/privateNamesNoConflictWhenInheriting.ts ===
+    #foo: number;
+}
+
+class B extends A {
+>B : Symbol(B, Decl(privateNamesNoConflictWhenInheriting.ts, 1, 1))
+
+    #foo: string;    // OK: private names are unique to each class
+>#foo : Symbol(B.#foo, Decl(privateNamesNoConflictWhenInheriting.ts, 3, 19))
+}
+
+const b: A = new B() // OK
+>b : Symbol(b, Decl(privateNamesNoConflictWhenInheriting.ts, 7, 5))
+>B : Symbol(B, Decl(privateNamesNoConflictWhenInheriting.ts, 1, 1))
+

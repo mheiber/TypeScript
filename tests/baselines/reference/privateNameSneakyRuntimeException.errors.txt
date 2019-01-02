@@ -1,0 +1,23 @@
+tests/cases/conformance/classes/members/privateNames/privateNameSneakyRuntimeException.ts(3,9): error TS7008: Member '#foo' implicitly has an 'any' type.
+tests/cases/conformance/classes/members/privateNames/privateNameSneakyRuntimeException.ts(4,16): error TS7006: Parameter 'other' implicitly has an 'any' type.
+
+
+==== tests/cases/conformance/classes/members/privateNames/privateNameSneakyRuntimeException.ts (2 errors) ====
+    function createClass () {
+        return class {
+            #foo;
+            ~~~~
+!!! error TS7008: Member '#foo' implicitly has an 'any' type.
+            equals(other) {
+                   ~~~~~
+!!! error TS7006: Parameter 'other' implicitly has an 'any' type.
+                return this.#foo = other.#foo;
+            }
+        };
+    }
+    
+    const a = new (createClass())();
+    const b = new (createClass())();
+    
+    console.log(a.equals(b));     // OK at compile time but will be a runtime error
+    

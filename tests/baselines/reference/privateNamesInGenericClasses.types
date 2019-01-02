@@ -1,0 +1,62 @@
+=== tests/cases/conformance/classes/members/privateNames/privateNamesInGenericClasses.ts ===
+  #foo: T;
+>T : any
+
+  bar(x: C<T>) { return x.#foo; }          // OK
+>bar(x: C<T>) { return x.#foo; }          // OK  baz(x: C<number>) { return x.#foo; }     // OK  quux(x: C<string>) { return x.#foo; }    // OK}declare let a: C<number> : any
+>bar : any
+>x : any
+>C<T>) : any
+>C : any
+>{ return x.#foo; } : { return: any; }
+>return : any
+>x.#foo : any
+>x : any
+
+  baz(x: C<number>) { return x.#foo; }     // OK
+>baz(x: C<number>) { return x.#foo; }     // OK  quux(x: C<string>) { return x.#foo; }    // OK}declare let a: C<number> : any
+>baz : any
+>x : any
+>C<number>) : any
+>C : any
+>{ return x.#foo; } : { return: any; }
+>return : any
+>x.#foo : any
+>x : any
+
+  quux(x: C<string>) { return x.#foo; }    // OK
+>quux(x: C<string>) { return x.#foo; }    // OK}declare let a: C<number> : any
+>quux : any
+>x : any
+>C<string>) : any
+>C : any
+>{ return x.#foo; } : { return: any; }
+>return : any
+>x.#foo : any
+>x : any
+}
+
+declare let a: C<number>;
+>declare : any
+>let : any
+>a : any
+>C<number> : any
+>C : any
+
+declare let b: C<string>;
+>b : any
+
+a.#foo;                                   // OK
+>a.#foo : any
+>a : any
+
+a = b;                                    // Error
+>a = b : any
+>a : any
+>b : any
+
+b = a;                                    // Error
+>b = a : any
+>b : any
+>a : any
+

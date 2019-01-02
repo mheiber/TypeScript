@@ -1,0 +1,25 @@
+tests/cases/conformance/classes/members/privateNames/privateNamesAndFields.ts(11,5): error TS2416: Property '#foo' in type 'B' is not assignable to the same property in base type 'A'.
+  Type 'string' is not assignable to type 'number'.
+
+
+==== tests/cases/conformance/classes/members/privateNames/privateNamesAndFields.ts (1 errors) ====
+    // @target ESNext
+    
+    class A {
+        #foo: number;
+        constructor () {
+            this.#foo = 3;
+        }
+    }
+    
+    class B extends A {
+        #foo: string;
+        ~~~~
+!!! error TS2416: Property '#foo' in type 'B' is not assignable to the same property in base type 'A'.
+!!! error TS2416:   Type 'string' is not assignable to type 'number'.
+        constructor () {
+            super();
+            this.#foo = "some string";
+        }
+    }
+    

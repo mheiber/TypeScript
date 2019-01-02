@@ -1,0 +1,15 @@
+=== tests/cases/conformance/classes/members/privateNames/privateNamesNoDelete.ts ===
+    #v = 1;
+>1 : 1
+
+    constructor() {
+>constructor() : any
+>constructor : any
+
+        delete this.#v; // Error: The operand of a delete operator cannot be a private name.
+>delete this.#v : boolean
+>this.#v : any
+>this : any
+    }
+}
+

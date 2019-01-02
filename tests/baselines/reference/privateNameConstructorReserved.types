@@ -1,0 +1,5 @@
+=== tests/cases/conformance/classes/members/privateNames/privateNameConstructorReserved.ts ===
+    #constructor() {}      // Error: `#constructor` is a reserved word.
+>() {} : () => void
+}
+

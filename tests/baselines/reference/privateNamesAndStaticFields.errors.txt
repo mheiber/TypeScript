@@ -1,0 +1,27 @@
+tests/cases/conformance/classes/members/privateNames/privateNamesAndStaticFields.ts(10,7): error TS2417: Class static side 'typeof B' incorrectly extends base class static side 'typeof A'.
+  Types of property '#foo' are incompatible.
+    Type 'string' is not assignable to type 'number'.
+
+
+==== tests/cases/conformance/classes/members/privateNames/privateNamesAndStaticFields.ts (1 errors) ====
+    // @target ESNext
+    
+    class A {
+        static #foo: number;
+        constructor () {
+            A.#foo = 3;
+        }
+    }
+    
+    class B extends A {
+          ~
+!!! error TS2417: Class static side 'typeof B' incorrectly extends base class static side 'typeof A'.
+!!! error TS2417:   Types of property '#foo' are incompatible.
+!!! error TS2417:     Type 'string' is not assignable to type 'number'.
+        static #foo: string;
+        constructor () {
+            super();
+            B.#foo = "some string";
+        }
+    }
+    

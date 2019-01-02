@@ -1,3 +1,4 @@
+// @strict: true
 class A {
     #myField = "hello world";
     constructor() {

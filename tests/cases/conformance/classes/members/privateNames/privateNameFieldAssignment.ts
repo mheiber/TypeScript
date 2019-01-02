@@ -1,3 +1,4 @@
+// @strict: true
 class A {
     #field = 0;
     constructor() {

@@ -1,0 +1,61 @@
+tests/cases/conformance/classes/members/privateNames/privateNamesInNestedClasses.ts(1,4): error TS1128: Declaration or statement expected.
+tests/cases/conformance/classes/members/privateNames/privateNamesInNestedClasses.ts(1,9): error TS1128: Declaration or statement expected.
+tests/cases/conformance/classes/members/privateNames/privateNamesInNestedClasses.ts(2,4): error TS1128: Declaration or statement expected.
+tests/cases/conformance/classes/members/privateNames/privateNamesInNestedClasses.ts(2,9): error TS1128: Declaration or statement expected.
+tests/cases/conformance/classes/members/privateNames/privateNamesInNestedClasses.ts(3,4): error TS2304: Cannot find name 'method'.
+tests/cases/conformance/classes/members/privateNames/privateNamesInNestedClasses.ts(3,14): error TS1005: ';' expected.
+tests/cases/conformance/classes/members/privateNames/privateNamesInNestedClasses.ts(6,17): error TS7006: Parameter 'a' implicitly has an 'any' type.
+tests/cases/conformance/classes/members/privateNames/privateNamesInNestedClasses.ts(9,20): error TS2304: Cannot find name 'A'.
+tests/cases/conformance/classes/members/privateNames/privateNamesInNestedClasses.ts(16,22): error TS2552: Cannot find name 'A'. Did you mean 'a'?
+tests/cases/conformance/classes/members/privateNames/privateNamesInNestedClasses.ts(22,1): error TS1128: Declaration or statement expected.
+tests/cases/conformance/classes/members/privateNames/privateNamesInNestedClasses.ts(24,5): error TS2304: Cannot find name 'A'.
+
+
+==== tests/cases/conformance/classes/members/privateNames/privateNamesInNestedClasses.ts (11 errors) ====
+       #foo = "A's #foo";
+       ~~~~
+!!! error TS1128: Declaration or statement expected.
+            ~
+!!! error TS1128: Declaration or statement expected.
+       #bar = "A's #bar";
+       ~~~~
+!!! error TS1128: Declaration or statement expected.
+            ~
+!!! error TS1128: Declaration or statement expected.
+       method () {
+       ~~~~~~
+!!! error TS2304: Cannot find name 'method'.
+                 ~
+!!! error TS1005: ';' expected.
+           class B {
+               #foo = "B's #foo";
+               bar (a) {
+                    ~
+!!! error TS7006: Parameter 'a' implicitly has an 'any' type.
+                   a.#foo; // OK, no compile-time error, don't know what `a` is
+               }
+               baz (a: A) {
+                       ~
+!!! error TS2304: Cannot find name 'A'.
+                   a.#foo; // compile-time error, shadowed
+               }
+               quux (b: B) {
+                   b.#foo; // OK
+               }
+           }
+           const a = new A();
+                         ~
+!!! error TS2552: Cannot find name 'A'. Did you mean 'a'?
+!!! related TS2728 tests/cases/conformance/classes/members/privateNames/privateNamesInNestedClasses.ts:16:14: 'a' is declared here.
+           new B().bar(a);
+           new B().baz(a);
+           const b = new B();
+           new B().quux(b);
+       }
+    }
+    ~
+!!! error TS1128: Declaration or statement expected.
+    
+    new A().method();
+        ~
+!!! error TS2304: Cannot find name 'A'.

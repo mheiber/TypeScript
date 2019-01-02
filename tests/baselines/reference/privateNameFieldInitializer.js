@@ -7,6 +7,7 @@ class A {
 
 //// [privateNameFieldInitializer.js]
 var _field, _uninitialized;
+"use strict";
 var A = /** @class */ (function () {
     function A() {
         _field.set(this, 10);

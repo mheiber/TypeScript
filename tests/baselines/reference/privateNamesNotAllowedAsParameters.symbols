@@ -1,0 +1,5 @@
+=== tests/cases/conformance/classes/members/privateNames/privateNamesNotAllowedAsParameters.ts ===
+    setFoo(#foo: string) {}
+No type information for this code.}
+No type information for this code.
+No type information for this code.

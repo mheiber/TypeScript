@@ -1,0 +1,14 @@
+tests/cases/conformance/classes/members/privateNames/privateNameDuplicateField.ts(2,5): error TS7008: Member '#foo' implicitly has an 'any' type.
+tests/cases/conformance/classes/members/privateNames/privateNameDuplicateField.ts(3,5): error TS2300: Duplicate identifier '#foo'.
+
+
+==== tests/cases/conformance/classes/members/privateNames/privateNameDuplicateField.ts (2 errors) ====
+    class A {
+        #foo;
+        ~~~~
+!!! error TS7008: Member '#foo' implicitly has an 'any' type.
+        #foo;
+        ~~~~
+!!! error TS2300: Duplicate identifier '#foo'.
+    }
+    

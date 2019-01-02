@@ -1,0 +1,36 @@
+tests/cases/conformance/classes/members/privateNames/privateNamesNoAccessibilityModifiers.ts(1,5): error TS1128: Declaration or statement expected.
+tests/cases/conformance/classes/members/privateNames/privateNamesNoAccessibilityModifiers.ts(1,12): error TS1128: Declaration or statement expected.
+tests/cases/conformance/classes/members/privateNames/privateNamesNoAccessibilityModifiers.ts(2,5): error TS1128: Declaration or statement expected.
+tests/cases/conformance/classes/members/privateNames/privateNamesNoAccessibilityModifiers.ts(2,13): error TS1128: Declaration or statement expected.
+tests/cases/conformance/classes/members/privateNames/privateNamesNoAccessibilityModifiers.ts(3,5): error TS1128: Declaration or statement expected.
+tests/cases/conformance/classes/members/privateNames/privateNamesNoAccessibilityModifiers.ts(3,15): error TS1128: Declaration or statement expected.
+tests/cases/conformance/classes/members/privateNames/privateNamesNoAccessibilityModifiers.ts(4,5): error TS1128: Declaration or statement expected.
+tests/cases/conformance/classes/members/privateNames/privateNamesNoAccessibilityModifiers.ts(4,14): error TS1128: Declaration or statement expected.
+tests/cases/conformance/classes/members/privateNames/privateNamesNoAccessibilityModifiers.ts(5,1): error TS1128: Declaration or statement expected.
+
+
+==== tests/cases/conformance/classes/members/privateNames/privateNamesNoAccessibilityModifiers.ts (9 errors) ====
+        public #foo;         // Error
+        ~~~~~~
+!!! error TS1128: Declaration or statement expected.
+               ~~~~
+!!! error TS1128: Declaration or statement expected.
+        private #bar;        // Error
+        ~~~~~~~
+!!! error TS1128: Declaration or statement expected.
+                ~~~~
+!!! error TS1128: Declaration or statement expected.
+        protected #baz;      // Error
+        ~~~~~~~~~
+!!! error TS1128: Declaration or statement expected.
+                  ~~~~
+!!! error TS1128: Declaration or statement expected.
+        readonly #qux;       // OK
+        ~~~~~~~~
+!!! error TS1128: Declaration or statement expected.
+                 ~~~~
+!!! error TS1128: Declaration or statement expected.
+    }
+    ~
+!!! error TS1128: Declaration or statement expected.
+    

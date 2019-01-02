@@ -6,6 +6,7 @@ class A {
 
 //// [privateNameFieldDeclaration.js]
 var _name;
+"use strict";
 var A = /** @class */ (function () {
     function A() {
         _name.set(this, void 0);

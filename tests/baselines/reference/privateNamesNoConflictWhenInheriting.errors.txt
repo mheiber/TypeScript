@@ -1,0 +1,30 @@
+tests/cases/conformance/classes/members/privateNames/privateNamesNoConflictWhenInheriting.ts(1,5): error TS1128: Declaration or statement expected.
+tests/cases/conformance/classes/members/privateNames/privateNamesNoConflictWhenInheriting.ts(1,9): error TS1128: Declaration or statement expected.
+tests/cases/conformance/classes/members/privateNames/privateNamesNoConflictWhenInheriting.ts(1,11): error TS2693: 'number' only refers to a type, but is being used as a value here.
+tests/cases/conformance/classes/members/privateNames/privateNamesNoConflictWhenInheriting.ts(2,1): error TS1128: Declaration or statement expected.
+tests/cases/conformance/classes/members/privateNames/privateNamesNoConflictWhenInheriting.ts(4,17): error TS2304: Cannot find name 'A'.
+tests/cases/conformance/classes/members/privateNames/privateNamesNoConflictWhenInheriting.ts(8,10): error TS2304: Cannot find name 'A'.
+
+
+==== tests/cases/conformance/classes/members/privateNames/privateNamesNoConflictWhenInheriting.ts (6 errors) ====
+        #foo: number;
+        ~~~~
+!!! error TS1128: Declaration or statement expected.
+            ~
+!!! error TS1128: Declaration or statement expected.
+              ~~~~~~
+!!! error TS2693: 'number' only refers to a type, but is being used as a value here.
+    }
+    ~
+!!! error TS1128: Declaration or statement expected.
+    
+    class B extends A {
+                    ~
+!!! error TS2304: Cannot find name 'A'.
+        #foo: string;    // OK: private names are unique to each class
+    }
+    
+    const b: A = new B() // OK
+             ~
+!!! error TS2304: Cannot find name 'A'.
+    

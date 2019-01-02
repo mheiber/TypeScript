@@ -1,0 +1,7 @@
+=== tests/cases/conformance/classes/members/privateNames/privateNameNotAccessibleOutsideDefiningClass.ts ===
+    #foo: number = 3;
+No type information for this code.}
+No type information for this code.
+No type information for this code.new A().#foo = 4;               // Error
+No type information for this code.
+No type information for this code.

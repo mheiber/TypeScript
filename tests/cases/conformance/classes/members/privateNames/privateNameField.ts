@@ -1,3 +1,4 @@
+// @strict: true
 class A {
     #name: string;
     constructor(name: string) {
