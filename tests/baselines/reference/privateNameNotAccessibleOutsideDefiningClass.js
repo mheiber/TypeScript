@@ -10,13 +10,13 @@ new A().#foo = 4;               // Error
 
 //// [privateNameNotAccessibleOutsideDefiningClass.js]
 // @target es6
-var _foo;
+var _fooWeakMap_1;
 "use strict";
 var A = /** @class */ (function () {
     function A() {
-        _foo.set(this, 3);
+        _fooWeakMap_1.set(this, 3);
     }
     return A;
 }());
-_foo = new WeakMap();
+_fooWeakMap_1 = new WeakMap();
 new A().#foo = 4; // Error

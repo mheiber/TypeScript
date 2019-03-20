@@ -33,24 +33,24 @@ var __extends = (this && this.__extends) || (function () {
     };
 })();
 var _classPrivateFieldSet = function (receiver, privateMap, value) { if (!privateMap.has(receiver)) { throw new TypeError("attempted to set private field on non-instance"); } privateMap.set(receiver, value); return value; };
-var _foo, _foo_1;
+var _fooWeakMap_1, _fooWeakMap_2;
 "use strict";
 var A = /** @class */ (function () {
     function A() {
-        _foo.set(this, void 0);
-        _classPrivateFieldSet(this, _foo, 3);
+        _fooWeakMap_1.set(this, void 0);
+        _classPrivateFieldSet(this, _fooWeakMap_1, 3);
     }
     return A;
 }());
-_foo = new WeakMap();
+_fooWeakMap_1 = new WeakMap();
 var B = /** @class */ (function (_super) {
     __extends(B, _super);
     function B() {
         var _this = _super.call(this) || this;
-        _foo_1.set(_this, void 0);
-        _classPrivateFieldSet(_this, _foo_1, "some string");
+        _fooWeakMap_2.set(_this, void 0);
+        _classPrivateFieldSet(_this, _fooWeakMap_2, "some string");
         return _this;
     }
     return B;
 }(A));
-_foo_1 = new WeakMap();
+_fooWeakMap_2 = new WeakMap();

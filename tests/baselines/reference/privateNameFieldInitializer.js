@@ -6,12 +6,12 @@ class A {
 
 
 //// [privateNameFieldInitializer.js]
-var _field, _uninitialized;
+var _fieldWeakMap_1, _uninitializedWeakMap_1;
 var A = /** @class */ (function () {
     function A() {
-        _field.set(this, 10);
-        _uninitialized.set(this, void 0);
+        _fieldWeakMap_1.set(this, 10);
+        _uninitializedWeakMap_1.set(this, void 0);
     }
     return A;
 }());
-_field = new WeakMap(), _uninitialized = new WeakMap();
+_fieldWeakMap_1 = new WeakMap(), _uninitializedWeakMap_1 = new WeakMap();

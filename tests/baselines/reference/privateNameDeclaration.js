@@ -5,11 +5,11 @@ class A {
 
 
 //// [privateNameDeclaration.js]
-var _name;
+var _nameWeakMap_1;
 var A = /** @class */ (function () {
     function A() {
-        _name.set(this, void 0);
+        _nameWeakMap_1.set(this, void 0);
     }
     return A;
 }());
-_name = new WeakMap();
+_nameWeakMap_1 = new WeakMap();

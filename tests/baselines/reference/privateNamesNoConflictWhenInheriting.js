@@ -27,23 +27,23 @@ var __extends = (this && this.__extends) || (function () {
         d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
     };
 })();
-var _foo, _foo_1;
+var _fooWeakMap_1, _fooWeakMap_2;
 "use strict";
 var A = /** @class */ (function () {
     function A() {
-        _foo.set(this, void 0);
+        _fooWeakMap_1.set(this, void 0);
     }
     return A;
 }());
-_foo = new WeakMap();
+_fooWeakMap_1 = new WeakMap();
 var B = /** @class */ (function (_super) {
     __extends(B, _super);
     function B() {
         var _this = _super !== null && _super.apply(this, arguments) || this;
-        _foo_1.set(_this, void 0); // OK: private names are unique to each class
+        _fooWeakMap_2.set(_this, void 0); // OK: private names are unique to each class
         return _this;
     }
     return B;
 }(A));
-_foo_1 = new WeakMap();
+_fooWeakMap_2 = new WeakMap();
 var b = new B(); // OK

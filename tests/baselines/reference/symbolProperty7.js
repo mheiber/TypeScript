@@ -14,8 +14,8 @@ class C {
     constructor() {
         this[_a] = 0;
     }
-    [(_a = Symbol(), Symbol(), Symbol())]() { }
-    get [Symbol()]() {
+    [Symbol()]() { }
+    get [(_a = Symbol(), Symbol(), Symbol())]() {
         return 0;
     }
 }
