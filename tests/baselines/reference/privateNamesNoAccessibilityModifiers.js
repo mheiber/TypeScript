@@ -11,15 +11,15 @@ class A {
 
 //// [privateNamesNoAccessibilityModifiers.js]
 // @target es6
-var _foo, _bar, _baz, _qux;
+var _fooWeakMap_1, _barWeakMap_1, _bazWeakMap_1, _quxWeakMap_1;
 "use strict";
 var A = /** @class */ (function () {
     function A() {
-        _foo.set(this, 3); // Error
-        _bar.set(this, 3); // Error
-        _baz.set(this, 3); // Error
-        _qux.set(this, 3); // OK
+        _fooWeakMap_1.set(this, 3); // Error
+        _barWeakMap_1.set(this, 3); // Error
+        _bazWeakMap_1.set(this, 3); // Error
+        _quxWeakMap_1.set(this, 3); // OK
     }
     return A;
 }());
-_foo = new WeakMap(), _bar = new WeakMap(), _baz = new WeakMap(), _qux = new WeakMap();
+_fooWeakMap_1 = new WeakMap(), _barWeakMap_1 = new WeakMap(), _bazWeakMap_1 = new WeakMap(), _quxWeakMap_1 = new WeakMap();

@@ -1,10 +1,10 @@
-//// [privateNameDeclaration.ts]
+//// [privateNameFieldDeclaration.ts]
 class A {
     #name: string;
 }
 
 
-//// [privateNameDeclaration.js]
+//// [privateNameFieldDeclaration.js]
 var _nameWeakMap_1;
 var A = /** @class */ (function () {
     function A() {

@@ -10,12 +10,12 @@ class A {
 
 
 //// [privateNamesAndDecorators.js]
-var _foo;
+var _fooWeakMap_1, _bar_1, _barWeakSet_1;
 var A = /** @class */ (function () {
     function A() {
-        _foo.set(this, 1);
+        _barWeakSet_1.add(this);
+        _fooWeakMap_1.set(this, 1);
     }
-    A.prototype.#bar = function () { };
     return A;
 }());
-_foo = new WeakMap();
+_fooWeakMap_1 = new WeakMap(), _barWeakSet_1 = new WeakSet(), _bar_1 = function _bar_1() { };

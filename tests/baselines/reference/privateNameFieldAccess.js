@@ -9,12 +9,12 @@ class A {
 
 //// [privateNameFieldAccess.js]
 var _classPrivateFieldGet = function (receiver, privateMap) { if (!privateMap.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return privateMap.get(receiver); };
-var _myField;
+var _myFieldWeakMap_1;
 var A = /** @class */ (function () {
     function A() {
-        _myField.set(this, "hello world");
-        console.log(_classPrivateFieldGet(this, _myField));
+        _myFieldWeakMap_1.set(this, "hello world");
+        console.log(_classPrivateFieldGet(this, _myFieldWeakMap_1));
     }
     return A;
 }());
-_myField = new WeakMap();
+_myFieldWeakMap_1 = new WeakMap();

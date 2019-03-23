@@ -1,0 +1,82 @@
+=== tests/cases/conformance/classes/members/privateNames/privateNamedMethod.ts ===
+class A {
+>A : A
+
+    #foo = "hello";
+>#foo : string
+>"hello" : "hello"
+
+    #log(name: string) {
+>#log : (name: string) => void
+>name : string
+
+        console.log(this.#foo);
+>console.log(this.#foo) : void
+>console.log : (message?: any, ...optionalParams: any[]) => void
+>console : Console
+>log : (message?: any, ...optionalParams: any[]) => void
+>this.#foo : string
+>this : this
+
+        console.log(name);
+>console.log(name) : void
+>console.log : (message?: any, ...optionalParams: any[]) => void
+>console : Console
+>log : (message?: any, ...optionalParams: any[]) => void
+>name : string
+    }
+    #logIfTallEnough(height: number, name: string) {
+>#logIfTallEnough : (height: number, name: string) => void
+>height : number
+>name : string
+
+        if (height >= 50) {
+>height >= 50 : boolean
+>height : number
+>50 : 50
+
+            this.#log(name);
+>this.#log(name) : void
+>this.#log : (name: string) => void
+>this : this
+>name : string
+        }
+    }
+    #logAll(height: number, ...names: string[]) {
+>#logAll : (height: number, ...names: string[]) => void
+>height : number
+>names : string[]
+
+        for (const name of names) {
+>name : string
+>names : string[]
+
+            this.#logIfTallEnough(height, name);
+>this.#logIfTallEnough(height, name) : void
+>this.#logIfTallEnough : (height: number, name: string) => void
+>this : this
+>height : number
+>name : string
+        }
+    }
+    constructor() {
+        this.#logIfTallEnough(100, "world");
+>this.#logIfTallEnough(100, "world") : void
+>this.#logIfTallEnough : (height: number, name: string) => void
+>this : this
+>100 : 100
+>"world" : "world"
+
+        this.#logAll(100, ...["a", "b", "c"]);
+>this.#logAll(100, ...["a", "b", "c"]) : void
+>this.#logAll : (height: number, ...names: string[]) => void
+>this : this
+>100 : 100
+>...["a", "b", "c"] : string
+>["a", "b", "c"] : string[]
+>"a" : "a"
+>"b" : "b"
+>"c" : "c"
+    }
+}
+

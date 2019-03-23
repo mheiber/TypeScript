@@ -1,0 +1,37 @@
+=== tests/cases/conformance/classes/members/privateNames/privateNamedMethodOrder.ts ===
+class A {
+>A : A
+
+    static bar: A | undefined = new A("max");
+>bar : A | undefined
+>new A("max") : A
+>A : typeof A
+>"max" : "max"
+
+    #foo() {
+>#foo : () => void
+
+        A.bar = undefined
+>A.bar = undefined : undefined
+>A.bar : A | undefined
+>A : typeof A
+>bar : A | undefined
+>undefined : undefined
+    }
+    constructor (public name: string) {
+>name : string
+
+        this.#foo()
+>this.#foo() : void
+>this.#foo : () => void
+>this : this
+
+        console.log(this)
+>console.log(this) : void
+>console.log : (message?: any, ...optionalParams: any[]) => void
+>console : Console
+>log : (message?: any, ...optionalParams: any[]) => void
+>this : this
+    }
+}
+

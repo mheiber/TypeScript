@@ -30,31 +30,31 @@ new A().method();
 //// [privateNamesInNestedClasses.js]
 // @target es6
 var _classPrivateFieldGet = function (receiver, privateMap) { if (!privateMap.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return privateMap.get(receiver); };
-var _foo, _bar;
+var _fooWeakMap_1, _barWeakMap_1;
 "use strict";
 var A = /** @class */ (function () {
     function A() {
-        _foo.set(this, "A's #foo");
-        _bar.set(this, "A's #bar");
+        _fooWeakMap_1.set(this, "A's #foo");
+        _barWeakMap_1.set(this, "A's #bar");
     }
     A.prototype.method = function () {
-        var _foo_1;
+        var _fooWeakMap_2;
         var B = /** @class */ (function () {
             function B() {
-                _foo_1.set(this, "B's #foo");
+                _fooWeakMap_2.set(this, "B's #foo");
             }
             B.prototype.bar = function (a) {
-                _classPrivateFieldGet(a, _foo_1); // OK, no compile-time error, don't know what `a` is
+                _classPrivateFieldGet(a, _fooWeakMap_2); // OK, no compile-time error, don't know what `a` is
             };
             B.prototype.baz = function (a) {
-                _classPrivateFieldGet(a, _foo_1); // compile-time error, shadowed
+                _classPrivateFieldGet(a, _fooWeakMap_2); // compile-time error, shadowed
             };
             B.prototype.quux = function (b) {
-                _classPrivateFieldGet(b, _foo_1); // OK
+                _classPrivateFieldGet(b, _fooWeakMap_2); // OK
             };
             return B;
         }());
-        _foo_1 = new WeakMap();
+        _fooWeakMap_2 = new WeakMap();
         var a = new A();
         new B().bar(a);
         new B().baz(a);
@@ -63,5 +63,5 @@ var A = /** @class */ (function () {
     };
     return A;
 }());
-_foo = new WeakMap(), _bar = new WeakMap();
+_fooWeakMap_1 = new WeakMap(), _barWeakMap_1 = new WeakMap();
 new A().method();

@@ -1,0 +1,65 @@
+=== tests/cases/conformance/classes/members/privateNames/privateNamedMethod.ts ===
+class A {
+>A : Symbol(A, Decl(privateNamedMethod.ts, 0, 0))
+
+    #foo = "hello";
+>#foo : Symbol(A.#foo, Decl(privateNamedMethod.ts, 0, 9))
+
+    #log(name: string) {
+>#log : Symbol(A.#log, Decl(privateNamedMethod.ts, 1, 19))
+>name : Symbol(name, Decl(privateNamedMethod.ts, 2, 9))
+
+        console.log(this.#foo);
+>console.log : Symbol(Console.log, Decl(lib.dom.d.ts, --, --))
+>console : Symbol(console, Decl(lib.dom.d.ts, --, --))
+>log : Symbol(Console.log, Decl(lib.dom.d.ts, --, --))
+>this.#foo : Symbol(A.#foo, Decl(privateNamedMethod.ts, 0, 9))
+>this : Symbol(A, Decl(privateNamedMethod.ts, 0, 0))
+
+        console.log(name);
+>console.log : Symbol(Console.log, Decl(lib.dom.d.ts, --, --))
+>console : Symbol(console, Decl(lib.dom.d.ts, --, --))
+>log : Symbol(Console.log, Decl(lib.dom.d.ts, --, --))
+>name : Symbol(name, Decl(privateNamedMethod.ts, 2, 9))
+    }
+    #logIfTallEnough(height: number, name: string) {
+>#logIfTallEnough : Symbol(A.#logIfTallEnough, Decl(privateNamedMethod.ts, 5, 5))
+>height : Symbol(height, Decl(privateNamedMethod.ts, 6, 21))
+>name : Symbol(name, Decl(privateNamedMethod.ts, 6, 36))
+
+        if (height >= 50) {
+>height : Symbol(height, Decl(privateNamedMethod.ts, 6, 21))
+
+            this.#log(name);
+>this.#log : Symbol(A.#log, Decl(privateNamedMethod.ts, 1, 19))
+>this : Symbol(A, Decl(privateNamedMethod.ts, 0, 0))
+>name : Symbol(name, Decl(privateNamedMethod.ts, 6, 36))
+        }
+    }
+    #logAll(height: number, ...names: string[]) {
+>#logAll : Symbol(A.#logAll, Decl(privateNamedMethod.ts, 10, 5))
+>height : Symbol(height, Decl(privateNamedMethod.ts, 11, 12))
+>names : Symbol(names, Decl(privateNamedMethod.ts, 11, 27))
+
+        for (const name of names) {
+>name : Symbol(name, Decl(privateNamedMethod.ts, 12, 18))
+>names : Symbol(names, Decl(privateNamedMethod.ts, 11, 27))
+
+            this.#logIfTallEnough(height, name);
+>this.#logIfTallEnough : Symbol(A.#logIfTallEnough, Decl(privateNamedMethod.ts, 5, 5))
+>this : Symbol(A, Decl(privateNamedMethod.ts, 0, 0))
+>height : Symbol(height, Decl(privateNamedMethod.ts, 11, 12))
+>name : Symbol(name, Decl(privateNamedMethod.ts, 12, 18))
+        }
+    }
+    constructor() {
+        this.#logIfTallEnough(100, "world");
+>this.#logIfTallEnough : Symbol(A.#logIfTallEnough, Decl(privateNamedMethod.ts, 5, 5))
+>this : Symbol(A, Decl(privateNamedMethod.ts, 0, 0))
+
+        this.#logAll(100, ...["a", "b", "c"]);
+>this.#logAll : Symbol(A.#logAll, Decl(privateNamedMethod.ts, 10, 5))
+>this : Symbol(A, Decl(privateNamedMethod.ts, 0, 0))
+    }
+}
+

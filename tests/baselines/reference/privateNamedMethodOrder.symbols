@@ -1,0 +1,33 @@
+=== tests/cases/conformance/classes/members/privateNames/privateNamedMethodOrder.ts ===
+class A {
+>A : Symbol(A, Decl(privateNamedMethodOrder.ts, 0, 0))
+
+    static bar: A | undefined = new A("max");
+>bar : Symbol(A.bar, Decl(privateNamedMethodOrder.ts, 0, 9))
+>A : Symbol(A, Decl(privateNamedMethodOrder.ts, 0, 0))
+>A : Symbol(A, Decl(privateNamedMethodOrder.ts, 0, 0))
+
+    #foo() {
+>#foo : Symbol(A.#foo, Decl(privateNamedMethodOrder.ts, 1, 45))
+
+        A.bar = undefined
+>A.bar : Symbol(A.bar, Decl(privateNamedMethodOrder.ts, 0, 9))
+>A : Symbol(A, Decl(privateNamedMethodOrder.ts, 0, 0))
+>bar : Symbol(A.bar, Decl(privateNamedMethodOrder.ts, 0, 9))
+>undefined : Symbol(undefined)
+    }
+    constructor (public name: string) {
+>name : Symbol(A.name, Decl(privateNamedMethodOrder.ts, 5, 17))
+
+        this.#foo()
+>this.#foo : Symbol(A.#foo, Decl(privateNamedMethodOrder.ts, 1, 45))
+>this : Symbol(A, Decl(privateNamedMethodOrder.ts, 0, 0))
+
+        console.log(this)
+>console.log : Symbol(Console.log, Decl(lib.dom.d.ts, --, --))
+>console : Symbol(console, Decl(lib.dom.d.ts, --, --))
+>log : Symbol(Console.log, Decl(lib.dom.d.ts, --, --))
+>this : Symbol(A, Decl(privateNamedMethodOrder.ts, 0, 0))
+    }
+}
+

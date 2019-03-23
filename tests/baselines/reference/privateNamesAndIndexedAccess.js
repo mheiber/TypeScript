@@ -13,13 +13,13 @@ class C {
 
 
 //// [privateNamesAndIndexedAccess.js]
-var _bar, _bar_1;
+var _barWeakMap_1, _barWeakMap_2;
 "use strict";
 class C {
     constructor() {
         this.foo = 3;
-        _bar_1.set(this, 3);
-        _bar_1.set(this, void 0);
+        _barWeakMap_2.set(this, 3);
+        _barWeakMap_2.set(this, void 0);
         // will never use this syntax, already taken:
         this.badAlways = 3; // Error
         const ok = 3;
@@ -27,4 +27,4 @@ class C {
         const badForNow;
     }
 }
-_bar = new WeakMap(), _bar_1 = new WeakMap();
+_barWeakMap_1 = new WeakMap(), _barWeakMap_2 = new WeakMap();
