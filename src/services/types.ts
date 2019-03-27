@@ -26,7 +26,7 @@ namespace ts {
         readonly text: string;
     }
 
-    export interface PrivateName {
+    export interface PrivateIdentifier {
         readonly text: string;
     }
 

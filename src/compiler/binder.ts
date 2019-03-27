@@ -283,15 +283,14 @@ namespace ts {
                     Debug.assert(isWellKnownSymbolSyntactically(nameExpression));
                     return getPropertyNameForKnownSymbolName(idText((<PropertyAccessExpression>nameExpression).name));
                 }
-                if (isPrivateName(name)) {
-                    // containingClass exists because private names only allowed inside classes
-                    const containingClass = getContainingClass(name.parent);
+                if (isPrivateIdentifier(name)) {
+                    const containingClass = getContainingClass(node);
                     if (!containingClass) {
-                        // we're in a case where there's a private name outside a class (invalid)
+                        // we can get here in cases where there is already a parse error.
                         return undefined;
                     }
                     const containingClassSymbol = containingClass.symbol;
-                    return getPropertyNameForPrivateNameDescription(containingClassSymbol, name.escapedText);
+                    return getSymbolNameForPrivateIdentifier(containingClassSymbol, name.escapedText);
                 }
                 return isPropertyNameLiteral(name) ? getEscapedTextOfIdentifierOrLiteral(name) : undefined;
             }
@@ -349,10 +348,6 @@ namespace ts {
 
             const isDefaultExport = hasModifier(node, ModifierFlags.Default);
 
-            // need this before getDeclarationName
-            if (isNamedDeclaration(node)) {
-                node.name.parent = node;
-            }
             // The exported symbol for an export default function/class node is always named "default"
             const name = isDefaultExport && parent ? InternalSymbolName.Default : getDeclarationName(node);
 
@@ -405,6 +400,10 @@ namespace ts {
                         symbolTable.set(name, symbol = createSymbol(SymbolFlags.None, name));
                     }
                     else if (!(includes & SymbolFlags.Variable && symbol.flags & SymbolFlags.Assignment)) {
+                        // Assignment declarations are allowed to merge with variables, no matter what other flags they have.
+                        if (isNamedDeclaration(node)) {
+                            node.name.parent = node;
+                        }
                         // Report errors every position with duplicate declaration
                         // Report errors on previous encountered declarations
                         let message = symbol.flags & SymbolFlags.BlockScopedVariable
@@ -1930,7 +1929,7 @@ namespace ts {
 
         // The binder visits every node, so this is a good place to check for
         // the reserved private name (there is only one)
-        function checkPrivateName(node: PrivateName) {
+        function checkPrivateIdentifier(node: PrivateIdentifier) {
             if (node.escapedText === "#constructor") {
                 // Report error only if there are no parse errors in file
                 if (!file.parseDiagnostics.length) {
@@ -2212,8 +2211,8 @@ namespace ts {
                         node.flowNode = currentFlow;
                     }
                     return checkStrictModeIdentifier(<Identifier>node);
-                case SyntaxKind.PrivateName:
-                    return checkPrivateName(node as PrivateName);
+                case SyntaxKind.PrivateIdentifier:
+                    return checkPrivateIdentifier(node as PrivateIdentifier);
                 case SyntaxKind.PropertyAccessExpression:
                 case SyntaxKind.ElementAccessExpression:
                     if (currentFlow && isNarrowableReference(<Expression>node)) {
@@ -2512,7 +2511,7 @@ namespace ts {
             if (!setCommonJsModuleIndicator(node)) {
                 return;
             }
-            const symbol = forEachIdentifierOrPrivateNameInEntityName(node.arguments[0], /*parent*/ undefined, (id, symbol) => {
+            const symbol = forEachIdentifierInEntityName(node.arguments[0], /*parent*/ undefined, (id, symbol) => {
                 if (symbol) {
                     addDeclarationToSymbol(symbol, id, SymbolFlags.Module | SymbolFlags.Assignment);
                 }
@@ -2531,7 +2530,7 @@ namespace ts {
                 return;
             }
             const lhs = node.left as PropertyAccessEntityNameExpression;
-            const symbol = forEachIdentifierOrPrivateNameInEntityName(lhs.expression, /*parent*/ undefined, (id, symbol) => {
+            const symbol = forEachIdentifierInEntityName(lhs.expression, /*parent*/ undefined, (id, symbol) => {
                 if (symbol) {
                     addDeclarationToSymbol(symbol, id, SymbolFlags.Module | SymbolFlags.Assignment);
                 }
@@ -2567,6 +2566,12 @@ namespace ts {
 
         function bindThisPropertyAssignment(node: BinaryExpression | PropertyAccessExpression) {
             Debug.assert(isInJSFile(node));
+            // private identifiers *must* be declared (even in JS files)
+            const hasPrivateIdentifier = (isBinaryExpression(node) && isPropertyAccessExpression(node.left) && isPrivateIdentifier(node.left.name))
+                || (isPropertyAccessExpression(node) && isPrivateIdentifier(node.name));
+            if (hasPrivateIdentifier) {
+                return;
+            }
             const thisContainer = getThisContainer(node, /*includeArrowFunctions*/ false);
             switch (thisContainer.kind) {
                 case SyntaxKind.FunctionDeclaration:
@@ -2702,7 +2707,7 @@ namespace ts {
                 // make symbols or add declarations for intermediate containers
                 const flags = SymbolFlags.Module | SymbolFlags.Assignment;
                 const excludeFlags = SymbolFlags.ValueModuleExcludes & ~SymbolFlags.Assignment;
-                namespaceSymbol = forEachIdentifierOrPrivateNameInEntityName(entityName, namespaceSymbol, (id, symbol, parent) => {
+                namespaceSymbol = forEachIdentifierInEntityName(entityName, namespaceSymbol, (id, symbol, parent) => {
                     if (symbol) {
                         addDeclarationToSymbol(symbol, id, flags);
                         return symbol;
@@ -2797,7 +2802,7 @@ namespace ts {
             }
         }
 
-        function forEachIdentifierOrPrivateNameInEntityName(e: EntityNameExpression, parent: Symbol | undefined, action: (e: Identifier | PrivateName, symbol: Symbol | undefined, parent: Symbol | undefined) => Symbol | undefined): Symbol | undefined {
+        function forEachIdentifierInEntityName(e: EntityNameExpression, parent: Symbol | undefined, action: (e: Identifier, symbol: Symbol | undefined, parent: Symbol | undefined) => Symbol | undefined): Symbol | undefined {
             if (isExportsOrModuleExportsOrAlias(file, e)) {
                 return file.symbol;
             }
@@ -2805,7 +2810,7 @@ namespace ts {
                 return action(e, lookupSymbolForPropertyAccess(e), parent);
             }
             else {
-                const s = forEachIdentifierOrPrivateNameInEntityName(e.expression, parent, action);
+                const s = forEachIdentifierInEntityName(e.expression, parent, action);
                 return action(e.name, s && s.exports && s.exports.get(e.name.escapedText), s);
             }
         }
@@ -3954,6 +3959,10 @@ namespace ts {
             case SyntaxKind.ContinueStatement:
             case SyntaxKind.BreakStatement:
                 transformFlags |= TransformFlags.ContainsHoistedDeclarationOrCompletion;
+                break;
+
+            case SyntaxKind.PrivateIdentifier:
+                transformFlags |= TransformFlags.ContainsClassFields;
                 break;
         }
 
