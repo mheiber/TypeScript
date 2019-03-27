@@ -3878,6 +3878,10 @@ namespace ts {
             case SyntaxKind.BreakStatement:
                 transformFlags |= TransformFlags.ContainsHoistedDeclarationOrCompletion;
                 break;
+
+            case SyntaxKind.PrivateName:
+                transformFlags |= TransformFlags.ContainsClassFields;
+                break;
         }
 
         node.transformFlags = transformFlags | TransformFlags.HasComputedFlags;
