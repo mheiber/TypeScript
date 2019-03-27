@@ -6,6 +6,10 @@ class C {
 >#test : number
 >24 : 24
 
+    static #staticTest: number = 24;
+>#staticTest : number
+>24 : 24
+
     constructor() {
         this.#test++;
 >this.#test++ : number
@@ -26,6 +30,26 @@ class C {
 >--this.#test : number
 >this.#test : number
 >this : this
+
+        C.#staticTest++;
+>C.#staticTest++ : number
+>C.#staticTest : number
+>C : typeof C
+
+        C.#staticTest--;
+>C.#staticTest-- : number
+>C.#staticTest : number
+>C : typeof C
+
+        ++C.#staticTest;
+>++C.#staticTest : number
+>C.#staticTest : number
+>C : typeof C
+
+        --C.#staticTest;
+>--C.#staticTest : number
+>C.#staticTest : number
+>C : typeof C
     }
     test() {
 >test : () => void
@@ -61,10 +85,46 @@ class C {
 >this.getInstance : () => C
 >this : this
 >getInstance : () => C
+
+        this.getClass().#staticTest++;
+>this.getClass().#staticTest++ : number
+>this.getClass().#staticTest : number
+>this.getClass() : typeof C
+>this.getClass : () => typeof C
+>this : this
+>getClass : () => typeof C
+
+        this.getClass().#staticTest--;
+>this.getClass().#staticTest-- : number
+>this.getClass().#staticTest : number
+>this.getClass() : typeof C
+>this.getClass : () => typeof C
+>this : this
+>getClass : () => typeof C
+
+        ++this.getClass().#staticTest;
+>++this.getClass().#staticTest : number
+>this.getClass().#staticTest : number
+>this.getClass() : typeof C
+>this.getClass : () => typeof C
+>this : this
+>getClass : () => typeof C
+
+        --this.getClass().#staticTest;
+>--this.getClass().#staticTest : number
+>this.getClass().#staticTest : number
+>this.getClass() : typeof C
+>this.getClass : () => typeof C
+>this : this
+>getClass : () => typeof C
     }
     getInstance() { return new C(); }
 >getInstance : () => C
 >new C() : C
+>C : typeof C
+
+    getClass() { return C; }
+>getClass : () => typeof C
 >C : typeof C
 }
 

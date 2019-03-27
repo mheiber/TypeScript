@@ -6,6 +6,10 @@ class A {
 >#myField : string
 >"hello world" : "hello world"
 
+    static #myStaticField = "hello world";
+>#myStaticField : string
+>"hello world" : "hello world"
+
     constructor() {
         console.log(this.#myField);
 >console.log(this.#myField) : void
@@ -14,6 +18,14 @@ class A {
 >log : (message?: any, ...optionalParams: any[]) => void
 >this.#myField : string
 >this : this
+
+        console.log(A.#myStaticField);
+>console.log(A.#myStaticField) : void
+>console.log : (message?: any, ...optionalParams: any[]) => void
+>console : Console
+>log : (message?: any, ...optionalParams: any[]) => void
+>A.#myStaticField : string
+>A : typeof A
     }
 }
 

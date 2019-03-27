@@ -6,6 +6,10 @@ class A {
 >#field : number
 >0 : 0
 
+    static #staticField = 0;
+>#staticField : number
+>0 : 0
+
     constructor() {
         this.#field = 1;
 >this.#field = 1 : 1
@@ -201,6 +205,201 @@ class A {
 >A : typeof A
 >getInstance : () => A
 >13 : 13
+
+        A.#staticField = 1;
+>A.#staticField = 1 : 1
+>A.#staticField : number
+>A : typeof A
+>1 : 1
+
+        A.#staticField += 2;
+>A.#staticField += 2 : number
+>A.#staticField : number
+>A : typeof A
+>2 : 2
+
+        A.#staticField -= 3;
+>A.#staticField -= 3 : number
+>A.#staticField : number
+>A : typeof A
+>3 : 3
+
+        A.#staticField /= 4;
+>A.#staticField /= 4 : number
+>A.#staticField : number
+>A : typeof A
+>4 : 4
+
+        A.#staticField *= 5;
+>A.#staticField *= 5 : number
+>A.#staticField : number
+>A : typeof A
+>5 : 5
+
+        A.#staticField **= 6;
+>A.#staticField **= 6 : number
+>A.#staticField : number
+>A : typeof A
+>6 : 6
+
+        A.#staticField %= 7;
+>A.#staticField %= 7 : number
+>A.#staticField : number
+>A : typeof A
+>7 : 7
+
+        A.#staticField <<= 8;
+>A.#staticField <<= 8 : number
+>A.#staticField : number
+>A : typeof A
+>8 : 8
+
+        A.#staticField >>= 9;
+>A.#staticField >>= 9 : number
+>A.#staticField : number
+>A : typeof A
+>9 : 9
+
+        A.#staticField >>>= 10;
+>A.#staticField >>>= 10 : number
+>A.#staticField : number
+>A : typeof A
+>10 : 10
+
+        A.#staticField &= 11;
+>A.#staticField &= 11 : number
+>A.#staticField : number
+>A : typeof A
+>11 : 11
+
+        A.#staticField |= 12;
+>A.#staticField |= 12 : number
+>A.#staticField : number
+>A : typeof A
+>12 : 12
+
+        A.#staticField ^= 13;
+>A.#staticField ^= 13 : number
+>A.#staticField : number
+>A : typeof A
+>13 : 13
+
+        A.getClass().#staticField = 1;
+>A.getClass().#staticField = 1 : 1
+>A.getClass().#staticField : number
+>A.getClass() : typeof A
+>A.getClass : () => typeof A
+>A : typeof A
+>getClass : () => typeof A
+>1 : 1
+
+        A.getClass().#staticField += 2;
+>A.getClass().#staticField += 2 : number
+>A.getClass().#staticField : number
+>A.getClass() : typeof A
+>A.getClass : () => typeof A
+>A : typeof A
+>getClass : () => typeof A
+>2 : 2
+
+        A.getClass().#staticField -= 3;
+>A.getClass().#staticField -= 3 : number
+>A.getClass().#staticField : number
+>A.getClass() : typeof A
+>A.getClass : () => typeof A
+>A : typeof A
+>getClass : () => typeof A
+>3 : 3
+
+        A.getClass().#staticField /= 4;
+>A.getClass().#staticField /= 4 : number
+>A.getClass().#staticField : number
+>A.getClass() : typeof A
+>A.getClass : () => typeof A
+>A : typeof A
+>getClass : () => typeof A
+>4 : 4
+
+        A.getClass().#staticField *= 5;
+>A.getClass().#staticField *= 5 : number
+>A.getClass().#staticField : number
+>A.getClass() : typeof A
+>A.getClass : () => typeof A
+>A : typeof A
+>getClass : () => typeof A
+>5 : 5
+
+        A.getClass().#staticField **= 6;
+>A.getClass().#staticField **= 6 : number
+>A.getClass().#staticField : number
+>A.getClass() : typeof A
+>A.getClass : () => typeof A
+>A : typeof A
+>getClass : () => typeof A
+>6 : 6
+
+        A.getClass().#staticField %= 7;
+>A.getClass().#staticField %= 7 : number
+>A.getClass().#staticField : number
+>A.getClass() : typeof A
+>A.getClass : () => typeof A
+>A : typeof A
+>getClass : () => typeof A
+>7 : 7
+
+        A.getClass().#staticField <<= 8;
+>A.getClass().#staticField <<= 8 : number
+>A.getClass().#staticField : number
+>A.getClass() : typeof A
+>A.getClass : () => typeof A
+>A : typeof A
+>getClass : () => typeof A
+>8 : 8
+
+        A.getClass().#staticField >>= 9;
+>A.getClass().#staticField >>= 9 : number
+>A.getClass().#staticField : number
+>A.getClass() : typeof A
+>A.getClass : () => typeof A
+>A : typeof A
+>getClass : () => typeof A
+>9 : 9
+
+        A.getClass().#staticField >>>= 10;
+>A.getClass().#staticField >>>= 10 : number
+>A.getClass().#staticField : number
+>A.getClass() : typeof A
+>A.getClass : () => typeof A
+>A : typeof A
+>getClass : () => typeof A
+>10 : 10
+
+        A.getClass().#staticField &= 11;
+>A.getClass().#staticField &= 11 : number
+>A.getClass().#staticField : number
+>A.getClass() : typeof A
+>A.getClass : () => typeof A
+>A : typeof A
+>getClass : () => typeof A
+>11 : 11
+
+        A.getClass().#staticField |= 12;
+>A.getClass().#staticField |= 12 : number
+>A.getClass().#staticField : number
+>A.getClass() : typeof A
+>A.getClass : () => typeof A
+>A : typeof A
+>getClass : () => typeof A
+>12 : 12
+
+        A.getClass().#staticField ^= 13;
+>A.getClass().#staticField ^= 13 : number
+>A.getClass().#staticField : number
+>A.getClass() : typeof A
+>A.getClass : () => typeof A
+>A : typeof A
+>getClass : () => typeof A
+>13 : 13
     }
     static getInstance() {
 >getInstance : () => A
@@ -208,6 +407,12 @@ class A {
         return new A();
 >new A() : A
 >A : typeof A
+    }
+    static getClass() {
+>getClass : () => typeof A
+
+        return this;
+>this : typeof A
     }
 }
 

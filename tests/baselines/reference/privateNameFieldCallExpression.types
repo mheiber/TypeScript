@@ -11,8 +11,21 @@ class A {
 >x : number
 >10 : 10
 
+    static #staticFieldFunc = () => A.staticX = 10;
+>#staticFieldFunc : () => number
+>() => A.staticX = 10 : () => number
+>A.staticX = 10 : 10
+>A.staticX : number
+>A : typeof A
+>staticX : number
+>10 : 10
+
     x = 1;
 >x : number
+>1 : 1
+
+    static staticX = 1;
+>staticX : number
 >1 : 1
 
     test() {
@@ -31,6 +44,20 @@ class A {
         func();
 >func() : number
 >func : () => number
+
+        A.#staticFieldFunc();
+>A.#staticFieldFunc() : number
+>A.#staticFieldFunc : () => number
+>A : typeof A
+
+        const func2 = A.#staticFieldFunc;
+>func2 : () => number
+>A.#staticFieldFunc : () => number
+>A : typeof A
+
+        func2();
+>func2() : number
+>func2 : () => number
     }
 }
 

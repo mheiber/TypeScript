@@ -1,11 +1,12 @@
 === tests/cases/conformance/classes/members/privateNames/privateNameField.ts ===
-// @target es6
-
 class A {
 >A : A
 
     #name: string;
 >#name : string
+
+    static #staticName: string;
+>#staticName : string
 
     constructor(name: string) {
 >name : string
@@ -14,6 +15,12 @@ class A {
 >this.#name = name : string
 >this.#name : string
 >this : this
+>name : string
+
+        A.#staticName = name;
+>A.#staticName = name : string
+>A.#staticName : string
+>A : typeof A
 >name : string
     }
 }

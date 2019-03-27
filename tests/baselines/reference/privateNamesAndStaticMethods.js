@@ -31,6 +31,9 @@ class B extends A {
 
 
 //// [privateNamesAndStaticMethods.js]
+var _classPrivateFieldGet = function (receiver, privateMap) { if (!privateMap.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return privateMap.get(receiver); };
+var _classPrivateFieldSet = function (receiver, privateMap, value) { if (!privateMap.has(receiver)) { throw new TypeError("attempted to set private field on non-instance"); } privateMap.set(receiver, value); return value; };
+var __quuxWeakMap_1;
 "use strict";
 class A {
     constructor() {
@@ -42,12 +45,13 @@ class A {
         A.#quux++;
     }
     static get #quux() {
-        return this.#_quux;
+        return _classPrivateFieldGet(this, __quuxWeakMap_1);
     }
     static set #quux(val) {
-        this.#_quux = val;
+        _classPrivateFieldSet(this, __quuxWeakMap_1, val);
     }
 }
+__quuxWeakMap_1 = new WeakMap();
 class B extends A {
     constructor() {
         var _a;

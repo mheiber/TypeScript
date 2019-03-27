@@ -9,12 +9,12 @@ namespace ts {
     }
 
     const enum PrivateNamePlacement {
-        InstanceField,
+        Field,
         InstanceMethod
     }
 
-    interface PrivateNamedInstanceField {
-        placement: PrivateNamePlacement.InstanceField;
+    interface PrivateNamedField {
+        placement: PrivateNamePlacement.Field;
         accumulator: Identifier;
     }
 
@@ -28,7 +28,7 @@ namespace ts {
     /**
      * A mapping of private names to information needed for transformation.
      */
-    type PrivateNameEnvironment = UnderscoreEscapedMap<PrivateNamedInstanceField | PrivateNamedInstanceMethod>;
+    type PrivateNameEnvironment = UnderscoreEscapedMap<PrivateNamedField | PrivateNamedInstanceMethod>;
 
     /**
      * Transforms ECMAScript Class Syntax.
@@ -181,7 +181,7 @@ namespace ts {
                 const privateNameInfo = accessPrivateName(node.name);
                 if (privateNameInfo) {
                     switch (privateNameInfo.placement) {
-                        case PrivateNamePlacement.InstanceField:
+                        case PrivateNamePlacement.Field:
                             return setOriginalNode(
                                 setTextRange(
                                     createClassPrivateFieldGetHelper(
@@ -359,16 +359,15 @@ namespace ts {
                 const privateNameInfo = accessPrivateName(node.left.name);
                 if (privateNameInfo) {
                     switch (privateNameInfo.placement) {
-                        case PrivateNamePlacement.InstanceField: {
-                            return transformPrivateNamedInstanceFieldAssignment(privateNameInfo, node);
-                        }
+                        case PrivateNamePlacement.Field:
+                            return transformPrivateNamedFieldAssignment(privateNameInfo, node);
                     }
                 }
             }
             return visitEachChild(node, visitor, context);
         }
 
-        function transformPrivateNamedInstanceFieldAssignment(privateNameInfo: PrivateNamedInstanceField, node: PrivateNameAssignmentExpression) {
+        function transformPrivateNamedFieldAssignment(privateNameInfo: PrivateNamedField, node: PrivateNameAssignmentExpression) {
             if (isCompoundAssignment(node.operatorToken.kind)) {
                 const isReceiverInlineable = isSimpleInlineableExpression(node.left.expression);
                 const getReceiver = isReceiverInlineable ? node.left.expression : createTempVariable(hoistVariableDeclaration);
@@ -532,7 +531,7 @@ namespace ts {
             pendingExpressions = pendingExpressions || [];
             last(privateNameEnvironmentStack).forEach(entry => {
                 switch (entry.placement) {
-                    case PrivateNamePlacement.InstanceField:
+                    case PrivateNamePlacement.Field:
                         break;
                     case PrivateNamePlacement.InstanceMethod:
                         const func = privateNamedMethodToFunction(entry.origFunc, entry.funcName);
@@ -625,7 +624,7 @@ namespace ts {
             if (classDeclaresPrivateNames) {
                 last(privateNameEnvironmentStack).forEach(({ placement, accumulator }) => {
                     switch (placement) {
-                        case PrivateNamePlacement.InstanceField:
+                        case PrivateNamePlacement.Field:
                             // handled in addInitializedPropertyStatements
                             break;
                         case PrivateNamePlacement.InstanceMethod:
@@ -734,13 +733,12 @@ namespace ts {
                 const privateNameInfo = accessPrivateName(propertyName);
                 if (privateNameInfo) {
                     switch (privateNameInfo.placement) {
-                        case PrivateNamePlacement.InstanceField: {
-                            return createPrivateInstanceFieldInitializer(
+                        case PrivateNamePlacement.Field:
+                            return createPrivateFieldInitializer(
                                 receiver,
                                 initializer,
                                 privateNameInfo.accumulator
                             );
-                        }
                     }
                 }
             }
@@ -868,16 +866,16 @@ namespace ts {
 
             let identifierName: string;
             let accumulator: Identifier;
-            if (hasModifier(element, ModifierFlags.Static)) {
-                // statics not supported yet
-                return;
-            }
             if (isPropertyDeclaration(element)) {
                 identifierName = "WeakMap";
                 accumulator = createUniqueName(`_${text.slice(1)}WeakMap`);
-                env.set(escapedText, { placement: PrivateNamePlacement.InstanceField, accumulator });
+                env.set(escapedText, { placement: PrivateNamePlacement.Field, accumulator });
             }
             else if (isMethodDeclaration(element)) {
+                if (hasModifier(element, ModifierFlags.Static)) {
+                    // static methods not supported yet
+                    return;
+                }
                 identifierName = "WeakSet";
                 accumulator = createUniqueName(`_${text.slice(1)}WeakSet`);
                 const escapedText = element.name.escapedText;
@@ -990,7 +988,7 @@ namespace ts {
         }
     }
 
-    function createPrivateInstanceFieldInitializer(receiver: LeftHandSideExpression, initializer: Expression | undefined, weakMapName: Identifier) {
+    function createPrivateFieldInitializer(receiver: LeftHandSideExpression, initializer: Expression | undefined, weakMapName: Identifier) {
         return createCall(
             createPropertyAccess(weakMapName, "set"),
             /*typeArguments*/ undefined,

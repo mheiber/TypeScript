@@ -4,5 +4,8 @@ class A {
 
     #name: string;
 >#name : string
+
+    static #staticName: string;
+>#staticName : string
 }
 

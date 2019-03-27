@@ -4,5 +4,8 @@ class A {
 
     #name: string;
 >#name : Symbol(A.#name, Decl(privateNameFieldDeclaration.ts, 0, 9))
+
+    static #staticName: string;
+>#staticName : Symbol(A.#staticName, Decl(privateNameFieldDeclaration.ts, 1, 18))
 }
 

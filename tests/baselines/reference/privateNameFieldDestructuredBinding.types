@@ -6,6 +6,10 @@ class A {
 >#field : number
 >1 : 1
 
+    static #staticField = 1;
+>#staticField : number
+>1 : 1
+
     testObject() {
 >testObject : () => { x: number; y: number; }
 
@@ -47,6 +51,31 @@ class A {
 >[this.#field, y] : [number, number]
 >this.#field : number
 >this : this
+>y : number
+>this.testArray() : number[]
+>this.testArray : () => number[]
+>this : this
+>testArray : () => number[]
+
+        ({ x: A.#staticField, y } = this.testObject());
+>({ x: A.#staticField, y } = this.testObject()) : { x: number; y: number; }
+>{ x: A.#staticField, y } = this.testObject() : { x: number; y: number; }
+>{ x: A.#staticField, y } : { x: number; y: number; }
+>x : number
+>A.#staticField : number
+>A : typeof A
+>y : number
+>this.testObject() : { x: number; y: number; }
+>this.testObject : () => { x: number; y: number; }
+>this : this
+>testObject : () => { x: number; y: number; }
+
+        ([A.#staticField, y] = this.testArray());
+>([A.#staticField, y] = this.testArray()) : number[]
+>[A.#staticField, y] = this.testArray() : number[]
+>[A.#staticField, y] : [number, number]
+>A.#staticField : number
+>A : typeof A
 >y : number
 >this.testArray() : number[]
 >this.testArray : () => number[]

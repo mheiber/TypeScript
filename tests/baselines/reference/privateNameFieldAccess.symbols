@@ -5,6 +5,9 @@ class A {
     #myField = "hello world";
 >#myField : Symbol(A.#myField, Decl(privateNameFieldAccess.ts, 0, 9))
 
+    static #myStaticField = "hello world";
+>#myStaticField : Symbol(A.#myStaticField, Decl(privateNameFieldAccess.ts, 1, 29))
+
     constructor() {
         console.log(this.#myField);
 >console.log : Symbol(Console.log, Decl(lib.dom.d.ts, --, --))
@@ -12,6 +15,13 @@ class A {
 >log : Symbol(Console.log, Decl(lib.dom.d.ts, --, --))
 >this.#myField : Symbol(A.#myField, Decl(privateNameFieldAccess.ts, 0, 9))
 >this : Symbol(A, Decl(privateNameFieldAccess.ts, 0, 0))
+
+        console.log(A.#myStaticField);
+>console.log : Symbol(Console.log, Decl(lib.dom.d.ts, --, --))
+>console : Symbol(console, Decl(lib.dom.d.ts, --, --))
+>log : Symbol(Console.log, Decl(lib.dom.d.ts, --, --))
+>A.#myStaticField : Symbol(A.#myStaticField, Decl(privateNameFieldAccess.ts, 1, 29))
+>A : Symbol(A, Decl(privateNameFieldAccess.ts, 0, 0))
     }
 }
 

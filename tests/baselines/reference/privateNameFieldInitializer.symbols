@@ -5,7 +5,13 @@ class A {
     #field = 10;
 >#field : Symbol(A.#field, Decl(privateNameFieldInitializer.ts, 0, 9))
 
+    static #staticField = 10;
+>#staticField : Symbol(A.#staticField, Decl(privateNameFieldInitializer.ts, 1, 16))
+
     #uninitialized;
->#uninitialized : Symbol(A.#uninitialized, Decl(privateNameFieldInitializer.ts, 1, 16))
+>#uninitialized : Symbol(A.#uninitialized, Decl(privateNameFieldInitializer.ts, 2, 29))
+
+    static #staticUninitialized;
+>#staticUninitialized : Symbol(A.#staticUninitialized, Decl(privateNameFieldInitializer.ts, 3, 19))
 }
 
