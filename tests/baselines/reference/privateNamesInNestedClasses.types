@@ -34,9 +34,33 @@ class A {
 >baz : (a: A) => void
 >a : A
 
-               a.#foo; // compile-time error, shadowed
+               a.#foo; // Error: shadowed
 >a.#foo : any
 >a : A
+
+               class C {
+>C : C
+
+                   #bar = "C's #bar";
+>#bar : string
+>"C's #bar" : "C's #bar"
+
+                   constructor () {
+                       a.#foo; // Error: shadowed
+>a.#foo : any
+>a : A
+
+                       new C().#bar; // OK
+>new C().#bar : string
+>new C() : C
+>C : typeof C
+
+                       new A().#bar // Error: shadowed
+>new A().#bar : any
+>new A() : A
+>A : typeof A
+                   }
+               }
            }
            quux (b: B) {
 >quux : (b: B) => void

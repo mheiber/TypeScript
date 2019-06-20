@@ -11,7 +11,15 @@ class A {
                a.#foo; // OK, no compile-time error, don't know what `a` is
            }
            baz (a: A) {
-               a.#foo; // compile-time error, shadowed
+               a.#foo; // Error: shadowed
+               class C {
+                   #bar = "C's #bar";
+                   constructor () {
+                       a.#foo; // Error: shadowed
+                       new C().#bar; // OK
+                       new A().#bar // Error: shadowed
+                   }
+               }
            }
            quux (b: B) {
                b.#foo; // OK
@@ -44,7 +52,16 @@ var A = /** @class */ (function () {
                 a.#foo; // OK, no compile-time error, don't know what `a` is
             };
             B.prototype.baz = function (a) {
-                a.#foo; // compile-time error, shadowed
+                a.#foo; // Error: shadowed
+                var C = /** @class */ (function () {
+                    function C() {
+                        this.#bar = "C's #bar";
+                        a.#foo; // Error: shadowed
+                        new C().#bar; // OK
+                        new A().#bar; // Error: shadowed
+                    }
+                    return C;
+                }());
             };
             B.prototype.quux = function (b) {
                 b.#foo; // OK

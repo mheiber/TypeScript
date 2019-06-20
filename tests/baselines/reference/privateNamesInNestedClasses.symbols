@@ -31,44 +31,63 @@ class A {
 >a : Symbol(a, Decl(privateNamesInNestedClasses.ts, 11, 16))
 >A : Symbol(A, Decl(privateNamesInNestedClasses.ts, 0, 0))
 
-               a.#foo; // compile-time error, shadowed
+               a.#foo; // Error: shadowed
 >a : Symbol(a, Decl(privateNamesInNestedClasses.ts, 11, 16))
+
+               class C {
+>C : Symbol(C, Decl(privateNamesInNestedClasses.ts, 12, 22))
+
+                   #bar = "C's #bar";
+>#bar : Symbol(C.#bar, Decl(privateNamesInNestedClasses.ts, 13, 24))
+
+                   constructor () {
+                       a.#foo; // Error: shadowed
+>a : Symbol(a, Decl(privateNamesInNestedClasses.ts, 11, 16))
+
+                       new C().#bar; // OK
+>new C().#bar : Symbol(C.#bar, Decl(privateNamesInNestedClasses.ts, 13, 24))
+>C : Symbol(C, Decl(privateNamesInNestedClasses.ts, 12, 22))
+
+                       new A().#bar // Error: shadowed
+>A : Symbol(A, Decl(privateNamesInNestedClasses.ts, 0, 0))
+                   }
+               }
            }
            quux (b: B) {
->quux : Symbol(B.quux, Decl(privateNamesInNestedClasses.ts, 13, 12))
->b : Symbol(b, Decl(privateNamesInNestedClasses.ts, 14, 17))
+>quux : Symbol(B.quux, Decl(privateNamesInNestedClasses.ts, 21, 12))
+>b : Symbol(b, Decl(privateNamesInNestedClasses.ts, 22, 17))
 >B : Symbol(B, Decl(privateNamesInNestedClasses.ts, 5, 14))
 
                b.#foo; // OK
 >b.#foo : Symbol(B.#foo, Decl(privateNamesInNestedClasses.ts, 6, 16))
->b : Symbol(b, Decl(privateNamesInNestedClasses.ts, 14, 17))
+>b : Symbol(b, Decl(privateNamesInNestedClasses.ts, 22, 17))
            }
        }
        const a = new A();
->a : Symbol(a, Decl(privateNamesInNestedClasses.ts, 18, 12))
+>a : Symbol(a, Decl(privateNamesInNestedClasses.ts, 26, 12))
 >A : Symbol(A, Decl(privateNamesInNestedClasses.ts, 0, 0))
 
        new B().bar(a);
 >new B().bar : Symbol(B.bar, Decl(privateNamesInNestedClasses.ts, 7, 29))
 >B : Symbol(B, Decl(privateNamesInNestedClasses.ts, 5, 14))
 >bar : Symbol(B.bar, Decl(privateNamesInNestedClasses.ts, 7, 29))
->a : Symbol(a, Decl(privateNamesInNestedClasses.ts, 18, 12))
+>a : Symbol(a, Decl(privateNamesInNestedClasses.ts, 26, 12))
 
        new B().baz(a);
 >new B().baz : Symbol(B.baz, Decl(privateNamesInNestedClasses.ts, 10, 12))
 >B : Symbol(B, Decl(privateNamesInNestedClasses.ts, 5, 14))
 >baz : Symbol(B.baz, Decl(privateNamesInNestedClasses.ts, 10, 12))
->a : Symbol(a, Decl(privateNamesInNestedClasses.ts, 18, 12))
+>a : Symbol(a, Decl(privateNamesInNestedClasses.ts, 26, 12))
 
        const b = new B();
->b : Symbol(b, Decl(privateNamesInNestedClasses.ts, 21, 12))
+>b : Symbol(b, Decl(privateNamesInNestedClasses.ts, 29, 12))
 >B : Symbol(B, Decl(privateNamesInNestedClasses.ts, 5, 14))
 
        new B().quux(b);
->new B().quux : Symbol(B.quux, Decl(privateNamesInNestedClasses.ts, 13, 12))
+>new B().quux : Symbol(B.quux, Decl(privateNamesInNestedClasses.ts, 21, 12))
 >B : Symbol(B, Decl(privateNamesInNestedClasses.ts, 5, 14))
->quux : Symbol(B.quux, Decl(privateNamesInNestedClasses.ts, 13, 12))
->b : Symbol(b, Decl(privateNamesInNestedClasses.ts, 21, 12))
+>quux : Symbol(B.quux, Decl(privateNamesInNestedClasses.ts, 21, 12))
+>b : Symbol(b, Decl(privateNamesInNestedClasses.ts, 29, 12))
    }
 }
 

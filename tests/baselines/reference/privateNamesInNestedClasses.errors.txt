@@ -1,8 +1,12 @@
 tests/cases/conformance/classes/members/privateNames/privateNamesInNestedClasses.ts(13,18): error TS2339: Property '#foo' does not exist on type 'A'.
-tests/cases/conformance/classes/members/privateNames/privateNamesInNestedClasses.ts(13,18): error TS18013: This usage of '#foo' refers to the private member declared in its enclosing class. While type 'B' has a private member with the same spelling, its declaration and accessibility are distinct.
+tests/cases/conformance/classes/members/privateNames/privateNamesInNestedClasses.ts(13,18): error TS18013: This usage of '#foo' refers to the private member declared in its enclosing class. While type 'A' has a private member with the same spelling, its declaration and accessibility are distinct.
+tests/cases/conformance/classes/members/privateNames/privateNamesInNestedClasses.ts(17,26): error TS2339: Property '#foo' does not exist on type 'A'.
+tests/cases/conformance/classes/members/privateNames/privateNamesInNestedClasses.ts(17,26): error TS18013: This usage of '#foo' refers to the private member declared in its enclosing class. While type 'B' has a private member with the same spelling, its declaration and accessibility are distinct.
+tests/cases/conformance/classes/members/privateNames/privateNamesInNestedClasses.ts(19,32): error TS2339: Property '#bar' does not exist on type 'A'.
+tests/cases/conformance/classes/members/privateNames/privateNamesInNestedClasses.ts(19,32): error TS18013: This usage of '#bar' refers to the private member declared in its enclosing class. While type 'B' has a private member with the same spelling, its declaration and accessibility are distinct.
 
 
-==== tests/cases/conformance/classes/members/privateNames/privateNamesInNestedClasses.ts (2 errors) ====
+==== tests/cases/conformance/classes/members/privateNames/privateNamesInNestedClasses.ts (6 errors) ====
     // @target es6
     
     class A {
@@ -15,11 +19,27 @@ tests/cases/conformance/classes/members/privateNames/privateNamesInNestedClasses
                    a.#foo; // OK, no compile-time error, don't know what `a` is
                }
                baz (a: A) {
-                   a.#foo; // compile-time error, shadowed
+                   a.#foo; // Error: shadowed
                      ~~~~
 !!! error TS2339: Property '#foo' does not exist on type 'A'.
                      ~~~~
+!!! error TS18013: This usage of '#foo' refers to the private member declared in its enclosing class. While type 'A' has a private member with the same spelling, its declaration and accessibility are distinct.
+                   class C {
+                       #bar = "C's #bar";
+                       constructor () {
+                           a.#foo; // Error: shadowed
+                             ~~~~
+!!! error TS2339: Property '#foo' does not exist on type 'A'.
+                             ~~~~
 !!! error TS18013: This usage of '#foo' refers to the private member declared in its enclosing class. While type 'B' has a private member with the same spelling, its declaration and accessibility are distinct.
+                           new C().#bar; // OK
+                           new A().#bar // Error: shadowed
+                                   ~~~~
+!!! error TS2339: Property '#bar' does not exist on type 'A'.
+                                   ~~~~
+!!! error TS18013: This usage of '#bar' refers to the private member declared in its enclosing class. While type 'B' has a private member with the same spelling, its declaration and accessibility are distinct.
+                       }
+                   }
                }
                quux (b: B) {
                    b.#foo; // OK
