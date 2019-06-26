@@ -10105,7 +10105,7 @@ namespace ts {
             return false;
         }
 
-        function getPropertyNameFromIndex(indexType: Type, accessNode: StringLiteral | Identifier | ObjectBindingPattern | ArrayBindingPattern | ComputedPropertyName | NumericLiteral | IndexedAccessTypeNode | ElementAccessExpression | SyntheticExpression | undefined) {
+        function getPropertyNameFromIndex(indexType: Type, accessNode: ElementAccessExpression | IndexedAccessTypeNode | PropertyName | BindingName | SyntheticExpression | undefined) {
             const accessExpression = accessNode && accessNode.kind === SyntaxKind.ElementAccessExpression ? accessNode : undefined;
             return isTypeUsableAsPropertyName(indexType) ?
                 getPropertyNameFromType(indexType) :

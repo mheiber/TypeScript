@@ -6277,7 +6277,8 @@ namespace ts {
         return kind === SyntaxKind.Identifier
             || kind === SyntaxKind.StringLiteral
             || kind === SyntaxKind.NumericLiteral
-            || kind === SyntaxKind.ComputedPropertyName;
+            || kind === SyntaxKind.ComputedPropertyName
+            || kind === SyntaxKind.PrivateName;
     }
 
     export function isBindingName(node: Node): node is BindingName {
