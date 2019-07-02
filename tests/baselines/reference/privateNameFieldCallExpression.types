@@ -2,13 +2,13 @@
 class A {
 >A : A
 
-    #fieldFunc = () => this.x = 10;
->#fieldFunc : () => number
->() => this.x = 10 : () => number
+    #fieldFunc = function() { this.x = 10; };
+>#fieldFunc : () => void
+>function() { this.x = 10; } : () => void
 >this.x = 10 : 10
->this.x : number
->this : this
->x : number
+>this.x : any
+>this : any
+>x : any
 >10 : 10
 
     x = 1;
@@ -19,18 +19,18 @@ class A {
 >test : () => void
 
         this.#fieldFunc();
->this.#fieldFunc() : number
->this.#fieldFunc : () => number
+>this.#fieldFunc() : void
+>this.#fieldFunc : () => void
 >this : this
 
         const func = this.#fieldFunc;
->func : () => number
->this.#fieldFunc : () => number
+>func : () => void
+>this.#fieldFunc : () => void
 >this : this
 
         func();
->func() : number
->func : () => number
+>func() : void
+>func : () => void
     }
 }
 

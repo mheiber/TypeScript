@@ -1,6 +1,6 @@
 //// [privateNameFieldCallExpression.ts]
 class A {
-    #fieldFunc = () => this.x = 10;
+    #fieldFunc = function() { this.x = 10; };
     x = 1;
     test() {
         this.#fieldFunc();
@@ -15,8 +15,7 @@ var _classPrivateFieldGet = function (receiver, privateMap) { if (!privateMap.ha
 var _fieldFunc;
 var A = /** @class */ (function () {
     function A() {
-        var _this = this;
-        _fieldFunc.set(this, function () { return _this.x = 10; });
+        _fieldFunc.set(this, function () { this.x = 10; });
         this.x = 1;
     }
     A.prototype.test = function () {
