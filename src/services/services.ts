@@ -2188,6 +2188,10 @@ namespace ts {
                 const text = getEscapedTextOfIdentifierOrLiteral(node);
                 nameTable.set(text, nameTable.get(text) === undefined ? node.pos : -1);
             }
+            else if (isPrivateName(node)) {
+                const text = node.escapedText;
+                nameTable.set(text, nameTable.get(text) === undefined ? node.pos : -1);
+            }
 
             forEachChild(node, walk);
             if (hasJSDocNodes(node)) {

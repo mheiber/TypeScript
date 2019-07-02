@@ -114,7 +114,7 @@ namespace ts {
         return node;
     }
 
-    function createLiteralFromNode(sourceNode: Exclude<PropertyNameLiteral, PrivateName>): StringLiteral {
+    function createLiteralFromNode(sourceNode: PropertyNameLiteral): StringLiteral {
         const node = createStringLiteral(getTextOfIdentifierOrLiteral(sourceNode));
         node.textSourceNode = sourceNode;
         return node;

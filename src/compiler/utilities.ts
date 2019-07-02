@@ -2767,12 +2767,10 @@ namespace ts {
         }
     }
 
-    export type PropertyNameLiteral = Identifier | PrivateName | StringLiteralLike | NumericLiteral;
+    export type PropertyNameLiteral = Identifier | StringLiteralLike | NumericLiteral;
     export function isPropertyNameLiteral(node: Node): node is PropertyNameLiteral {
         switch (node.kind) {
             case SyntaxKind.Identifier:
-            // TODO: should this be here?
-            case SyntaxKind.PrivateName:
             case SyntaxKind.StringLiteral:
             case SyntaxKind.NoSubstitutionTemplateLiteral:
             case SyntaxKind.NumericLiteral:
@@ -2782,11 +2780,11 @@ namespace ts {
         }
     }
     export function getTextOfIdentifierOrLiteral(node: PropertyNameLiteral): string {
-        return node.kind === SyntaxKind.Identifier || node.kind === SyntaxKind.PrivateName ? idText(node) : node.text;
+        return node.kind === SyntaxKind.Identifier ? idText(node) : node.text;
     }
 
     export function getEscapedTextOfIdentifierOrLiteral(node: PropertyNameLiteral): __String {
-        return node.kind === SyntaxKind.Identifier || node.kind === SyntaxKind.PrivateName ? node.escapedText : escapeLeadingUnderscores(node.text);
+        return node.kind === SyntaxKind.Identifier ? node.escapedText : escapeLeadingUnderscores(node.text);
     }
 
     export function getPropertyNameForUniqueESSymbol(symbol: Symbol): __String {
