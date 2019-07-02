@@ -214,6 +214,13 @@ namespace ts {
         return name;
     }
 
+    // Private names
+    export function createPrivateName(text: string): PrivateName {
+        const node = createSynthesizedNode(SyntaxKind.PrivateName) as PrivateName;
+        node.escapedText = escapeLeadingUnderscores(text);
+        return node;
+    }
+
     // Punctuation
 
     export function createToken<TKind extends SyntaxKind>(token: TKind) {

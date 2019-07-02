@@ -1717,7 +1717,6 @@ namespace ts {
         function emitPrivateName(node: PrivateName) {
             const writeText = node.symbol ? writeSymbol : write;
             writeText(getTextOfNode(node, /*includeTrivia*/ false), node.symbol);
-            emitList(node, /*typeArguments*/ undefined, ListFormat.TypeParameters); // Call emitList directly since it could be an array of TypeParameterDeclarations _or_ type arguments
         }
 
         //

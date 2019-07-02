@@ -1430,15 +1430,11 @@ namespace ts {
             return finishNode(node);
         }
 
-        function createPrivateName(): PrivateName {
+        function parsePrivateName(): PrivateName {
                 const node = createNode(SyntaxKind.PrivateName) as PrivateName;
                 node.escapedText = escapeLeadingUnderscores(scanner.getTokenText());
                 nextToken();
                 return finishNode(node);
-        }
-
-        function parsePrivateName(): PrivateName {
-            return createPrivateName();
         }
 
         function parseContextualModifier(t: SyntaxKind): boolean {
