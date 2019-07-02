@@ -1781,19 +1781,22 @@ namespace ts {
         }
 
         /**
-         * Gets an expression that represents a property name. For a computed property, a
-         * name is generated for the node.
+         * Gets an expression that represents a property name (for decorated properties or enums).
+         * For a computed property, a name is generated for the node.
          *
          * @param member The member whose name should be converted into an expression.
          */
         function getExpressionForPropertyName(member: ClassElement | EnumMember, generateNameForComputedPropertyName: boolean): Expression {
             const name = member.name!;
-            if (isComputedPropertyName(name)) {
+            if (isPrivateName(name)) {
+                return Debug.failBadSyntaxKind(name, "Private names cannot be decorated or used as enum members.");
+            }
+            else if (isComputedPropertyName(name)) {
                 return generateNameForComputedPropertyName && !isSimpleInlineableExpression(name.expression)
                     ? getGeneratedNameForNode(name)
                     : name.expression;
             }
-            else if (isIdentifier(name) || isPrivateName(name)) {
+            else if (isIdentifier(name)) {
                 return createLiteral(idText(name));
             }
             else {
