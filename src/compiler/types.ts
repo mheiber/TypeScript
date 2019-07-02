@@ -1795,6 +1795,7 @@ namespace ts {
     export interface PropertyAccessEntityNameExpression extends PropertyAccessExpression {
         _propertyAccessExpressionLikeQualifiedNameBrand?: any;
         expression: EntityNameExpression;
+        name: Identifier;
     }
 
     export interface ElementAccessExpression extends MemberExpression {
