@@ -833,7 +833,7 @@ namespace ts {
         expression: Expression;
     }
 
-    export interface PrivateName extends PrimaryExpression, Declaration {
+    export interface PrivateName extends Node {
         kind: SyntaxKind.PrivateName;
         // escaping not strictly necessary
         // avoids gotchas in transforms and utils
