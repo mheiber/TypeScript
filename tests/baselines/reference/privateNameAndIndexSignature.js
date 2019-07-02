@@ -14,7 +14,7 @@ class A {
 // @target es6
 var A = /** @class */ (function () {
     function A(message) {
-        this.#f = 3; // Error Property '#f' does not exist on type 'A'.
+        this.f = 3; // Error Property '#f' does not exist on type 'A'.
     }
     return A;
 }());

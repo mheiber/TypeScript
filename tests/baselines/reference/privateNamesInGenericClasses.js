@@ -26,6 +26,6 @@ class C {
     quux(x) { return _classPrivateFieldGet(x, _foo); } // OK
 }
 _foo = new WeakMap();
-a.#foo; // Error
+a.foo; // Error
 a = b; // Error
 b = a; // Error

@@ -19,4 +19,4 @@ var A = /** @class */ (function () {
     return A;
 }());
 _foo = new WeakMap();
-new A().#foo = 4; // Error
+new A().foo = 4; // Error

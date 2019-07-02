@@ -36,22 +36,23 @@ var _classPrivateFieldSet = function (receiver, privateMap, value) { if (!privat
 var __quux;
 class A {
     constructor() {
+        var _a;
         __quux.set(this, void 0);
-        this.#foo.call(this, 30);
-        this.#bar.call(this, 30);
-        this.#bar.call(this, 30);
-        this.#quux = this.#quux + 1;
-        this.#quux++;
+        this.foo.call(this, 30);
+        this.bar.call(this, 30);
+        this.bar.call(this, 30);
+        this.quux = this.quux + 1;
+        _a = this.quux, this.quux = _a + 1, _a;
     }
-    #foo(a) { }
-    async #bar(a) { }
-    async *#baz(a) {
+    foo(a) { }
+    async bar(a) { }
+    async *baz(a) {
         return 3;
     }
-    get #quux() {
+    get quux() {
         return _classPrivateFieldGet(this, __quux);
     }
-    set #quux(val) {
+    set quux(val) {
         _classPrivateFieldSet(this, __quux, val);
     }
 }
@@ -59,7 +60,7 @@ __quux = new WeakMap();
 class B extends A {
     constructor() {
         super();
-        this.#foo.call(this, "str");
+        this.foo.call(this, "str");
     }
-    #foo(a) { }
+    foo(a) { }
 }

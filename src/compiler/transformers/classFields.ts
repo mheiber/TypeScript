@@ -94,8 +94,18 @@ namespace ts {
                     return visitCallExpression(node as CallExpression);
                 case SyntaxKind.BinaryExpression:
                     return visitBinaryExpression(node as BinaryExpression);
+                case SyntaxKind.PrivateName:
+                    return visitPrivateName(node as PrivateName);
             }
             return visitEachChild(node, visitor, context);
+        }
+
+        /**
+         * If we visit a private name, this means it is an undeclared private name.
+         * Replace it with an identifier to produce valid syntax.
+         */
+        function visitPrivateName(node: PrivateName) {
+            return setOriginalNode(createIdentifier(idText(node).substring(1)), node);
         }
 
         /**
@@ -308,7 +318,7 @@ namespace ts {
             if (isDestructuringAssignment(node)) {
                 const left = transformDestructuringAssignmentTarget(node.left);
                 if (left !== node.left) {
-                    return updateBinary(node, left, node.right, node.operatorToken);
+                    return updateBinary(node, left, visitNode(node.right, visitor), node.operatorToken);
                 }
             }
             else if (isPrivateNameAssignmentExpression(node)) {
@@ -674,6 +684,9 @@ namespace ts {
                             );
                         }
                     }
+                }
+                else {
+                    Debug.fail("Undeclared private name for property declaration.");
                 }
             }
             if (!initializer) {

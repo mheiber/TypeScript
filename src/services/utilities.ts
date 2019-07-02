@@ -1272,7 +1272,7 @@ namespace ts {
         return name.kind === SyntaxKind.ComputedPropertyName
             // treat computed property names where expression is string/numeric literal as just string/numeric literal
             ? isStringOrNumericLiteralLike(name.expression) ? name.expression.text : undefined
-            : getTextOfIdentifierOrLiteral(name);
+            : isPrivateName(name) ? idText(name) : getTextOfIdentifierOrLiteral(name);
     }
 
     export function programContainsEs6Modules(program: Program): boolean {

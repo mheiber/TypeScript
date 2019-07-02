@@ -37,22 +37,22 @@ var __quux;
 "use strict";
 class A {
     constructor() {
-        var _a, _b, _c;
-        (_a = A).#foo.call(_a, 30);
-        (_b = A).#bar.call(_b, 30);
-        (_c = A).#bar.call(_c, 30);
-        A.#quux = A.#quux + 1;
-        A.#quux++;
+        var _a, _b, _c, A_1, _d;
+        (_a = A).foo.call(_a, 30);
+        (_b = A).bar.call(_b, 30);
+        (_c = A).bar.call(_c, 30);
+        A.quux = A.quux + 1;
+        A_1 = A, _d = A_1.quux, A_1.quux = _d + 1, _d;
     }
-    static #foo(a) { }
-    static async #bar(a) { }
-    static async *#baz(a) {
+    static foo(a) { }
+    static async bar(a) { }
+    static async *baz(a) {
         return 3;
     }
-    static get #quux() {
+    static get quux() {
         return _classPrivateFieldGet(this, __quux);
     }
-    static set #quux(val) {
+    static set quux(val) {
         _classPrivateFieldSet(this, __quux, val);
     }
 }
@@ -61,7 +61,7 @@ class B extends A {
     constructor() {
         var _a;
         super();
-        (_a = B).#foo.call(_a, "str");
+        (_a = B).foo.call(_a, "str");
     }
-    static #foo(a) { }
+    static foo(a) { }
 }

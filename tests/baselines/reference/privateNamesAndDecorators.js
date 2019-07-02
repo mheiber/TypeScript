@@ -15,7 +15,7 @@ var A = /** @class */ (function () {
     function A() {
         _foo.set(this, 1);
     }
-    A.prototype.#bar = function () { };
+    A.prototype.bar = function () { };
     return A;
 }());
 _foo = new WeakMap();
