@@ -344,7 +344,6 @@ namespace ts {
 
             const isDefaultExport = hasModifier(node, ModifierFlags.Default);
 
-            // need this before getDeclarationName
             if (isNamedDeclaration(node)) {
                 node.name.parent = node;
             }
