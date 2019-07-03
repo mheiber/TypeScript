@@ -599,6 +599,7 @@ namespace ts {
         let sourceText: string;
         let nodeCount: number;
         let identifiers: Map<string>;
+        let privateNames: Map<string>;
         let identifierCount: number;
 
         let parsingContext: ParsingContext;
@@ -789,6 +790,7 @@ namespace ts {
             parseDiagnostics = [];
             parsingContext = 0;
             identifiers = createMap<string>();
+            privateNames = createMap<string>();
             identifierCount = 0;
             nodeCount = 0;
 
@@ -1430,9 +1432,17 @@ namespace ts {
             return finishNode(node);
         }
 
+        function internPrivateName(text: string): string {
+            let privateName = privateNames.get(text);
+            if (privateName === undefined) {
+                privateNames.set(text, privateName = text);
+            }
+            return privateName;
+        }
+
         function parsePrivateName(): PrivateName {
                 const node = createNode(SyntaxKind.PrivateName) as PrivateName;
-                node.escapedText = escapeLeadingUnderscores(scanner.getTokenText());
+                node.escapedText = escapeLeadingUnderscores(internPrivateName(scanner.getTokenText()));
                 nextToken();
                 return finishNode(node);
         }
