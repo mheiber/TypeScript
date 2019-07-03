@@ -279,10 +279,9 @@ namespace ts {
                     return getPropertyNameForKnownSymbolName(idText((<PropertyAccessExpression>nameExpression).name));
                 }
                 if (isPrivateName(name)) {
-                    // containingClass exists because private names only allowed inside classes
-                    const containingClass = getContainingClass(name.parent);
+                    const containingClass = getContainingClass(node);
                     if (!containingClass) {
-                        // we're in a case where there's a private name outside a class (invalid)
+                        Debug.fail("Unexpected private name outside of a class");
                         return undefined;
                     }
                     const containingClassSymbol = containingClass.symbol;
@@ -344,9 +343,6 @@ namespace ts {
 
             const isDefaultExport = hasModifier(node, ModifierFlags.Default);
 
-            if (isNamedDeclaration(node)) {
-                node.name.parent = node;
-            }
             // The exported symbol for an export default function/class node is always named "default"
             const name = isDefaultExport && parent ? InternalSymbolName.Default : getDeclarationName(node);
 
@@ -399,6 +395,10 @@ namespace ts {
                         symbolTable.set(name, symbol = createSymbol(SymbolFlags.None, name));
                     }
                     else if (!(includes & SymbolFlags.Variable && symbol.flags & SymbolFlags.Assignment)) {
+                        // Assignment declarations are allowed to merge with variables, no matter what other flags they have.
+                        if (isNamedDeclaration(node)) {
+                            node.name.parent = node;
+                        }
                         // Report errors every position with duplicate declaration
                         // Report errors on previous encountered declarations
                         let message = symbol.flags & SymbolFlags.BlockScopedVariable
