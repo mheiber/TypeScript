@@ -926,10 +926,10 @@ namespace ts {
     export interface BindingElement extends NamedDeclaration {
         kind: SyntaxKind.BindingElement;
         parent: BindingPattern;
-        propertyName?: PropertyName;        // Binding property name (in object binding pattern)
-        dotDotDotToken?: DotDotDotToken;    // Present on rest element (in object binding pattern)
-        name: BindingName;                  // Declared binding element name
-        initializer?: Expression;           // Optional initializer
+        propertyName?: Exclude<PropertyName, PrivateName>;  // Binding property name (in object binding pattern)
+        dotDotDotToken?: DotDotDotToken;                    // Present on rest element (in object binding pattern)
+        name: BindingName;                                  // Declared binding element name
+        initializer?: Expression;                           // Optional initializer
     }
 
     /*@internal*/
@@ -965,12 +965,20 @@ namespace ts {
 
     /** Unlike ObjectLiteralElement, excludes JSXAttribute and JSXSpreadAttribute. */
     export type ObjectLiteralElementLike
-        = PropertyAssignment
+        = Exclude<PropertyAssignment, { name: PrivateName }>
         | ShorthandPropertyAssignment
         | SpreadAssignment
         | MethodDeclaration
         | AccessorDeclaration
         ;
+
+    export interface NonPrivateNamedPropertyAssignment extends ObjectLiteralElement, JSDocContainer {
+        parent: ObjectLiteralExpression;
+        kind: SyntaxKind.PropertyAssignment;
+        name: Exclude<PropertyName, PrivateName>;
+        questionToken?: QuestionToken;
+        initializer: Expression;
+    }
 
     export interface PropertyAssignment extends ObjectLiteralElement, JSDocContainer {
         parent: ObjectLiteralExpression;

@@ -5019,7 +5019,7 @@ namespace ts {
             return reference ? getFlowTypeOfReference(reference, declaredType) : declaredType;
         }
 
-        function getSyntheticElementAccess(node: BindingElement | PropertyAssignment | ShorthandPropertyAssignment | Expression): ElementAccessExpression | undefined {
+        function getSyntheticElementAccess(node: BindingElement | NonPrivateNamedPropertyAssignment | ShorthandPropertyAssignment | Expression): ElementAccessExpression | undefined {
             const parentAccess = getParentElementAccess(node);
             if (parentAccess && parentAccess.flowNode) {
                 const propName = getDestructuringPropertyName(node);
@@ -5052,18 +5052,19 @@ namespace ts {
             }
         }
 
-        function getDestructuringPropertyName(node: BindingElement | PropertyAssignment | ShorthandPropertyAssignment | Expression) {
+        function getDestructuringPropertyName(node: BindingElement | NonPrivateNamedPropertyAssignment | ShorthandPropertyAssignment | Expression) {
             const parent = node.parent;
             if (node.kind === SyntaxKind.BindingElement && parent.kind === SyntaxKind.ObjectBindingPattern) {
                 return getLiteralPropertyNameText((<BindingElement>node).propertyName || <Identifier>(<BindingElement>node).name);
             }
             if (node.kind === SyntaxKind.PropertyAssignment || node.kind === SyntaxKind.ShorthandPropertyAssignment) {
-                return getLiteralPropertyNameText((<PropertyAssignment | ShorthandPropertyAssignment>node).name);
+                return getLiteralPropertyNameText((<NonPrivateNamedPropertyAssignment | ShorthandPropertyAssignment>node).name);
             }
             return "" + (<NodeArray<Node>>(<BindingPattern | ArrayLiteralExpression>parent).elements).indexOf(node);
         }
 
-        function getLiteralPropertyNameText(name: PropertyName) {
+
+        function getLiteralPropertyNameText(name: Exclude<PropertyName, PrivateName>) {
             const type = getLiteralTypeFromPropertyName(name);
             return type.flags & (TypeFlags.StringLiteral | TypeFlags.NumberLiteral) ? "" + (<StringLiteralType | NumberLiteralType>type).value : undefined;
         }
@@ -9980,10 +9981,7 @@ namespace ts {
                 type.resolvedIndexType || (type.resolvedIndexType = createIndexType(type, /*stringsOnly*/ false));
         }
 
-        function getLiteralTypeFromPropertyName(name: PropertyName) {
-            if (isPrivateName(name)) {
-                return neverType;
-            }
+        function getLiteralTypeFromPropertyName(name: Exclude<PropertyName, PrivateName>) {
             return isIdentifier(name) ? getLiteralType(unescapeLeadingUnderscores(name.escapedText)) :
                 getRegularTypeOfLiteralType(isComputedPropertyName(name) ? checkComputedPropertyName(name) : checkExpression(name));
         }
@@ -10004,6 +10002,9 @@ namespace ts {
                     }
                     else {
                         const name = prop.valueDeclaration && getNameOfDeclaration(prop.valueDeclaration) as PropertyName;
+                        if (isPrivateName(name)) {
+                            return neverType;
+                        }
                         type = name && getLiteralTypeFromPropertyName(name) || getLiteralType(symbolName(prop));
                     }
                 }
@@ -16154,7 +16155,7 @@ namespace ts {
             return type;
         }
 
-        function getTypeOfDestructuredProperty(type: Type, name: PropertyName) {
+        function getTypeOfDestructuredProperty(type: Type, name: Exclude<PropertyName, PrivateName>) {
             const nameType = getLiteralTypeFromPropertyName(name);
             if (!isTypeUsableAsPropertyName(nameType)) return errorType;
             const text = getPropertyNameFromType(nameType);
@@ -16196,7 +16197,7 @@ namespace ts {
             return getTypeOfDestructuredSpreadExpression(getAssignedType(<ArrayLiteralExpression>node.parent));
         }
 
-        function getAssignedTypeOfPropertyAssignment(node: PropertyAssignment | ShorthandPropertyAssignment): Type {
+        function getAssignedTypeOfPropertyAssignment(node: NonPrivateNamedPropertyAssignment | ShorthandPropertyAssignment): Type {
             return getTypeOfDestructuredProperty(getAssignedType(node.parent), node.name);
         }
 
