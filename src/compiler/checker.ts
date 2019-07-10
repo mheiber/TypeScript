@@ -29949,57 +29949,59 @@ namespace ts {
             return undefined;
         }
 
-        function getSymbolOfEntityNameOrPropertyAccessExpression(entityName: EntityName | PropertyAccessExpression): Symbol | undefined {
-            if (isDeclarationName(entityName)) {
-                return getSymbolOfNode(entityName.parent);
+        function getSymbolOfNameOrPropertyAccessExpression(name: EntityName | PrivateName | PropertyAccessExpression): Symbol | undefined {
+            if (isDeclarationName(name)) {
+                return getSymbolOfNode(name.parent);
             }
 
-            if (isInJSFile(entityName) &&
-                entityName.parent.kind === SyntaxKind.PropertyAccessExpression &&
-                entityName.parent === (entityName.parent.parent as BinaryExpression).left) {
+            if (isInJSFile(name) &&
+                name.parent.kind === SyntaxKind.PropertyAccessExpression &&
+                name.parent === (name.parent.parent as BinaryExpression).left) {
                 // Check if this is a special property assignment
-                const specialPropertyAssignmentSymbol = getSpecialPropertyAssignmentSymbolFromEntityName(entityName);
-                if (specialPropertyAssignmentSymbol) {
-                    return specialPropertyAssignmentSymbol;
+                if (!isPrivateName(name)) {
+                    const specialPropertyAssignmentSymbol = getSpecialPropertyAssignmentSymbolFromEntityName(name);
+                    if (specialPropertyAssignmentSymbol) {
+                        return specialPropertyAssignmentSymbol;
+                    }
                 }
             }
 
-            if (entityName.parent.kind === SyntaxKind.ExportAssignment && isEntityNameExpression(entityName)) {
+            if (name.parent.kind === SyntaxKind.ExportAssignment && isEntityNameExpression(name)) {
                 // Even an entity name expression that doesn't resolve as an entityname may still typecheck as a property access expression
-                const success = resolveEntityName(entityName,
+                const success = resolveEntityName(name,
                     /*all meanings*/ SymbolFlags.Value | SymbolFlags.Type | SymbolFlags.Namespace | SymbolFlags.Alias, /*ignoreErrors*/ true);
                 if (success && success !== unknownSymbol) {
                     return success;
                 }
             }
-            else if (!isPropertyAccessExpression(entityName) && isInRightSideOfImportOrExportAssignment(entityName)) {
+            else if (!isPropertyAccessExpression(name) && !isPrivateName(name) && isInRightSideOfImportOrExportAssignment(name)) {
                 // Since we already checked for ExportAssignment, this really could only be an Import
-                const importEqualsDeclaration = getAncestor(entityName, SyntaxKind.ImportEqualsDeclaration);
+                const importEqualsDeclaration = getAncestor(name, SyntaxKind.ImportEqualsDeclaration);
                 Debug.assert(importEqualsDeclaration !== undefined);
-                return getSymbolOfPartOfRightHandSideOfImportEquals(entityName, /*dontResolveAlias*/ true);
+                return getSymbolOfPartOfRightHandSideOfImportEquals(name, /*dontResolveAlias*/ true);
             }
 
-            if (!isPropertyAccessExpression(entityName)) {
-                const possibleImportNode = isImportTypeQualifierPart(entityName);
+            if (!isPropertyAccessExpression(name) && !isPrivateName(name)) {
+                const possibleImportNode = isImportTypeQualifierPart(name);
                 if (possibleImportNode) {
                     getTypeFromTypeNode(possibleImportNode);
-                    const sym = getNodeLinks(entityName).resolvedSymbol;
+                    const sym = getNodeLinks(name).resolvedSymbol;
                     return sym === unknownSymbol ? undefined : sym;
                 }
             }
 
-            while (isRightSideOfQualifiedNameOrPropertyAccess(entityName)) {
-                entityName = <QualifiedName | PropertyAccessEntityNameExpression>entityName.parent;
+            while (isRightSideOfQualifiedNameOrPropertyAccess(name)) {
+                name = <QualifiedName | PropertyAccessEntityNameExpression>name.parent;
             }
 
-            if (isHeritageClauseElementIdentifier(entityName)) {
+            if (isHeritageClauseElementIdentifier(name)) {
                 let meaning = SymbolFlags.None;
                 // In an interface or class, we're definitely interested in a type.
-                if (entityName.parent.kind === SyntaxKind.ExpressionWithTypeArguments) {
+                if (name.parent.kind === SyntaxKind.ExpressionWithTypeArguments) {
                     meaning = SymbolFlags.Type;
 
                     // In a class 'extends' clause we are also looking for a value.
-                    if (isExpressionWithTypeArgumentsInClassExtendsClause(entityName.parent)) {
+                    if (isExpressionWithTypeArgumentsInClassExtendsClause(name.parent)) {
                         meaning |= SymbolFlags.Value;
                     }
                 }
@@ -30008,58 +30010,58 @@ namespace ts {
                 }
 
                 meaning |= SymbolFlags.Alias;
-                const entityNameSymbol = isEntityNameExpression(entityName) ? resolveEntityName(entityName, meaning) : undefined;
+                const entityNameSymbol = isEntityNameExpression(name) ? resolveEntityName(name, meaning) : undefined;
                 if (entityNameSymbol) {
                     return entityNameSymbol;
                 }
             }
 
-            if (entityName.parent.kind === SyntaxKind.JSDocParameterTag) {
-                return getParameterSymbolFromJSDoc(entityName.parent as JSDocParameterTag);
+            if (name.parent.kind === SyntaxKind.JSDocParameterTag) {
+                return getParameterSymbolFromJSDoc(name.parent as JSDocParameterTag);
             }
 
-            if (entityName.parent.kind === SyntaxKind.TypeParameter && entityName.parent.parent.kind === SyntaxKind.JSDocTemplateTag) {
-                Debug.assert(!isInJSFile(entityName)); // Otherwise `isDeclarationName` would have been true.
-                const typeParameter = getTypeParameterFromJsDoc(entityName.parent as TypeParameterDeclaration & { parent: JSDocTemplateTag });
+            if (name.parent.kind === SyntaxKind.TypeParameter && name.parent.parent.kind === SyntaxKind.JSDocTemplateTag) {
+                Debug.assert(!isInJSFile(name)); // Otherwise `isDeclarationName` would have been true.
+                const typeParameter = getTypeParameterFromJsDoc(name.parent as TypeParameterDeclaration & { parent: JSDocTemplateTag });
                 return typeParameter && typeParameter.symbol;
             }
 
-            if (isExpressionNode(entityName)) {
-                if (nodeIsMissing(entityName)) {
+            if (isExpressionNode(name)) {
+                if (nodeIsMissing(name)) {
                     // Missing entity name.
                     return undefined;
                 }
 
-                if (entityName.kind === SyntaxKind.Identifier) {
-                    if (isJSXTagName(entityName) && isJsxIntrinsicIdentifier(entityName)) {
-                        const symbol = getIntrinsicTagSymbol(<JsxOpeningLikeElement>entityName.parent);
+                if (name.kind === SyntaxKind.Identifier) {
+                    if (isJSXTagName(name) && isJsxIntrinsicIdentifier(name)) {
+                        const symbol = getIntrinsicTagSymbol(<JsxOpeningLikeElement>name.parent);
                         return symbol === unknownSymbol ? undefined : symbol;
                     }
 
-                    return resolveEntityName(entityName, SymbolFlags.Value, /*ignoreErrors*/ false, /*dontResolveAlias*/ true);
+                    return resolveEntityName(name, SymbolFlags.Value, /*ignoreErrors*/ false, /*dontResolveAlias*/ true);
                 }
-                else if (entityName.kind === SyntaxKind.PropertyAccessExpression || entityName.kind === SyntaxKind.QualifiedName) {
-                    const links = getNodeLinks(entityName);
+                else if (name.kind === SyntaxKind.PropertyAccessExpression || name.kind === SyntaxKind.QualifiedName) {
+                    const links = getNodeLinks(name);
                     if (links.resolvedSymbol) {
                         return links.resolvedSymbol;
                     }
 
-                    if (entityName.kind === SyntaxKind.PropertyAccessExpression) {
-                        checkPropertyAccessExpression(entityName);
+                    if (name.kind === SyntaxKind.PropertyAccessExpression) {
+                        checkPropertyAccessExpression(name);
                     }
                     else {
-                        checkQualifiedName(entityName);
+                        checkQualifiedName(name);
                     }
                     return links.resolvedSymbol;
                 }
             }
-            else if (isTypeReferenceIdentifier(<EntityName>entityName)) {
-                const meaning = entityName.parent.kind === SyntaxKind.TypeReference ? SymbolFlags.Type : SymbolFlags.Namespace;
-                return resolveEntityName(<EntityName>entityName, meaning, /*ignoreErrors*/ false, /*dontResolveAlias*/ true);
+            else if (isTypeReferenceIdentifier(<EntityName>name)) {
+                const meaning = name.parent.kind === SyntaxKind.TypeReference ? SymbolFlags.Type : SymbolFlags.Namespace;
+                return resolveEntityName(<EntityName>name, meaning, /*ignoreErrors*/ false, /*dontResolveAlias*/ true);
             }
 
-            if (entityName.parent.kind === SyntaxKind.TypePredicate) {
-                return resolveEntityName(<Identifier>entityName, /*meaning*/ SymbolFlags.FunctionScopedVariable);
+            if (name.parent.kind === SyntaxKind.TypePredicate) {
+                return resolveEntityName(<Identifier>name, /*meaning*/ SymbolFlags.FunctionScopedVariable);
             }
 
             // Do we want to return undefined here?
@@ -30091,7 +30093,7 @@ namespace ts {
 
             if (node.kind === SyntaxKind.Identifier) {
                 if (isInRightSideOfImportOrExportAssignment(<Identifier>node)) {
-                    return getSymbolOfEntityNameOrPropertyAccessExpression(<Identifier>node);
+                    return getSymbolOfNameOrPropertyAccessExpression(<Identifier>node);
                 }
                 else if (parent.kind === SyntaxKind.BindingElement &&
                     grandParent.kind === SyntaxKind.ObjectBindingPattern &&
@@ -30107,9 +30109,10 @@ namespace ts {
 
             switch (node.kind) {
                 case SyntaxKind.Identifier:
+                case SyntaxKind.PrivateName:
                 case SyntaxKind.PropertyAccessExpression:
                 case SyntaxKind.QualifiedName:
-                    return getSymbolOfEntityNameOrPropertyAccessExpression(<EntityName | PropertyAccessExpression>node);
+                    return getSymbolOfNameOrPropertyAccessExpression(<EntityName | PrivateName | PropertyAccessExpression>node);
 
                 case SyntaxKind.ThisKeyword:
                     const container = getThisContainer(node, /*includeArrowFunctions*/ false);
