@@ -281,7 +281,7 @@ namespace ts {
                 if (isPrivateName(name)) {
                     const containingClass = getContainingClass(node);
                     if (!containingClass) {
-                        Debug.fail("Unexpected private name outside of a class");
+                        // we can get here in cases where there is already a parse error.
                         return undefined;
                     }
                     const containingClassSymbol = containingClass.symbol;
