@@ -9982,7 +9982,7 @@ namespace ts {
 
         function getLiteralTypeFromPropertyName(name: PropertyName) {
             if (isPrivateName(name)) {
-                return neverType;
+                return Debug.fail("Unexpected private name. Expected a parse error for foo[#bar] syntax");
             }
             return isIdentifier(name) ? getLiteralType(unescapeLeadingUnderscores(name.escapedText)) :
                 getRegularTypeOfLiteralType(isComputedPropertyName(name) ? checkComputedPropertyName(name) : checkExpression(name));
