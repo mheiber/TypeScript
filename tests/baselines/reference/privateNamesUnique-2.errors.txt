@@ -1,0 +1,29 @@
+tests/cases/conformance/classes/members/privateNames/a.ts(4,25): error TS2339: Property '#x' does not exist on type 'Foo'.
+tests/cases/conformance/classes/members/privateNames/a.ts(4,25): error TS18013: Property '#x' is not accessible outside class 'Foo' because it has a private name.
+
+
+==== tests/cases/conformance/classes/members/privateNames/a.ts (2 errors) ====
+    export class Foo {
+        #x;
+        copy(other: import("./b").Foo) {
+            this.#x = other.#x; // error
+                            ~~
+!!! error TS2339: Property '#x' does not exist on type 'Foo'.
+                            ~~
+!!! error TS18013: Property '#x' is not accessible outside class 'Foo' because it has a private name.
+        }
+    }
+        
+==== tests/cases/conformance/classes/members/privateNames/b.ts (0 errors) ====
+    export class Foo {
+        #x;
+    }
+    
+==== tests/cases/conformance/classes/members/privateNames/main.ts (0 errors) ====
+    import { Foo as A } from "./a";
+    import { Foo as B } from "./b";
+    
+    const a = new A();
+    const b = new B();
+    a.copy(b); // error
+    
