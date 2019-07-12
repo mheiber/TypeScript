@@ -70,6 +70,7 @@ const x: number = a.baz                   // OK
 >baz : Symbol(C.baz, Decl(privateNamesAndGenericClasses-2.ts, 8, 5), Decl(privateNamesAndGenericClasses-2.ts, 12, 5))
 
 a.#foo;                                   // Error
+>a.#foo : Symbol(C.#foo, Decl(privateNamesAndGenericClasses-2.ts, 0, 12))
 >a : Symbol(a, Decl(privateNamesAndGenericClasses-2.ts, 18, 3))
 
 a = b;                                    // Error

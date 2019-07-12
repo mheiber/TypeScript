@@ -5026,7 +5026,7 @@
         "category": "Error",
         "code": 18010
     },
-    "The operand of a delete operator cannot be a private name.": {
+    "The operand of a 'delete' operator cannot be a private name.": {
         "category": "Error",
         "code": 18011
     },
@@ -5034,20 +5034,28 @@
         "category": "Error",
         "code": 18012
     },
-    "Property '{0}' is not accessible outside class '{1}' because it has a private name.": {
+    "Property '{0}' is not accessible outside class '{1}' because it is privately named.": {
         "category": "Error",
         "code": 18013
     },
-    "This usage of '{0}' refers to the private member declared in its enclosing class. While type '{1}' has a private member with the same spelling, its declaration and accessibility are distinct.": {
+    "The property '{0}' cannot be accessed on type '{1}' within this class because it is shadowed by another private identifier with the same spelling.": {
         "category": "Error",
         "code": 18014
     },
-    "Property '{0}' is missing in type '{1}'. While type '{1}' has a private member with the same spelling, its declaration and accessibility are distinct.": {
+    "Property '{0}' in type '{1}' refers to a different member that cannot be accessed from within type '{2}'.": {
         "category": "Error",
         "code": 18015
     },
     "Private names are not allowed outside class bodies.": {
         "category": "Error",
         "code": 18016
+    },
+    "The shadowing declaration of '{0}' is defined here": {
+        "category": "Error",
+        "code": 18017
+    },
+    "The declaration of '{0}' that you probably intended to use is defined here": {
+        "category": "Error",
+        "code": 18018
     }
 }

@@ -31,7 +31,7 @@ declare let b: C<string>;
 >b : C<string>
 
 a.#foo;                                   // Error
->a.#foo : any
+>a.#foo : number
 >a : C<number>
 
 a = b;                                    // Error

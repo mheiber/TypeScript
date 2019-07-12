@@ -1,16 +1,18 @@
-tests/cases/conformance/classes/members/privateNames/a.ts(4,25): error TS2339: Property '#x' does not exist on type 'Foo'.
-tests/cases/conformance/classes/members/privateNames/a.ts(4,25): error TS18013: Property '#x' is not accessible outside class 'Foo' because it has a private name.
+tests/cases/conformance/classes/members/privateNames/a.ts(4,15): error TS2339: Property '#x' does not exist on type 'Foo'.
+tests/cases/conformance/classes/members/privateNames/a.ts(4,15): error TS18014: The property '#x' cannot be accessed on type 'Foo' within this class because it is shadowed by another private identifier with the same spelling.
 
 
 ==== tests/cases/conformance/classes/members/privateNames/a.ts (2 errors) ====
     export class Foo {
         #x;
         copy(other: import("./b").Foo) {
-            this.#x = other.#x; // error
-                            ~~
+            other.#x; // error
+                  ~~
 !!! error TS2339: Property '#x' does not exist on type 'Foo'.
-                            ~~
-!!! error TS18013: Property '#x' is not accessible outside class 'Foo' because it has a private name.
+                  ~~
+!!! error TS18014: The property '#x' cannot be accessed on type 'Foo' within this class because it is shadowed by another private identifier with the same spelling.
+!!! related TS18017 tests/cases/conformance/classes/members/privateNames/a.ts:2:5: The shadowing declaration of '#x' is defined here
+!!! related TS18018 /.src/tests/cases/conformance/classes/members/privateNames/b.ts:2:5: The declaration of '#x' that you probably intended to use is defined here
         }
     }
         

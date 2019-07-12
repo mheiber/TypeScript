@@ -9,5 +9,6 @@ class A {
 }
 
 new A().#foo = 4;               // Error
+>new A().#foo : Symbol(A.#foo, Decl(privateNameNotAccessibleOutsideDefiningClass.ts, 2, 9))
 >A : Symbol(A, Decl(privateNameNotAccessibleOutsideDefiningClass.ts, 0, 0))
 

@@ -9,10 +9,7 @@ export class Foo {
 >copy : (other: import("tests/cases/conformance/classes/members/privateNames/b").Foo) => void
 >other : import("tests/cases/conformance/classes/members/privateNames/b").Foo
 
-        this.#x = other.#x; // error
->this.#x = other.#x : any
->this.#x : any
->this : this
+        other.#x; // error
 >other.#x : any
 >other : import("tests/cases/conformance/classes/members/privateNames/b").Foo
     }

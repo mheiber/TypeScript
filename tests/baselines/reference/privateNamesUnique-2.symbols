@@ -10,9 +10,7 @@ export class Foo {
 >other : Symbol(other, Decl(a.ts, 2, 9))
 >Foo : Symbol(Foo, Decl(b.ts, 0, 0))
 
-        this.#x = other.#x; // error
->this.#x : Symbol(Foo.#x, Decl(a.ts, 0, 18))
->this : Symbol(Foo, Decl(a.ts, 0, 0))
+        other.#x; // error
 >other : Symbol(other, Decl(a.ts, 2, 9))
     }
 }

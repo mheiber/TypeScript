@@ -4,7 +4,7 @@
 export class Foo {
     #x;
     copy(other: import("./b").Foo) {
-        this.#x = other.#x; // error
+        other.#x; // error
     }
 }
     
@@ -37,7 +37,6 @@ _x = new WeakMap();
 //// [a.js]
 "use strict";
 var _classPrivateFieldGet = function (receiver, privateMap) { if (!privateMap.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return privateMap.get(receiver); };
-var _classPrivateFieldSet = function (receiver, privateMap, value) { if (!privateMap.has(receiver)) { throw new TypeError("attempted to set private field on non-instance"); } privateMap.set(receiver, value); return value; };
 var _x;
 exports.__esModule = true;
 var Foo = /** @class */ (function () {
@@ -45,7 +44,7 @@ var Foo = /** @class */ (function () {
         _x.set(this, void 0);
     }
     Foo.prototype.copy = function (other) {
-        _classPrivateFieldSet(this, _x, _classPrivateFieldGet(other, _x)); // error
+        _classPrivateFieldGet(other, _x); // error
     };
     return Foo;
 }());

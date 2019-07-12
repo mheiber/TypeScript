@@ -2,7 +2,7 @@
 export class Foo {
     #x;
     copy(other: import("./b").Foo) {
-        this.#x = other.#x; // error
+        other.#x; // error
     }
 }
     

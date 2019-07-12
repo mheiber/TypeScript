@@ -1,6 +1,7 @@
 /* @internal */
 namespace ts {
     const ambientModuleSymbolRegex = /^".+"$/;
+    const anon = "(anonymous)" as __String & string;
 
     let nextSymbolId = 1;
     let nextNodeId = 1;
@@ -9140,7 +9141,7 @@ namespace ts {
 
         function checkNoTypeArguments(node: NodeWithTypeArguments, symbol?: Symbol) {
             if (node.typeArguments) {
-                error(node, Diagnostics.Type_0_is_not_generic, symbol ? symbolToString(symbol) : (<TypeReferenceNode>node).typeName ? declarationNameToString((<TypeReferenceNode>node).typeName) : "(anonymous)");
+                error(node, Diagnostics.Type_0_is_not_generic, symbol ? symbolToString(symbol) : (<TypeReferenceNode>node).typeName ? declarationNameToString((<TypeReferenceNode>node).typeName) : anon);
                 return false;
             }
             return true;
@@ -13701,10 +13702,13 @@ namespace ts {
                             const privateNameDescription = unmatchedProperty.valueDeclaration.name.escapedText;
                             const symbolTableKey = getPropertyNameForPrivateNameDescription(source.symbol, privateNameDescription);
                             if (symbolTableKey && !!getPropertyOfType(source, symbolTableKey)) {
+                                const sourceName = source.symbol.valueDeclaration.name;
+                                const targetName = isClassDeclaration(target.symbol.valueDeclaration) ? target.symbol.valueDeclaration.name : undefined;
                                 reportError(
-                                    Diagnostics.Property_0_is_missing_in_type_1_While_type_1_has_a_private_member_with_the_same_spelling_its_declaration_and_accessibility_are_distinct,
+                                    Diagnostics.Property_0_in_type_1_refers_to_a_different_member_that_cannot_be_accessed_from_within_type_2,
                                     diagnosticName(privateNameDescription),
-                                    diagnosticName(source.symbol.valueDeclaration.name || ("(anonymous)" as __String))
+                                    diagnosticName(sourceName || anon),
+                                    diagnosticName(targetName || anon),
                                 );
                                 hasReported = true;
                             }
@@ -20156,6 +20160,14 @@ namespace ts {
                 }
             }
 
+            if (isPropertyAccessExpression(node) && isPrivateName(node.name)) {
+                if (!getContainingClass(node)) {
+                    error(errorNode, Diagnostics.Private_names_are_not_allowed_outside_class_bodies);
+                    return false;
+                }
+                return true;
+            }
+
             // Public properties are otherwise accessible.
             if (!(flags & ModifierFlags.NonPublicAccessibilityModifier)) {
                 return true;
@@ -20293,46 +20305,75 @@ namespace ts {
             return isCallOrNewExpression(node.parent) && node.parent.expression === node;
         }
 
-        function getPropertyForPrivateName(apparentType: Type, leftType: Type, right: PrivateName, errorNode: Node | undefined): Symbol | undefined {
-            let classWithShadowedPrivateName;
-            let container = getContainingClass(right);
-            while (container) {
-                const symbolTableKey = getPropertyNameForPrivateNameDescription(container.symbol, right.escapedText);
-                if (symbolTableKey) {
-                    const prop = getPropertyOfType(apparentType, symbolTableKey);
-                    if (prop) {
-                        if (classWithShadowedPrivateName) {
-                            if (errorNode) {
-                                error(
-                                    errorNode,
-                                    Diagnostics.This_usage_of_0_refers_to_the_private_member_declared_in_its_enclosing_class_While_type_1_has_a_private_member_with_the_same_spelling_its_declaration_and_accessibility_are_distinct,
-                                    diagnosticName(right),
-                                    diagnosticName(classWithShadowedPrivateName.name || ("(anonymous)" as __String))
-                                );
-                            }
-                            return undefined;
-                        }
-                        return prop;
-                    }
-                    else {
-                        classWithShadowedPrivateName = container;
-                    }
-                }
-                container = getContainingClass(container);
+        function getPropertyForPrivateName(leftType: Type, right: PrivateName, errorNode: Node | undefined): Symbol | undefined {
+            const privateNameDescription = right.escapedText;
+            const diagName = diagnosticName(right);
+
+            const key = getPropertyNameForPrivateNameDescription(leftType.symbol, privateNameDescription);
+            const prop = getPropertyOfType(leftType, key);
+            if (!prop) {
+                return undefined;
             }
-            // If this isn't a case of shadowing, and the lhs has a property with the same
-            // private name description, then there is a privacy violation
-            if (leftType.symbol.members) {
-                const symbolTableKey = getPropertyNameForPrivateNameDescription(leftType.symbol, right.escapedText);
-                const prop = getPropertyOfType(apparentType, symbolTableKey);
-                if (prop) {
-                    if (errorNode) {
-                        error(right, Diagnostics.Property_0_is_not_accessible_outside_class_1_because_it_has_a_private_name, symbolToString(prop), typeToString(getDeclaringClass(prop)!));
-                    }
-                }
+
+            const containingClass = getContainingClass(right);
+            if (!containingClass) {
+                // Prop is found, but not accessible. We catch and report this error in checkPropertyAccessibility
+                return prop;
             }
-            // not found
-            return undefined;
+
+            // check to see if private name is shadowed
+            let nearestMatch: Node | undefined;
+            const nearestMatchContainingClass = findAncestor(right, node => {
+                if (!node.symbol) {
+                    return false;
+                }
+                const key = getPropertyNameForPrivateNameDescription(node.symbol, privateNameDescription);
+                const instanceSymbol = node.symbol.members && node.symbol.members.get(key);
+                const staticSymbol = node.symbol.exports && node.symbol.exports.get(key);
+                const matchingSymbol = instanceSymbol || staticSymbol;
+                if (matchingSymbol) {
+                    nearestMatch = matchingSymbol.valueDeclaration;
+                }
+                return !!matchingSymbol;
+            });
+            if (!nearestMatch || !nearestMatchContainingClass) {
+                if (errorNode) {
+                    error(
+                        right,
+                        Diagnostics.Property_0_is_not_accessible_outside_class_1_because_it_is_privately_named,
+                        typeToString(leftType),
+                        diagnosticName(containingClass.name || anon)
+                    );
+                }
+                return undefined;
+            }
+            const match = nearestMatch as Node;
+            const isShadowed = nearestMatchContainingClass.symbol !== leftType.symbol;
+            if (!isShadowed) {
+                return prop;
+            }
+
+            const shadowed = prop.valueDeclaration;
+            const diagnostic = error(
+                errorNode,
+                Diagnostics.The_property_0_cannot_be_accessed_on_type_1_within_this_class_because_it_is_shadowed_by_another_private_identifier_with_the_same_spelling,
+                diagnosticName(right),
+                typeToString(leftType)
+            );
+
+            addRelatedInfo(
+                diagnostic,
+                createDiagnosticForNode(
+                    match,
+                    Diagnostics.The_shadowing_declaration_of_0_is_defined_here,
+                    diagName
+                ),
+                createDiagnosticForNode(
+                    shadowed,
+                    Diagnostics.The_declaration_of_0_that_you_probably_intended_to_use_is_defined_here,
+                    diagName
+                )
+            );
         }
 
         function checkPropertyAccessExpressionOrQualifiedName(node: PropertyAccessExpression | QualifiedName, left: Expression | QualifiedName, right: Identifier | PrivateName) {
@@ -20347,7 +20388,7 @@ namespace ts {
                 }
                 return apparentType;
             }
-            const prop = isPrivateName(right) ? getPropertyForPrivateName(apparentType, leftType, right, /* errorNode */ right) : getPropertyOfType(apparentType, right.escapedText);
+            const prop = isPrivateName(right) ? getPropertyForPrivateName(leftType, right, /* errorNode */ right) : getPropertyOfType(apparentType, right.escapedText);
             if (isIdentifier(left) && parentSymbol && !(prop && isConstEnumOrConstEnumOnlyModule(prop))) {
                 markAliasReferenced(parentSymbol, node);
             }

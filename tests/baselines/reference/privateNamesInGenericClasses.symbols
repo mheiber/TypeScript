@@ -39,6 +39,7 @@ declare let b: C<string>;
 >C : Symbol(C, Decl(privateNamesInGenericClasses.ts, 0, 0))
 
 a.#foo;                                   // Error
+>a.#foo : Symbol(C.#foo, Decl(privateNamesInGenericClasses.ts, 0, 12))
 >a : Symbol(a, Decl(privateNamesInGenericClasses.ts, 7, 11))
 
 a = b;                                    // Error
