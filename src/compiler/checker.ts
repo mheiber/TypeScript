@@ -24982,6 +24982,8 @@ namespace ts {
 
             const instanceNames = createUnderscoreEscapedMap<Declaration>();
             const staticNames = createUnderscoreEscapedMap<Declaration>();
+            // private names share the same scope
+            const privateNames = createUnderscoreEscapedMap<Declaration>();
             for (const member of node.members) {
                 if (member.kind === SyntaxKind.Constructor) {
                     for (const param of (member as ConstructorDeclaration).parameters) {
@@ -24992,11 +24994,19 @@ namespace ts {
                 }
                 else {
                     const isStatic = hasModifier(member, ModifierFlags.Static);
-                    const names = isStatic ? staticNames : instanceNames;
-
+                    let names;
                     const name = member.name;
+                    if (!name) {
+                        return;
+                    }
+                    if (isPrivateName(name)) {
+                        names = privateNames;
+                    }
+                    else {
+                        names = isStatic ? staticNames : instanceNames;
+                    }
                     const memberName = name && getPropertyNameForPropertyNameNode(name);
-                    if (name && memberName) {
+                    if (memberName) {
                         switch (member.kind) {
                             case SyntaxKind.GetAccessor:
                                 addName(names, name, memberName, Declaration.Getter);

@@ -1,0 +1,15 @@
+=== tests/cases/conformance/classes/members/privateNames/privateNamesUnique-4.ts ===
+class A {
+>A : Symbol(A, Decl(privateNamesUnique-4.ts, 0, 0))
+
+    #foo = 1;
+>#foo : Symbol(A.#foo, Decl(privateNamesUnique-4.ts, 0, 9))
+
+    static #foo = true; // error (duplicate)
+>#foo : Symbol(A.#foo, Decl(privateNamesUnique-4.ts, 1, 13))
+
+                        // because static and instance private names
+                        // share the same lexical scope
+                        // https://tc39.es/proposal-class-fields/#prod-ClassBody
+}
+

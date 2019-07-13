@@ -1,0 +1,14 @@
+tests/cases/conformance/classes/members/privateNames/privateNamesUnique-4.ts(3,12): error TS2300: Duplicate identifier '#foo'.
+
+
+==== tests/cases/conformance/classes/members/privateNames/privateNamesUnique-4.ts (1 errors) ====
+    class A {
+        #foo = 1;
+        static #foo = true; // error (duplicate)
+               ~~~~
+!!! error TS2300: Duplicate identifier '#foo'.
+                            // because static and instance private names
+                            // share the same lexical scope
+                            // https://tc39.es/proposal-class-fields/#prod-ClassBody
+    }
+    
