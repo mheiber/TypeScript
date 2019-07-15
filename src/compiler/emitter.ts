@@ -1149,9 +1149,9 @@ namespace ts {
                     case SyntaxKind.Identifier:
                         return emitIdentifier(<Identifier>node);
 
-                    // PrivateNames
-                    case SyntaxKind.PrivateName:
-                        return emitPrivateName(node as PrivateName);
+                    // PrivateIdentifiers
+                    case SyntaxKind.PrivateIdentifier:
+                        return emitPrivateIdentifier(node as PrivateIdentifier);
 
                     // Parse tree nodes
 
@@ -1453,8 +1453,8 @@ namespace ts {
                         return emitIdentifier(<Identifier>node);
 
                     // Private Names
-                    case SyntaxKind.PrivateName:
-                        return emitPrivateName(node as PrivateName);
+                    case SyntaxKind.PrivateIdentifier:
+                        return emitPrivateIdentifier(node as PrivateIdentifier);
 
                     // Reserved words
                     case SyntaxKind.FalseKeyword:
@@ -1714,7 +1714,7 @@ namespace ts {
             emitList(node, node.typeArguments, ListFormat.TypeParameters); // Call emitList directly since it could be an array of TypeParameterDeclarations _or_ type arguments
         }
 
-        function emitPrivateName(node: PrivateName) {
+        function emitPrivateIdentifier(node: PrivateIdentifier) {
             const writeText = node.symbol ? writeSymbol : write;
             writeText(getTextOfNode(node, /*includeTrivia*/ false), node.symbol);
         }

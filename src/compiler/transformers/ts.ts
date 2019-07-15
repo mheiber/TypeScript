@@ -1788,7 +1788,7 @@ namespace ts {
          */
         function getExpressionForPropertyName(member: ClassElement | EnumMember, generateNameForComputedPropertyName: boolean): Expression {
             const name = member.name!;
-            if (isPrivateName(name)) {
+            if (isPrivateIdentifier(name)) {
                 return Debug.failBadSyntaxKind(name, "Private names cannot be decorated or used as enum members.");
             }
             else if (isComputedPropertyName(name)) {

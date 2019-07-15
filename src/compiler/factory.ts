@@ -215,8 +215,8 @@ namespace ts {
     }
 
     // Private names
-    export function createPrivateName(text: string): PrivateName {
-        const node = createSynthesizedNode(SyntaxKind.PrivateName) as PrivateName;
+    export function createPrivateIdentifier(text: string): PrivateIdentifier {
+        const node = createSynthesizedNode(SyntaxKind.PrivateIdentifier) as PrivateIdentifier;
         node.escapedText = escapeLeadingUnderscores(text);
         return node;
     }
@@ -1011,7 +1011,7 @@ namespace ts {
             : node;
     }
 
-    export function createPropertyAccess(expression: Expression, name: string | Identifier | PrivateName) {
+    export function createPropertyAccess(expression: Expression, name: string | Identifier | PrivateIdentifier) {
         const node = <PropertyAccessExpression>createSynthesizedNode(SyntaxKind.PropertyAccessExpression);
         node.expression = parenthesizeForAccess(expression);
         node.name = asName(name);
@@ -1019,7 +1019,7 @@ namespace ts {
         return node;
     }
 
-    export function updatePropertyAccess(node: PropertyAccessExpression, expression: Expression, name: Identifier | PrivateName) {
+    export function updatePropertyAccess(node: PropertyAccessExpression, expression: Expression, name: Identifier | PrivateIdentifier) {
         // Because we are updating existed propertyAccess we want to inherit its emitFlags
         // instead of using the default from createPropertyAccess
         return node.expression !== expression
@@ -3069,7 +3069,7 @@ namespace ts {
 
     // Utilities
 
-    function asName<T extends Identifier | PrivateName | BindingName | PropertyName | EntityName | ThisTypeNode | undefined>(name: string | T): T | Identifier {
+    function asName<T extends Identifier | PrivateIdentifier | BindingName | PropertyName | EntityName | ThisTypeNode | undefined>(name: string | T): T | Identifier {
         return isString(name) ? createIdentifier(name) : name;
     }
 
@@ -3466,7 +3466,7 @@ namespace ts {
         }
         else {
             const expression = setTextRange(
-                (isIdentifier(memberName) || isPrivateName(memberName))
+                (isIdentifier(memberName) || isPrivateIdentifier(memberName))
                     ? createPropertyAccess(target, memberName)
                     : createElementAccess(target, memberName),
                 memberName
@@ -3922,7 +3922,7 @@ namespace ts {
         }
     }
 
-    export function createExpressionForPropertyName(memberName: Exclude<PropertyName, PrivateName>): Expression {
+    export function createExpressionForPropertyName(memberName: Exclude<PropertyName, PrivateIdentifier>): Expression {
         if (isIdentifier(memberName)) {
             return createLiteral(memberName);
         }
@@ -3935,15 +3935,15 @@ namespace ts {
     }
 
     /**
-     * accessor declaration that can be converted to an expression (`name` field cannot be a `PrivateName`)
+     * accessor declaration that can be converted to an expression (`name` field cannot be a `PrivateIdentifier`)
      */
-    type ExpressionableAccessorDeclaration = AccessorDeclaration & {name: Exclude<PropertyName, PrivateName>};
+    type ExpressionableAccessorDeclaration = AccessorDeclaration & {name: Exclude<PropertyName, PrivateIdentifier>};
 
     export function createExpressionForObjectLiteralElementLike(node: ObjectLiteralExpression, property: ObjectLiteralElementLike, receiver: Expression): Expression | undefined {
         switch (property.kind) {
             case SyntaxKind.GetAccessor:
             case SyntaxKind.SetAccessor:
-                // type assertion `as ExpressionableAccessorDeclaration` is safe because PrivateNames are not allowed in object literals
+                // type assertion `as ExpressionableAccessorDeclaration` is safe because PrivateIdentifiers are not allowed in object literals
                 return createExpressionForAccessorDeclaration(node.properties, property as ExpressionableAccessorDeclaration, receiver, !!node.multiLine);
             case SyntaxKind.PropertyAssignment:
                 return createExpressionForPropertyAssignment(property, receiver);

@@ -5014,19 +5014,19 @@
         "category": "Error",
         "code": 18007
     },
-    "Private names are not allowed in variable declarations.": {
+    "Private identifiers are not allowed in variable declarations.": {
         "category": "Error",
         "code": 18008
     },
-    "Private names cannot be used as parameters": {
+    "Private identifiers cannot be used as parameters": {
         "category": "Error",
         "code": 18009
     },
-    "Accessibility modifiers cannot be used with private names.": {
+    "Accessibility modifiers cannot be used with private identifiers.": {
         "category": "Error",
         "code": 18010
     },
-    "The operand of a 'delete' operator cannot be a private name.": {
+    "The operand of a 'delete' operator cannot be a private identifier.": {
         "category": "Error",
         "code": 18011
     },
@@ -5046,7 +5046,7 @@
         "category": "Error",
         "code": 18015
     },
-    "Private names are not allowed outside class bodies.": {
+    "Private identifiers are not allowed outside class bodies.": {
         "category": "Error",
         "code": 18016
     },

@@ -278,7 +278,7 @@ namespace ts {
                     Debug.assert(isWellKnownSymbolSyntactically(nameExpression));
                     return getPropertyNameForKnownSymbolName(idText((<PropertyAccessExpression>nameExpression).name));
                 }
-                if (isPrivateName(name)) {
+                if (isPrivateIdentifier(name)) {
                     const containingClass = getContainingClass(node);
                     if (!containingClass) {
                         // we can get here in cases where there is already a parse error.
@@ -1858,7 +1858,7 @@ namespace ts {
 
         // The binder visits every node, so this is a good place to check for
         // the reserved private name (there is only one)
-        function checkPrivateName(node: PrivateName) {
+        function checkPrivateIdentifier(node: PrivateIdentifier) {
             if (node.escapedText === "#constructor") {
                 // Report error only if there are no parse errors in file
                 if (!file.parseDiagnostics.length) {
@@ -2140,8 +2140,8 @@ namespace ts {
                         node.flowNode = currentFlow;
                     }
                     return checkStrictModeIdentifier(<Identifier>node);
-                case SyntaxKind.PrivateName:
-                    return checkPrivateName(node as PrivateName);
+                case SyntaxKind.PrivateIdentifier:
+                    return checkPrivateIdentifier(node as PrivateIdentifier);
                 case SyntaxKind.PropertyAccessExpression:
                 case SyntaxKind.ElementAccessExpression:
                     if (currentFlow && isNarrowableReference(<Expression>node)) {
@@ -3878,7 +3878,7 @@ namespace ts {
                 transformFlags |= TransformFlags.ContainsHoistedDeclarationOrCompletion;
                 break;
 
-            case SyntaxKind.PrivateName:
+            case SyntaxKind.PrivateIdentifier:
                 transformFlags |= TransformFlags.ContainsClassFields;
                 break;
         }

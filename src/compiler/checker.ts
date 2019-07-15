@@ -136,7 +136,7 @@ namespace ts {
             getDeclaredTypeOfSymbol,
             getPropertiesOfType,
             getPropertyOfType: (type, name) => getPropertyOfType(type, escapeLeadingUnderscores(name)),
-            getPropertyForPrivateName,
+            getPropertyForPrivateIdentifier,
             getTypeOfPropertyOfType: (type, name) => getTypeOfPropertyOfType(type, escapeLeadingUnderscores(name)),
             getIndexInfoOfType,
             getSignaturesOfType,
@@ -1745,8 +1745,8 @@ namespace ts {
             }
         }
 
-        function diagnosticName(nameArg: __String | Identifier | PrivateName) {
-            return isString(nameArg) ? unescapeLeadingUnderscores(nameArg as __String) : declarationNameToString(nameArg as Identifier | PrivateName);
+        function diagnosticName(nameArg: __String | Identifier | PrivateIdentifier) {
+            return isString(nameArg) ? unescapeLeadingUnderscores(nameArg as __String) : declarationNameToString(nameArg as Identifier | PrivateIdentifier);
         }
 
         function isTypeParameterSymbolDeclaredInContainer(symbol: Symbol, container: Node) {
@@ -2948,7 +2948,7 @@ namespace ts {
         // A reserved member name starts with two underscores, but the third character cannot be an underscore,
         // @, or #. A third underscore indicates an escaped form of an identifer that started
         // with at least two underscores. The @ character indicates that the name is denoted by a well known ES
-        // Symbol instance and the # indicates that the name is a PrivateName.
+        // Symbol instance and the # indicates that the name is a PrivateIdentifier.
         function isReservedMemberName(name: __String) {
             return (name as string).charCodeAt(0) === CharacterCodes._ &&
                 (name as string).charCodeAt(1) === CharacterCodes._ &&
@@ -9982,7 +9982,7 @@ namespace ts {
         }
 
         function getLiteralTypeFromPropertyName(name: PropertyName) {
-            if (isPrivateName(name)) {
+            if (isPrivateIdentifier(name)) {
                 return neverType;
             }
             return isIdentifier(name) ? getLiteralType(unescapeLeadingUnderscores(name.escapedText)) :
@@ -13696,7 +13696,7 @@ namespace ts {
                         if (
                             unmatchedProperty.valueDeclaration
                             && isNamedDeclaration(unmatchedProperty.valueDeclaration)
-                            && isPrivateName(unmatchedProperty.valueDeclaration.name)
+                            && isPrivateIdentifier(unmatchedProperty.valueDeclaration.name)
                             && isClassDeclaration(source.symbol.valueDeclaration)
                         ) {
                             const privateNameDescription = unmatchedProperty.valueDeclaration.name.escapedText;
@@ -20160,9 +20160,9 @@ namespace ts {
                 }
             }
 
-            if (isPropertyAccessExpression(node) && isPrivateName(node.name)) {
+            if (isPropertyAccessExpression(node) && isPrivateIdentifier(node.name)) {
                 if (!getContainingClass(node)) {
-                    error(errorNode, Diagnostics.Private_names_are_not_allowed_outside_class_bodies);
+                    error(errorNode, Diagnostics.Private_identifiers_are_not_allowed_outside_class_bodies);
                     return false;
                 }
                 return true;
@@ -20305,7 +20305,7 @@ namespace ts {
             return isCallOrNewExpression(node.parent) && node.parent.expression === node;
         }
 
-        function getPropertyForPrivateName(leftType: Type, right: PrivateName, errorNode: Node | undefined): Symbol | undefined {
+        function getPropertyForPrivateIdentifier(leftType: Type, right: PrivateIdentifier, errorNode: Node | undefined): Symbol | undefined {
             const privateNameDescription = right.escapedText;
             const diagName = diagnosticName(right);
 
@@ -20376,7 +20376,7 @@ namespace ts {
             );
         }
 
-        function checkPropertyAccessExpressionOrQualifiedName(node: PropertyAccessExpression | QualifiedName, left: Expression | QualifiedName, right: Identifier | PrivateName) {
+        function checkPropertyAccessExpressionOrQualifiedName(node: PropertyAccessExpression | QualifiedName, left: Expression | QualifiedName, right: Identifier | PrivateIdentifier) {
             let propType: Type;
             const leftType = checkNonNullExpression(left);
             const parentSymbol = getNodeLinks(left).resolvedSymbol;
@@ -20388,13 +20388,13 @@ namespace ts {
                 }
                 return apparentType;
             }
-            const prop = isPrivateName(right) ? getPropertyForPrivateName(leftType, right, /* errorNode */ right) : getPropertyOfType(apparentType, right.escapedText);
+            const prop = isPrivateIdentifier(right) ? getPropertyForPrivateIdentifier(leftType, right, /* errorNode */ right) : getPropertyOfType(apparentType, right.escapedText);
             if (isIdentifier(left) && parentSymbol && !(prop && isConstEnumOrConstEnumOnlyModule(prop))) {
                 markAliasReferenced(parentSymbol, node);
             }
             if (!prop) {
                 const indexInfo = assignmentKind === AssignmentKind.None || !isGenericObjectType(leftType) || isThisTypeParameter(leftType) ? getIndexInfoOfType(apparentType, IndexKind.String) : undefined;
-                if (!(indexInfo && indexInfo.type) || isPrivateName(right)) {
+                if (!(indexInfo && indexInfo.type) || isPrivateIdentifier(right)) {
                     if (isJSLiteralType(leftType)) {
                         return anyType;
                     }
@@ -20467,7 +20467,7 @@ namespace ts {
             return assignmentKind ? getBaseTypeOfLiteralType(flowType) : flowType;
         }
 
-        function checkPropertyNotUsedBeforeDeclaration(prop: Symbol, node: PropertyAccessExpression | QualifiedName, right: Identifier | PrivateName): void {
+        function checkPropertyNotUsedBeforeDeclaration(prop: Symbol, node: PropertyAccessExpression | QualifiedName, right: Identifier | PrivateIdentifier): void {
             const { valueDeclaration } = prop;
             if (!valueDeclaration) {
                 return;
@@ -20549,7 +20549,7 @@ namespace ts {
             return getIntersectionType(x);
         }
 
-        function reportNonexistentProperty(propNode: Identifier | PrivateName, containingType: Type) {
+        function reportNonexistentProperty(propNode: Identifier | PrivateIdentifier, containingType: Type) {
             let errorInfo: DiagnosticMessageChain | undefined;
             let relatedInfo: Diagnostic | undefined;
             if (containingType.flags & TypeFlags.Union && !(containingType.flags & TypeFlags.Primitive)) {
@@ -20592,11 +20592,11 @@ namespace ts {
             return prop !== undefined && prop.valueDeclaration && hasModifier(prop.valueDeclaration, ModifierFlags.Static);
         }
 
-        function getSuggestedSymbolForNonexistentProperty(name: Identifier | PrivateName | string, containingType: Type): Symbol | undefined {
+        function getSuggestedSymbolForNonexistentProperty(name: Identifier | PrivateIdentifier | string, containingType: Type): Symbol | undefined {
             return getSpellingSuggestionForName(isString(name) ? name : idText(name), getPropertiesOfType(containingType), SymbolFlags.Value);
         }
 
-        function getSuggestionForNonexistentProperty(name: Identifier | PrivateName | string, containingType: Type): string | undefined {
+        function getSuggestionForNonexistentProperty(name: Identifier | PrivateIdentifier | string, containingType: Type): string | undefined {
             const suggestion = getSuggestedSymbolForNonexistentProperty(name, containingType);
             return suggestion && symbolName(suggestion);
         }
@@ -23475,8 +23475,8 @@ namespace ts {
                 error(expr, Diagnostics.The_operand_of_a_delete_operator_must_be_a_property_reference);
                 return booleanType;
             }
-            if (expr.kind === SyntaxKind.PropertyAccessExpression && isPrivateName((expr as PropertyAccessExpression).name)) {
-                error(expr, Diagnostics.The_operand_of_a_delete_operator_cannot_be_a_private_name);
+            if (expr.kind === SyntaxKind.PropertyAccessExpression && isPrivateIdentifier((expr as PropertyAccessExpression).name)) {
+                error(expr, Diagnostics.The_operand_of_a_delete_operator_cannot_be_a_private_identifier);
             }
             const links = getNodeLinks(expr);
             const symbol = getExportSymbolOfValueSymbolIfExported(links.resolvedSymbol);
@@ -25024,7 +25024,7 @@ namespace ts {
             const instanceNames = createUnderscoreEscapedMap<Declaration>();
             const staticNames = createUnderscoreEscapedMap<Declaration>();
             // private names share the same scope
-            const privateNames = createUnderscoreEscapedMap<Declaration>();
+            const privateIdentifiers = createUnderscoreEscapedMap<Declaration>();
             for (const member of node.members) {
                 if (member.kind === SyntaxKind.Constructor) {
                     for (const param of (member as ConstructorDeclaration).parameters) {
@@ -25040,8 +25040,8 @@ namespace ts {
                     if (!name) {
                         return;
                     }
-                    if (isPrivateName(name)) {
-                        names = privateNames;
+                    if (isPrivateIdentifier(name)) {
+                        names = privateIdentifiers;
                     }
                     else {
                         names = isStatic ? staticNames : instanceNames;
@@ -25659,7 +25659,7 @@ namespace ts {
                         const subsequentName = (<FunctionLikeDeclaration>subsequentNode).name;
                         const areBothNamesSame = node.name && subsequentName && (
                             // Both are private names which are the same.
-                            (isPrivateName(node.name) && isPrivateName(subsequentName) && node.name.escapedText === subsequentName.escapedText) ||
+                            (isPrivateIdentifier(node.name) && isPrivateIdentifier(subsequentName) && node.name.escapedText === subsequentName.escapedText) ||
                             // Both are computed property names
                             // TODO: GH#17345: These are methods, so handle computed name case. (`Always allowing computed property names is *not* the correct behavior!)
                             (isComputedPropertyName(node.name) && isComputedPropertyName(subsequentName)) ||
@@ -26505,9 +26505,9 @@ namespace ts {
             }
         }
 
-        function getIdentifierFromEntityNameExpression(node: Identifier | PropertyAccessExpression): Identifier | PrivateName;
-        function getIdentifierFromEntityNameExpression(node: Expression): Identifier | PrivateName | undefined;
-        function getIdentifierFromEntityNameExpression(node: Expression): Identifier | PrivateName | undefined {
+        function getIdentifierFromEntityNameExpression(node: Identifier | PropertyAccessExpression): Identifier | PrivateIdentifier;
+        function getIdentifierFromEntityNameExpression(node: Expression): Identifier | PrivateIdentifier | undefined;
+        function getIdentifierFromEntityNameExpression(node: Expression): Identifier | PrivateIdentifier | undefined {
             switch (node.kind) {
                 case SyntaxKind.Identifier:
                     return node as Identifier;
@@ -30000,7 +30000,7 @@ namespace ts {
             return undefined;
         }
 
-        function getSymbolOfNameOrPropertyAccessExpression(name: EntityName | PrivateName | PropertyAccessExpression): Symbol | undefined {
+        function getSymbolOfNameOrPropertyAccessExpression(name: EntityName | PrivateIdentifier | PropertyAccessExpression): Symbol | undefined {
             if (isDeclarationName(name)) {
                 return getSymbolOfNode(name.parent);
             }
@@ -30009,7 +30009,7 @@ namespace ts {
                 name.parent.kind === SyntaxKind.PropertyAccessExpression &&
                 name.parent === (name.parent.parent as BinaryExpression).left) {
                 // Check if this is a special property assignment
-                if (!isPrivateName(name)) {
+                if (!isPrivateIdentifier(name)) {
                     const specialPropertyAssignmentSymbol = getSpecialPropertyAssignmentSymbolFromEntityName(name);
                     if (specialPropertyAssignmentSymbol) {
                         return specialPropertyAssignmentSymbol;
@@ -30025,14 +30025,14 @@ namespace ts {
                     return success;
                 }
             }
-            else if (!isPropertyAccessExpression(name) && !isPrivateName(name) && isInRightSideOfImportOrExportAssignment(name)) {
+            else if (!isPropertyAccessExpression(name) && !isPrivateIdentifier(name) && isInRightSideOfImportOrExportAssignment(name)) {
                 // Since we already checked for ExportAssignment, this really could only be an Import
                 const importEqualsDeclaration = getAncestor(name, SyntaxKind.ImportEqualsDeclaration);
                 Debug.assert(importEqualsDeclaration !== undefined);
                 return getSymbolOfPartOfRightHandSideOfImportEquals(name, /*dontResolveAlias*/ true);
             }
 
-            if (!isPropertyAccessExpression(name) && !isPrivateName(name)) {
+            if (!isPropertyAccessExpression(name) && !isPrivateIdentifier(name)) {
                 const possibleImportNode = isImportTypeQualifierPart(name);
                 if (possibleImportNode) {
                     getTypeFromTypeNode(possibleImportNode);
@@ -30160,10 +30160,10 @@ namespace ts {
 
             switch (node.kind) {
                 case SyntaxKind.Identifier:
-                case SyntaxKind.PrivateName:
+                case SyntaxKind.PrivateIdentifier:
                 case SyntaxKind.PropertyAccessExpression:
                 case SyntaxKind.QualifiedName:
-                    return getSymbolOfNameOrPropertyAccessExpression(<EntityName | PrivateName | PropertyAccessExpression>node);
+                    return getSymbolOfNameOrPropertyAccessExpression(<EntityName | PrivateIdentifier | PropertyAccessExpression>node);
 
                 case SyntaxKind.ThisKeyword:
                     const container = getThisContainer(node, /*includeArrowFunctions*/ false);
@@ -31560,8 +31560,8 @@ namespace ts {
             else if (node.kind === SyntaxKind.Parameter && (flags & ModifierFlags.ParameterPropertyModifier) && (<ParameterDeclaration>node).dotDotDotToken) {
                 return grammarErrorOnNode(node, Diagnostics.A_parameter_property_cannot_be_declared_using_a_rest_parameter);
             }
-            else if (isNamedDeclaration(node) && (flags & ModifierFlags.AccessibilityModifier) && node.name.kind === SyntaxKind.PrivateName) {
-                return grammarErrorOnNode(node, Diagnostics.Accessibility_modifiers_cannot_be_used_with_private_names);
+            else if (isNamedDeclaration(node) && (flags & ModifierFlags.AccessibilityModifier) && node.name.kind === SyntaxKind.PrivateIdentifier) {
+                return grammarErrorOnNode(node, Diagnostics.Accessibility_modifiers_cannot_be_used_with_private_identifiers);
             }
             if (flags & ModifierFlags.Async) {
                 return checkGrammarAsyncModifier(node, lastAsync!);
@@ -31967,8 +31967,8 @@ namespace ts {
                     return grammarErrorOnNode(prop.equalsToken!, Diagnostics.can_only_be_used_in_an_object_literal_property_inside_a_destructuring_assignment);
                 }
 
-                if (name.kind === SyntaxKind.PrivateName) {
-                    return grammarErrorOnNode(name, Diagnostics.Private_names_are_not_allowed_outside_class_bodies);
+                if (name.kind === SyntaxKind.PrivateIdentifier) {
+                    return grammarErrorOnNode(name, Diagnostics.Private_identifiers_are_not_allowed_outside_class_bodies);
                 }
 
                 // Modifiers are never allowed on properties except for 'async' on a method declaration

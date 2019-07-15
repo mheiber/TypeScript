@@ -1643,7 +1643,7 @@ namespace ts {
             setSourceMapRange(target, firstAccessor.name);
 
             const visitedAccessorName = visitNode(firstAccessor.name, visitor, isPropertyName);
-            if (isPrivateName(visitedAccessorName)) {
+            if (isPrivateIdentifier(visitedAccessorName)) {
                 return Debug.failBadSyntaxKind(visitedAccessorName, "Private names are not allowed in ES2015.");
             }
             const propertyName = createExpressionForPropertyName(visitedAccessorName);

@@ -197,9 +197,9 @@ namespace ts {
         AmpersandEqualsToken,
         BarEqualsToken,
         CaretEqualsToken,
-        // Identifiers and PrivateNames
+        // Identifiers and PrivateIdentifiers
         Identifier,
-        PrivateName,
+        PrivateIdentifier,
         // Reserved words
         BreakKeyword,
         CaseKeyword,
@@ -800,9 +800,9 @@ namespace ts {
 
     export type EntityName = Identifier | QualifiedName;
 
-    export type PropertyName = Identifier | StringLiteral | NumericLiteral | ComputedPropertyName | PrivateName;
+    export type PropertyName = Identifier | StringLiteral | NumericLiteral | ComputedPropertyName | PrivateIdentifier;
 
-    export type DeclarationName = Identifier | PrivateName | StringLiteralLike | NumericLiteral | ComputedPropertyName | BindingPattern;
+    export type DeclarationName = Identifier | PrivateIdentifier | StringLiteralLike | NumericLiteral | ComputedPropertyName | BindingPattern;
 
     export interface Declaration extends Node {
         _declarationBrand: any;
@@ -833,8 +833,8 @@ namespace ts {
         expression: Expression;
     }
 
-    export interface PrivateName extends Node {
-        kind: SyntaxKind.PrivateName;
+    export interface PrivateIdentifier extends Node {
+        kind: SyntaxKind.PrivateIdentifier;
         // escaping not strictly necessary
         // avoids gotchas in transforms and utils
         escapedText: __String;
@@ -954,8 +954,8 @@ namespace ts {
     }
 
     /*@internal*/
-    export interface PrivateNamedPropertyDeclaration extends PropertyDeclaration {
-        name: PrivateName;
+    export interface PrivateIdentifierPropertyDeclaration extends PropertyDeclaration {
+        name: PrivateIdentifier;
     }
 
     export interface ObjectLiteralElement extends NamedDeclaration {
@@ -1779,12 +1779,12 @@ namespace ts {
     export interface PropertyAccessExpression extends MemberExpression, NamedDeclaration {
         kind: SyntaxKind.PropertyAccessExpression;
         expression: LeftHandSideExpression;
-        name: Identifier | PrivateName;
+        name: Identifier | PrivateIdentifier;
     }
 
     /*@internal*/
-    export interface PrivateNamedPropertyAccessExpression extends PropertyAccessExpression {
-        name: PrivateName;
+    export interface PrivateIdentifierPropertyAccessExpression extends PropertyAccessExpression {
+        name: PrivateIdentifier;
     }
 
     export interface SuperPropertyAccessExpression extends PropertyAccessExpression {
@@ -3118,7 +3118,7 @@ namespace ts {
         getDeclaredTypeOfSymbol(symbol: Symbol): Type;
         getPropertiesOfType(type: Type): Symbol[];
         getPropertyOfType(type: Type, propertyName: string): Symbol | undefined;
-        getPropertyForPrivateName(leftType: Type, right: PrivateName, errorNode: Node | undefined): Symbol | undefined;
+        getPropertyForPrivateIdentifier(leftType: Type, right: PrivateIdentifier, errorNode: Node | undefined): Symbol | undefined;
         /* @internal */ getTypeOfPropertyOfType(type: Type, propertyName: string): Type | undefined;
         getIndexInfoOfType(type: Type, kind: IndexKind): IndexInfo | undefined;
         getSignaturesOfType(type: Type, kind: SignatureKind): ReadonlyArray<Signature>;

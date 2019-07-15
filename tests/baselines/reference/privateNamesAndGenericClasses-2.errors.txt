@@ -1,4 +1,4 @@
-tests/cases/conformance/classes/members/privateNames/privateNamesAndGenericClasses-2.ts(24,3): error TS18016: Private names are not allowed outside class bodies.
+tests/cases/conformance/classes/members/privateNames/privateNamesAndGenericClasses-2.ts(24,3): error TS18016: Private identifiers are not allowed outside class bodies.
 tests/cases/conformance/classes/members/privateNames/privateNamesAndGenericClasses-2.ts(25,1): error TS2322: Type 'C<string>' is not assignable to type 'C<number>'.
   Type 'string' is not assignable to type 'number'.
 tests/cases/conformance/classes/members/privateNames/privateNamesAndGenericClasses-2.ts(26,1): error TS2322: Type 'C<number>' is not assignable to type 'C<string>'.
@@ -31,7 +31,7 @@ tests/cases/conformance/classes/members/privateNames/privateNamesAndGenericClass
     const x: number = a.baz                   // OK
     a.#foo;                                   // Error
       ~~~~
-!!! error TS18016: Private names are not allowed outside class bodies.
+!!! error TS18016: Private identifiers are not allowed outside class bodies.
     a = b;                                    // Error
     ~
 !!! error TS2322: Type 'C<string>' is not assignable to type 'C<number>'.

@@ -1,4 +1,4 @@
-tests/cases/conformance/classes/members/privateNames/privateNameNotAccessibleOutsideDefiningClass.ts(7,9): error TS18016: Private names are not allowed outside class bodies.
+tests/cases/conformance/classes/members/privateNames/privateNameNotAccessibleOutsideDefiningClass.ts(7,9): error TS18016: Private identifiers are not allowed outside class bodies.
 
 
 ==== tests/cases/conformance/classes/members/privateNames/privateNameNotAccessibleOutsideDefiningClass.ts (1 errors) ====
@@ -10,5 +10,5 @@ tests/cases/conformance/classes/members/privateNames/privateNameNotAccessibleOut
     
     new A().#foo = 4;               // Error
             ~~~~
-!!! error TS18016: Private names are not allowed outside class bodies.
+!!! error TS18016: Private identifiers are not allowed outside class bodies.
     
