@@ -6691,7 +6691,7 @@ namespace ts {
          */
         function getPropertyNameFromType(type: StringLiteralType | NumberLiteralType | UniqueESSymbolType): __String {
             if (type.flags & TypeFlags.UniqueESSymbol) {
-                return getPropertyNameForUniqueESSymbol(type.symbol);
+                return (<UniqueESSymbolType>type).escapedName;
             }
             if (type.flags & (TypeFlags.StringLiteral | TypeFlags.NumberLiteral)) {
                 return escapeLeadingUnderscores("" + (<StringLiteralType | NumberLiteralType>type).value);
