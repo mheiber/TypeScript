@@ -2946,7 +2946,7 @@ namespace ts {
         }
 
         // A reserved member name starts with two underscores, but the third character cannot be an underscore,
-        // @, or #. A third underscore indicates an escaped form of an identifer that started
+        // @, or #. A third underscore indicates an escaped form of an identifier that started
         // with at least two underscores. The @ character indicates that the name is denoted by a well known ES
         // Symbol instance and the # indicates that the name is a PrivateIdentifier.
         function isReservedMemberName(name: __String) {
