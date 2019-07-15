@@ -20347,7 +20347,7 @@ namespace ts {
                 }
                 return undefined;
             }
-            const match = nearestMatch as Node;
+            const match = nearestMatch;
             const isShadowed = nearestMatchContainingClass.symbol !== leftType.symbol;
             if (!isShadowed) {
                 return prop;
