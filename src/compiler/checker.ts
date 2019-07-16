@@ -10005,9 +10005,6 @@ namespace ts {
                     }
                     else {
                         const name = prop.valueDeclaration && getNameOfDeclaration(prop.valueDeclaration) as PropertyName;
-                        if (name && isPrivateIdentifier(name)) {
-                            return neverType;
-                        }
                         type = name && getLiteralTypeFromPropertyName(name) || getLiteralType(symbolName(prop));
                     }
                 }
