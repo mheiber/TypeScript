@@ -15,7 +15,7 @@ class A {
     constructor () {
         this.#foo(30);
         this.#bar(30);
-        this.#bar(30);
+        this.#baz(30);
         this.#quux = this.#quux + 1;
         this.#quux++;
  }
@@ -40,7 +40,7 @@ class A {
         __quux.set(this, void 0);
         this.foo.call(this, 30);
         this.bar.call(this, 30);
-        this.bar.call(this, 30);
+        this.baz.call(this, 30);
         this.quux = this.quux + 1;
         _a = this.quux, this.quux = _a + 1, _a;
     }
