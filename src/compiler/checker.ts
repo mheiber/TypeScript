@@ -13685,6 +13685,62 @@ namespace ts {
                 return related;
             }
 
+            function reportUnmatchedProperty(source: Type, target: Type, unmatchedProperty: Symbol, requireOptionalProperties: boolean) {
+                let shouldSkipElaboration = false;
+                // give specific error in case where private names have the same description
+                if (
+                    unmatchedProperty.valueDeclaration
+                    && isNamedDeclaration(unmatchedProperty.valueDeclaration)
+                    && isPrivateIdentifier(unmatchedProperty.valueDeclaration.name)
+                    && isClassDeclaration(source.symbol.valueDeclaration)
+                ) {
+                    const privateNameDescription = unmatchedProperty.valueDeclaration.name.escapedText;
+                    const symbolTableKey = getPropertyNameForPrivateNameDescription(source.symbol, privateNameDescription);
+                    if (symbolTableKey && !!getPropertyOfType(source, symbolTableKey)) {
+                        const sourceName = source.symbol.valueDeclaration.name;
+                        const targetName = isClassDeclaration(target.symbol.valueDeclaration) ? target.symbol.valueDeclaration.name : undefined;
+                        reportError(
+                            Diagnostics.Property_0_in_type_1_refers_to_a_different_member_that_cannot_be_accessed_from_within_type_2,
+                            diagnosticName(privateNameDescription),
+                            diagnosticName(sourceName || anon),
+                            diagnosticName(targetName || anon),
+                        );
+                        return;
+                    }
+                    if (shouldSkipElaboration) {
+                        overrideNextErrorInfo = errorInfo;
+                    }
+                }
+                const props = arrayFrom(getUnmatchedProperties(source, target, requireOptionalProperties, /*matchDiscriminantProperties*/ false));
+                if (!headMessage || (headMessage.code !== Diagnostics.Class_0_incorrectly_implements_interface_1.code &&
+                    headMessage.code !== Diagnostics.Class_0_incorrectly_implements_class_1_Did_you_mean_to_extend_1_and_inherit_its_members_as_a_subclass.code)) {
+                    shouldSkipElaboration = true; // Retain top-level error for interface implementing issues, otherwise omit it
+                }
+                if (props.length === 1) {
+                    const propName = symbolToString(unmatchedProperty);
+                    reportError(Diagnostics.Property_0_is_missing_in_type_1_but_required_in_type_2, propName, ...getTypeNamesForErrorDisplay(source, target));
+                    if (length(unmatchedProperty.declarations)) {
+                        associateRelatedInfo(createDiagnosticForNode(unmatchedProperty.declarations[0], Diagnostics._0_is_declared_here, propName));
+                    }
+                    if (shouldSkipElaboration) {
+                        overrideNextErrorInfo = errorInfo;
+                    }
+                }
+                else if (tryElaborateArrayLikeErrors(source, target, /*reportErrors*/ false)) {
+                    if (props.length > 5) { // arbitrary cutoff for too-long list form
+                        reportError(Diagnostics.Type_0_is_missing_the_following_properties_from_type_1_Colon_2_and_3_more, typeToString(source), typeToString(target), map(props.slice(0, 4), p => symbolToString(p)).join(", "), props.length - 4);
+                    }
+                    else {
+                        reportError(Diagnostics.Type_0_is_missing_the_following_properties_from_type_1_Colon_2, typeToString(source), typeToString(target), map(props, p => symbolToString(p)).join(", "));
+                    }
+                    if (shouldSkipElaboration) {
+                        overrideNextErrorInfo = errorInfo;
+                    }
+                }
+                // No array like or unmatched property error - just issue top level error (errorInfo = undefined)
+
+            }
+
             function propertiesRelatedTo(source: Type, target: Type, reportErrors: boolean, excludedProperties: UnderscoreEscapedMap<true> | undefined): Ternary {
                 if (relation === identityRelation) {
                     return propertiesIdenticalTo(source, target, excludedProperties);
@@ -13693,62 +13749,7 @@ namespace ts {
                 const unmatchedProperty = getUnmatchedProperty(source, target, requireOptionalProperties, /*matchDiscriminantProperties*/ false);
                 if (unmatchedProperty) {
                     if (reportErrors) {
-                        let shouldSkipElaboration = false;
-                        // give specific error in case where private names have the same description
-                        let hasReported = false;
-                        if (
-                            unmatchedProperty.valueDeclaration
-                            && isNamedDeclaration(unmatchedProperty.valueDeclaration)
-                            && isPrivateIdentifier(unmatchedProperty.valueDeclaration.name)
-                            && isClassDeclaration(source.symbol.valueDeclaration)
-                        ) {
-                            const privateNameDescription = unmatchedProperty.valueDeclaration.name.escapedText;
-                            const symbolTableKey = getPropertyNameForPrivateNameDescription(source.symbol, privateNameDescription);
-                            if (symbolTableKey && !!getPropertyOfType(source, symbolTableKey)) {
-                                const sourceName = source.symbol.valueDeclaration.name;
-                                const targetName = isClassDeclaration(target.symbol.valueDeclaration) ? target.symbol.valueDeclaration.name : undefined;
-                                reportError(
-                                    Diagnostics.Property_0_in_type_1_refers_to_a_different_member_that_cannot_be_accessed_from_within_type_2,
-                                    diagnosticName(privateNameDescription),
-                                    diagnosticName(sourceName || anon),
-                                    diagnosticName(targetName || anon),
-                                );
-                                hasReported = true;
-                            }
-                            if (shouldSkipElaboration) {
-                                overrideNextErrorInfo = errorInfo;
-                            }
-                        }
-                        if (!hasReported) {
-                            const props = arrayFrom(getUnmatchedProperties(source, target, requireOptionalProperties, /*matchDiscriminantProperties*/ false));
-                            if (!headMessage || (headMessage.code !== Diagnostics.Class_0_incorrectly_implements_interface_1.code &&
-                                headMessage.code !== Diagnostics.Class_0_incorrectly_implements_class_1_Did_you_mean_to_extend_1_and_inherit_its_members_as_a_subclass.code)) {
-                                shouldSkipElaboration = true; // Retain top-level error for interface implementing issues, otherwise omit it
-                            }
-                            if (props.length === 1) {
-                                const propName = symbolToString(unmatchedProperty);
-                                reportError(Diagnostics.Property_0_is_missing_in_type_1_but_required_in_type_2, propName, ...getTypeNamesForErrorDisplay(source, target));
-                                if (length(unmatchedProperty.declarations)) {
-                                    associateRelatedInfo(createDiagnosticForNode(unmatchedProperty.declarations[0], Diagnostics._0_is_declared_here, propName));
-                                }
-                                if (shouldSkipElaboration) {
-                                    overrideNextErrorInfo = errorInfo;
-                                }
-                            }
-                            else if (tryElaborateArrayLikeErrors(source, target, /*reportErrors*/ false)) {
-                                if (props.length > 5) { // arbitrary cutoff for too-long list form
-                                    reportError(Diagnostics.Type_0_is_missing_the_following_properties_from_type_1_Colon_2_and_3_more, typeToString(source), typeToString(target), map(props.slice(0, 4), p => symbolToString(p)).join(", "), props.length - 4);
-                                }
-                                else {
-                                    reportError(Diagnostics.Type_0_is_missing_the_following_properties_from_type_1_Colon_2, typeToString(source), typeToString(target), map(props, p => symbolToString(p)).join(", "));
-                                }
-                                if (shouldSkipElaboration) {
-                                    overrideNextErrorInfo = errorInfo;
-                                }
-                            }
-                        }
-                        // ELSE: No array like or unmatched property error - just issue top level error (errorInfo = undefined)
-
+                        reportUnmatchedProperty(source, target, unmatchedProperty, requireOptionalProperties);
                     }
                     return Ternary.False;
                 }
