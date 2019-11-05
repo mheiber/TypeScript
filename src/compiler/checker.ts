@@ -23553,8 +23553,9 @@ namespace ts {
             }
             const prop = getPropertyOfType(type, propertyName);
             if (prop) {
-                if (isOptionalChain(node) && isPrivateIdentifierPropertyDeclaration(prop.valueDeclaration)) {
-                    return false;
+                if (isPropertyAccessExpression(node) && prop.valueDeclaration && isPrivateIdentifierPropertyDeclaration(prop.valueDeclaration)) {
+                    const declClass = getContainingClass(prop.valueDeclaration);
+                    return !isOptionalChain(node) && !!findAncestor(node, parent => parent === declClass);
                 }
                 return checkPropertyAccessibility(node, isSuper, type, prop);
             }
