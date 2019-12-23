@@ -769,6 +769,9 @@ namespace ts {
                     Debug.fail("Undeclared private name for property declaration.");
                 }
             }
+            if (isPrivateIdentifier(propertyName) && !property.initializer) {
+                return undefined;
+            }
 
             const initializer = property.initializer || emitAssignment ? visitNode(property.initializer, visitor, isExpression)
                 : hasModifier(getOriginalNode(property), ModifierFlags.ParameterPropertyModifier) && isIdentifier(propertyName) ? propertyName
