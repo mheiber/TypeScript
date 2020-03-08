@@ -2868,6 +2868,15 @@ namespace ts.server {
                         project = this.createLoadAndUpdateConfiguredProject(configFileName, `Creating possible configured project for ${info.fileName} to open`);
                         // Send the event only if the project got created as part of this open request and info is part of the project
                         if (!project.containsScriptInfo(info)) {
+                            const references = project.getProjectReferences() || [];
+                            for (const referencedConfigFileName of references.map(r => asNormalizedPath(normalizeSlashes(r.path)))) {
+                                const referencedProject = this.findConfiguredProjectByProjectName(referencedConfigFileName) ??
+                                    this.createLoadAndUpdateConfiguredProject(referencedConfigFileName, `creating referenced project for ${info.fileName}`);
+                                if (referencedProject.containsScriptInfo(info)) {
+                                    project = referencedProject;
+                                    this.logger.info(`Creating project for referenced config file ${referencedConfigFileName}`);
+                                }
+                            }
                             // Since the file isnt part of configured project, do not send config file info
                             configFileName = undefined;
                         }
